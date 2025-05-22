@@ -1,0 +1,50 @@
+import { ResultToppingCall } from "@/types/ToppingCall";
+import { Checkbox, FormControl, FormControlLabel, FormGroup, Typography } from "@mui/material";
+
+interface StoreRegisterToppingCallsCheckProps {
+    toppingOptions: Record<number, ResultToppingCall>;
+    selectedOption: Record<number, number[]>
+    onOptionChange: (toppingId: number, optionId: number, isChecked: boolean) => void;
+    callType: "pre_call" | "post_call"
+}
+
+export function StoreRegisterToppingCallsCheck({
+    toppingOptions,
+    selectedOption = {},
+    onOptionChange,
+    callType
+}: StoreRegisterToppingCallsCheckProps) {
+    return (
+        <div className="space-y-6">
+            {Object.values(toppingOptions).map(({ topping, call_options }) => (
+                <FormControl key={`${callType}-${topping.id}`} className="mt-4">
+                    <Typography variant="subtitle1" component="fieldset" className="w-full font-bold">
+                        {topping.topping_name}
+                    </Typography>
+                    <FormGroup
+                        className="grid grid-cols-3 gap-2"
+                    >
+                        {call_options.map(option => (
+                            <FormControlLabel
+                                key={option.id}
+                                control={
+                                    <Checkbox
+                                        checked={(selectedOption[topping.id] || []).includes(option.id)}
+                                        onChange={(_, checked) =>
+                                            onOptionChange(topping.id, option.id, checked)
+                                        }
+                                        color="primary"
+                                    />
+                                }
+                                label={
+                                    <Typography variant="body2">{option.call_option_name}</Typography>
+                                }
+                            />
+                        ))}
+                    </FormGroup>
+                </FormControl>
+            ))
+            }
+        </div>
+    )
+}
