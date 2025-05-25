@@ -18,11 +18,13 @@
     "@mui/material": "^7.1.0",
     "@mui/material-nextjs": "^7.1.0",
     "@tanstack/react-query": "^5.76.1",
+    "@vis.gl/react-google-maps": "^1.5.2",
     "axios": "^1.9.0",
     "next": "15.3.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.4",
+    "remix-utils": "^8.7.0",
     "zod": "^3.25.7",
     "zustand": "^5.0.4"
   },

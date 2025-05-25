@@ -157,10 +157,10 @@ const CreateStorePage = () => {
                 店舗登録
             </Button>
             {submitError && (
-                <Alert severity="error" className="my-4">{submitError}</Alert>
+                <Alert severity="error" className="my-4" variant="filled">{submitError}</Alert>
             )}
             {regSuccessMsg && (
-                <Alert severity="success" className="my-4">{regSuccessMsg}</Alert>
+                <Alert severity="success" className="my-4" variant="filled">{regSuccessMsg}</Alert>
             )}
         </form>
     )

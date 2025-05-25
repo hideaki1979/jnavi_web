@@ -78,3 +78,45 @@ export interface StoreToppingCall extends BaseToppingCall {
         noodle_type_name: string;
     };
 }
+
+// マップデータの型定義
+// 店舗情報
+export interface MapStore {
+    id: string | number;
+    store_name: string;
+    branch_name?: string | null;
+    address: string;
+    images?: string[] | null;
+    is_close?: boolean;
+}
+
+// マップ＋店舗情報（MAP画面用）
+export interface MapData {
+    id: string | number;
+    latitude: number;
+    longitude: number;
+    store: MapStore;
+}
+
+// MAP情報取得APIレスポンスの型定義
+export interface MapApiResponse {
+    status: string;
+    message: string;
+    data: MapData[];
+}
+
+// 画像ダウンロード用の画像情報データ型
+export interface StoreImageDownloadData {
+    id: number | string;
+    store_id: number | string;
+    user_id: number | string;
+    menu_type: number | string;
+    menu_name: string;
+    image_url: string;
+    topping_calls?: {
+        topping_id: number | string;
+        topping_name: string;
+        call_option_id: number | string;
+        call_option_name: string;
+    }[];
+}
