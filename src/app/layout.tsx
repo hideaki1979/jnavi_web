@@ -3,6 +3,8 @@ import { Noto_Sans_JP } from "next/font/google"
 import "./globals.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter"
 import QueryProviders from "./queryClientProvider";
+import { Suspense } from "react";
+import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer";
 
 const notoSansJP = Noto_Sans_JP({
   variable: "--font-noto-sans-jp",
@@ -30,7 +32,9 @@ export default function RootLayout({
       >
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <QueryProviders>
-            {children}
+            <Suspense fallback={<LoadingErrorContainer loading={true} />}>
+              {children}
+            </Suspense>
           </QueryProviders>
         </AppRouterCacheProvider>
       </body>
