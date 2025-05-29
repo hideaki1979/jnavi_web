@@ -1,4 +1,4 @@
-import { BaseToppingCall, SimulationToppingOption } from "./ToppingCall";
+import { BaseToppingCall, FormattedToppingOptionIds, FormattedToppingOptionNames, SimulationToppingOption } from "./ToppingCall";
 
 // 店舗登録フォーム画面用の型
 export interface StoreInput {
@@ -140,4 +140,30 @@ export interface SimulationSelectToppingCallsData {
     store_name: string;
     branch_name?: string | null;
     formattedToppingOptions?: [number, SimulationToppingOption][];
+}
+
+// （店舗詳細画面用）整形済店舗・トッピングコール情報（getStoreById）
+export interface FormattedToppingOptionNameStoreData {
+    // StoreDataの店舗別トッピングコール情報以外の全プロパティ
+    id: number;
+    store_name: string;
+    branch_name?: string | null;
+    address: string;
+    business_hours: string;
+    regular_holidays: string;
+    prior_meal_voucher: boolean;
+    topping_details?: string | null;
+    call_details?: string | null;
+    is_all_increased: boolean;
+    is_lot: boolean;
+    lot_detail?: string | null;
+    is_close?: boolean;
+
+    // （トッピング・オプション）整形済名称リスト
+    preCallFormatted: FormattedToppingOptionNames;
+    postCallFormatted: FormattedToppingOptionNames;
+
+    // （トッピング・オプション）整形済IDリスト
+    preCallFormattedIds: FormattedToppingOptionIds;
+    postCallFormattedIds: FormattedToppingOptionIds;
 }

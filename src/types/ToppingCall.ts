@@ -33,9 +33,14 @@ export interface ResultToppingCallApiRes {
     message: string;
 }
 
-// トッピング・コールID（店舗登録・更新画面用）
+// トッピング・コールID（店舗登録・更新・詳細画面用）
 export interface FormattedToppingOptionIds {
     [topping_id: number]: number[];
+}
+
+// トッピング・コール名称（店舗詳細画面用）
+export interface FormattedToppingOptionNames {
+    [topping_name: string]: string[];
 }
 
 /**

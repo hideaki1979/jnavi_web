@@ -1,5 +1,5 @@
 import ApiClient from "@/lib/ApiClient";
-import { MapApiResponse, MapData, SimulationSelectStoresData, SimulationSelectToppingCallsData, StoreImageDownloadData, StoreInput } from "@/types/Store";
+import { FormattedToppingOptionNameStoreData, MapApiResponse, MapData, SimulationSelectStoresData, SimulationSelectToppingCallsData, StoreImageDownloadData, StoreInput } from "@/types/Store";
 
 const api = ApiClient.getInstance()
 
@@ -66,6 +66,18 @@ export const getStoreToppingCalls = async (id: string, call_timing: string): Pro
         throw ApiClient.handlerError(
             error,
             "店舗トッピングコール情報取得時にエラーが発生しました。"
+        )
+    }
+}
+
+export const getStoreById = async (id: string): Promise<FormattedToppingOptionNameStoreData> => {
+    try {
+        const res = await api.get(`/stores/${id}`)
+        return res.data.data
+    } catch (error) {
+        throw ApiClient.handlerError(
+            error,
+            "店舗情報取得時に予期せぬエラーが発生しました"
         )
     }
 }
