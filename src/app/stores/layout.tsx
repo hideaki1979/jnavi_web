@@ -12,7 +12,7 @@ export default async function StoreLayout({
 }>) {
     return (
         <>
-            <div className="pt-16 px-8 flex justify-center items-center">
+            <div className="pt-12 px-8 flex justify-center items-center">
                 {children}
             </div>
         </>

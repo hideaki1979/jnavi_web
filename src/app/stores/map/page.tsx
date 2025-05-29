@@ -1,9 +1,10 @@
 "use client"
 
 import { getMapAll } from "@/app/api/stores";
+import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer";
 import { StoreInfoDrawer } from "@/components/StoreInfoDrawer";
 import { MapData, MapStore } from "@/types/Store";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { AdvancedMarker, APIProvider, Map, Pin } from '@vis.gl/react-google-maps'
 import { useEffect, useState } from "react";
@@ -12,7 +13,7 @@ const defaultCenter = { lat: 35.681236, lng: 139.767125 } // 東京駅
 const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!
 
 export default function MapPage() {
-    const { data: mapData, isLoading, error } = useQuery({
+    const { data: mapData, isLoading, isError, error } = useQuery({
         queryKey: ['mapData'],
         queryFn: getMapAll
     })
@@ -44,14 +45,9 @@ export default function MapPage() {
 
     // console.log(mapData)
 
-    if (isLoading) return (
-        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="100vh" >
-            <CircularProgress color="primary" />
-            <p className="mt-4 text-gray-300">Loading...</p>
-        </Box>
-    )
-
-    if (error) return <div>エラーです。<br />{error.message}</div>
+    if (isLoading || isError) {
+        return <LoadingErrorContainer loading={isLoading} error={isError ? (error as Error).message : null} />
+    }
 
     return (
         <Box
@@ -65,7 +61,7 @@ export default function MapPage() {
                     <Map
                         mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID}
                         defaultCenter={center}
-                        defaultZoom={16}
+                        defaultZoom={14}
                         style={{ width: "100%", height: "100%" }}
                         gestureHandling={"greedy"}
                         disableDefaultUI={true}

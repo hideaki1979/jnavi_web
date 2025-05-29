@@ -2,6 +2,7 @@
 
 import { createStore } from "@/app/api/stores"
 import { getToppingCallOptions } from "@/app/api/toppingCalls"
+import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { StoreFormInputText } from "@/components/StoreFormInputText"
 import { StoreRegisterToppingCallsCheck } from "@/components/StoreRegisterToppingCalls"
 import StoreSwitch from "@/components/StoreSwitch"
@@ -10,7 +11,7 @@ import { FormattedToppingOptionIds, ResultToppingCall } from "@/types/ToppingCal
 import { StoreFormInput, StoreInputSchema } from "@/validations/store"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AccessTime, EventBusy, Map, Store } from "@mui/icons-material"
-import { Alert, Box, Button, CircularProgress, Typography } from "@mui/material"
+import { Alert, Button, Typography } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
@@ -46,7 +47,7 @@ const CreateStorePage = () => {
     })
 
     // トッピングコール情報取得APIを呼び出す
-    const { data, isLoading: isInitDispLoading, error: initDispError } = useQuery({
+    const { data, isLoading: isInitDispLoading, isError, error: initDispError } = useQuery({
         queryKey: ['toppingCallOptions'],
         queryFn: getToppingCallOptions
     })
@@ -116,12 +117,9 @@ const CreateStorePage = () => {
 
     }
     // 初期表示時のローディング
-    if (isInitDispLoading) return (
-        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="100vh" >
-            <CircularProgress color="primary" />
-            <p className="mt-4 text-gray-300">Loading...</p>
-        </Box>
-    )
+    if (isInitDispLoading || isError) {
+        return <LoadingErrorContainer loading={isInitDispLoading} error={isError ? (initDispError as Error).message : null} />
+    }
 
     return (
         <form
@@ -132,9 +130,6 @@ const CreateStorePage = () => {
             <Typography variant="h5" mb={6} textAlign={"center"} fontWeight="bold">
                 店舗情報登録
             </Typography>
-            {initDispError && (
-                <p className="text-red-500 text-sm">{initDispError.message}</p>
-            )}
             <StoreFormInputText name="store_name" control={control} label="店舗名" errors={errors} startAdornment={<Store />} required margin="normal" />
             <StoreFormInputText name="branch_name" control={control} label="支店名" errors={errors} startAdornment={<Store />} margin="normal" />
             <StoreFormInputText name="address" control={control} label="住所" errors={errors} startAdornment={<Map />} required margin="normal" />

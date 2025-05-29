@@ -1,4 +1,4 @@
-import { BaseToppingCall } from "./ToppingCall";
+import { BaseToppingCall, SimulationToppingOption } from "./ToppingCall";
 
 // 店舗登録フォーム画面用の型
 export interface StoreInput {
@@ -86,7 +86,6 @@ export interface MapStore {
     store_name: string;
     branch_name?: string | null;
     address: string;
-    images?: string[] | null;
     is_close?: boolean;
 }
 
@@ -119,4 +118,26 @@ export interface StoreImageDownloadData {
         call_option_id: number | string;
         call_option_name: string;
     }[];
+}
+
+// シミュレーションの券売機
+export interface Ticket {
+    id: number;
+    menu_name: string;
+    price: number;
+}
+
+// シミュレーション用の店舗データ（食券購入で店舗全件取得：getStoresAll）
+export interface SimulationSelectStoresData {
+    id: string | number;
+    store_name: string;
+    branch_name?: string | null;
+}
+
+// シミュレーション・画像画面用の店舗データ（事前トッピング／着丼前トッピング：getStoreToppingCalls）
+export interface SimulationSelectToppingCallsData {
+    store_id: string | number;
+    store_name: string;
+    branch_name?: string | null;
+    formattedToppingOptions?: [number, SimulationToppingOption][];
 }

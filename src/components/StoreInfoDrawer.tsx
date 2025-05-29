@@ -1,9 +1,10 @@
 import { MapStore, StoreImageDownloadData } from "@/types/Store";
-import { Box, CircularProgress, Drawer, IconButton, ImageList, ImageListItem, ImageListItemBar, Typography } from "@mui/material";
+import { Box, Drawer, IconButton, ImageList, ImageListItem, ImageListItemBar, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useQuery } from "@tanstack/react-query";
 import { getStoreImages } from "@/app/api/stores";
 import Image from "next/image";
+import LoadingErrorContainer from "./feedback/LoadingErrorContainer";
 
 type StoreInfoDrawerProps = {
   open: boolean;
@@ -18,21 +19,15 @@ const MENU_TYPE_LABELS: Record<string, string> = {
 
 export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) {
 
-  const { data: imageData, isLoading, error } = useQuery<StoreImageDownloadData[], Error>({
+  const { data: imageData, isLoading, isError, error } = useQuery<StoreImageDownloadData[], Error>({
     queryKey: ["imageData", store?.id],
     queryFn: () => getStoreImages(String(store?.id)),
     enabled: !!store?.id
   })
 
-  if (isLoading) return (
-    <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="100vh" >
-      <CircularProgress color="primary" />
-      <p className="mt-4 text-gray-300">Loading...</p>
-    </Box>
-  )
-
-  if (error) return <div>エラーです。<br />{error.message}</div>
-
+  if (isLoading || isError) {
+    return <LoadingErrorContainer loading={isLoading} error={isError ? (error as Error).message : null} />
+  }
 
   return (
     <Drawer

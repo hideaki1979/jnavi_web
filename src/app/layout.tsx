@@ -13,7 +13,6 @@ const notoSansJP = Noto_Sans_JP({
   preload: false
 })
 
-
 export const metadata: Metadata = {
   title: "J-Navi",
   description: "二郎・二郎系の店舗情報（トッピング情報）を管理するアプリです",

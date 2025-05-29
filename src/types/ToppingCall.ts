@@ -48,3 +48,13 @@ export interface BaseToppingCall {
     call_timing: "pre_call" | "post_call";
     noodle_type_id: number | string;
 }
+
+export interface SimulationToppingOption {
+    toppingId: string | number;
+    toppingName: string;
+    options: {
+        optionId: string | number;
+        optionName: string;
+        storeToppingCallId?: string | number;
+    }[]
+}
