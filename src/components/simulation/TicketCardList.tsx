@@ -14,7 +14,7 @@ export function TicketCardList({ tickets, onSelect }: TicketCardListProps) {
                     <Card
                         sx={{
                             width: 200,
-                            height: 140,
+                            height: 120,
                             display: "flex",
                             flexDirection: "column",
                             mx: "auto",

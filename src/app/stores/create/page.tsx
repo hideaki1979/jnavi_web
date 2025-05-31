@@ -13,11 +13,14 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { AccessTime, EventBusy, Map, Store } from "@mui/icons-material"
 import { Alert, Button, Typography } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 
 
 const CreateStorePage = () => {
+
+    const router = useRouter()
 
     // DBから取得したトッピング・コール情報（初期表示時取得）
     const [toppingOptionData, setToppingOptionData] = useState<Record<string, ResultToppingCall>>({})
@@ -109,12 +112,11 @@ const CreateStorePage = () => {
             const res = await createStore(submitData)
             setRegSuccessMsg(res)
             reset()
-
+            setTimeout(() => router.push('/stores/map'), 2500)
         } catch (error) {
             console.error("店舗登録処理でエラー", error)
             setSubmitError("店舗登録処理に失敗しました。")
         }
-
     }
     // 初期表示時のローディング
     if (isInitDispLoading || isError) {
@@ -124,7 +126,7 @@ const CreateStorePage = () => {
     return (
         <form
             onSubmit={handleSubmit(onSubmit)}
-            className="border dark:border-gray-300 shadow-md rounded-md p-8 max-w-lg w-full bg-gray-200 text-slate-800"
+            className="border dark:border-gray-300 shadow-md rounded-md p-8 bg-gray-200 text-slate-800"
             noValidate
         >
             <Typography variant="h5" mb={6} textAlign={"center"} fontWeight="bold">

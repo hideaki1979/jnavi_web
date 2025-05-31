@@ -1,3 +1,5 @@
+import { Header } from "@/components/layout/Header";
+import { Box } from "@mui/material";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,9 +14,15 @@ export default async function StoreLayout({
 }>) {
     return (
         <>
-            <div className="pt-12 px-8 flex justify-center items-center">
+            {/* <div className="pt-12 px-8 flex justify-center items-center">
                 {children}
-            </div>
+            </div> */}
+            <Box display="flex" flexDirection="column" minHeight="100vh">
+                <Header />
+                <Box component="main" sx={{ flexGrow: 1, width: "100%" }}>
+                    {children}
+                </Box>
+            </Box>
         </>
     );
 }

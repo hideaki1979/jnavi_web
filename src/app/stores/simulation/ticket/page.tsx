@@ -46,7 +46,7 @@ export default function TicketMachinePage() {
     }
 
     return (
-        <Box maxWidth={720} mx="auto" p={4} bgcolor="#cac8c8" color="#000">
+        <Box p={4} bgcolor="#cac8c8" color="#000">
             <Typography variant="h6" align="center" fontWeight="bold" mb={4}>
                 コールシミュレーション
             </Typography>

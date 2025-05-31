@@ -1,0 +1,250 @@
+"use client"
+
+import { getStoreToppingCalls } from "@/app/api/stores"
+import { SelectedToppingInfo } from "@/types/Image"
+import { SimulationToppingOption } from "@/types/ToppingCall"
+import { imageUploadFormSchema, ImageUploadFormValues } from "@/validations/image"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
+import { useParams, useRouter } from "next/navigation"
+import React, { useRef, useState } from "react"
+import { Controller, useForm } from "react-hook-form"
+import imageCompression from "browser-image-compression"
+import { uploadStoreImage } from "@/app/api/images"
+import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
+import { Alert, Box, Button, CircularProgress, Divider, MenuItem, TextField, Typography } from "@mui/material"
+import Image from "next/image"
+import { ToppingOptionRadioSelector } from "@/components/toppingCallOptions/ToppingOptionRadioSelector"
+
+const MENU_TYPE = [
+    { label: "通常メニュー", value: "1" },
+    { label: "限定メニュー", value: "2" }
+]
+
+export default function StoreImageUploadPage() {
+    const router = useRouter()
+    const params = useParams()
+    const id = params.id as string
+
+    const [imageUrl, setImageUrl] = useState<string>("")
+    const [selectedToppingInfo, setSelectedToppingInfo] = useState<Record<string, SelectedToppingInfo>>({})
+    const [uploading, setUploading] = useState(false)
+    const [errorMsg, setErrorMsg] = useState<string>("")
+    const [successMsg, setSuccessMsg] = useState<string>("")
+    const inputRef = useRef<HTMLInputElement>(null)
+
+    // react-hook-form
+    const { control, handleSubmit, setValue, formState: { errors } } = useForm<ImageUploadFormValues>({
+        resolver: zodResolver(imageUploadFormSchema),
+        defaultValues: {
+            menuType: "1",
+            menuName: "",
+            imageFile: undefined
+        }
+    })
+
+    // トッピング情報取得
+    const { data: toppingCallData, isLoading: toppingIsLoading, isError: toppingIsError, error: toppingError } = useQuery({
+        queryKey: ['storeToppingCalls', id],
+        queryFn: () => getStoreToppingCalls(id, "all"),
+        enabled: !!id
+    })
+
+    console.log(toppingCallData)
+    const toppingOptions: SimulationToppingOption[] = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
+
+
+    // 画像選択・リサイズ
+    async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0]
+        if (!file) return
+        try {
+            const compressed = await imageCompression(file, {
+                maxWidthOrHeight: 1080,
+                maxSizeMB: 2,
+                useWebWorker: true,
+            })
+            // Blob→File型に変換
+            const compressedFile = compressed instanceof File
+                ? compressed
+                : new File([compressed], file.name, {
+                    type: file.type,
+                    lastModified: Date.now()
+                })
+
+            setImageUrl(URL.createObjectURL(compressedFile))
+            setValue("imageFile", compressedFile, { shouldValidate: true })
+        } catch (error) {
+            setErrorMsg(error instanceof Error ? error.message : "画像の最適化に失敗しました")
+        }
+    }
+
+    // トッピング選択
+    function handleOptionChange(toppingId: string, optionId: string, storeToppingCallId: string) {
+        setSelectedToppingInfo(prev => ({
+            ...prev,
+            [toppingId]: { optionId, storeToppingCallId }
+        }))
+    }
+
+    // 画像ファイルアップロード
+    async function onSubmit(values: ImageUploadFormValues) {
+        setUploading(true)
+        try {
+            if (!values.imageFile) {
+                setErrorMsg("画像ファイルは必須です")
+                setUploading(false)
+                return
+            }
+            const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader()
+                reader.onload = () => resolve(reader.result as string)
+                reader.onerror = reject
+                reader.readAsDataURL(values.imageFile)
+            })
+            const toppingSelections = Object.entries(selectedToppingInfo).map(([toppingId, info]) => ({
+                topping_id: Number(toppingId),
+                call_option_id: Number(info.optionId),
+                ...(info.storeToppingCallId ? { store_topping_call_id: info.storeToppingCallId } : {})
+            }))
+
+            const uploadImageData = {
+                store_id: id,
+                menu_type: Number(values.menuType),
+                menu_name: values.menuName,
+                image_base64: base64,
+                ...(toppingSelections.length > 0 ? { topping_selections: toppingSelections } : {})
+            }
+
+            await uploadStoreImage(id, uploadImageData)
+
+            setSuccessMsg("画像ファイルアップロードが成功しました。")
+            setTimeout(() => router.push('/stores/map'), 2500)
+        } catch (error) {
+            setErrorMsg(error instanceof Error ? error.message : "画像アップロードに失敗しました")
+        } finally {
+            setUploading(false)
+        }
+    }
+
+    if (toppingIsLoading || toppingIsError) {
+        return <LoadingErrorContainer loading={toppingIsLoading} error={toppingIsError ? (toppingError as Error).message : null} />
+    }
+
+    return (
+        <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="border border-gray-300 shadow-md rounded-md p-4 max-w-xl w-full bg-gray-200 text-slate-800"
+        >
+            <Typography variant="h5" fontWeight="bold" className="my-8 text-center">
+                店舗別画像アップロード
+            </Typography>
+
+            {/* 画像選択 */}
+            <Box display="flex" flexDirection="column" alignItems="center">
+                {imageUrl ? (
+                    <Box width="100%" display="flex" flexDirection="column" alignItems="center" mb={2}>
+                        <Image src={imageUrl} alt="選択したラーメン画像" width={280} height={160} className="rounded-md mb-4 object-contain" />
+                        <Button variant="outlined" color="secondary" onClick={() => {
+                            setValue("imageFile", undefined as unknown as File, { shouldValidate: true })
+                            setImageUrl("")
+                        }}>
+                            画像を削除
+                        </Button>
+                    </Box>
+                ) : (
+                    <Button variant="contained" component="label"
+                        className="w-full mb-2">
+                        画像を選択
+                        <input
+                            ref={inputRef}
+                            type="file"
+                            accept="image/*"
+                            hidden
+                            onChange={handleImageChange}
+                        />
+                    </Button>
+                )}
+                {errors.imageFile && (
+                    <Typography color="error" variant="caption">
+                        {errors.imageFile.message}
+                    </Typography>
+                )}
+            </Box>
+            <Divider className="my-4" />
+            {/* メニュー情報 */}
+            <Typography variant="subtitle1" fontWeight="bold" mb={4}>
+                メニュー情報
+            </Typography>
+            <Box mb={2}>
+                <Controller
+                    name="menuType" control={control}
+                    render={({ field }) => (
+                        <TextField
+                            select label="メニュータイプ" {...field}
+                            fullWidth className="mb-4"
+                            size="small" required
+                        >
+                            {MENU_TYPE.map(menu => (
+                                <MenuItem key={menu.value} value={menu.value}>
+                                    {menu.label}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                    )}
+                />
+                <Controller
+                    name="menuName"
+                    control={control}
+
+                    render={({ field }) => (
+                        <TextField
+                            label="メニュー名" {...field} placeholder="小ラーメン"
+                            fullWidth className="mb-4" error={!!errors.menuName}
+                            helperText={errors.menuName?.message} size="small"
+                        />
+                    )}
+                />
+            </Box>
+            {/* トッピングオプション */}
+            {toppingOptions.length > 0 && (
+                <>
+                    <Typography variant="subtitle1" fontWeight="bold" className="mb-4">
+                        トッピングコールオプション
+                    </Typography>
+                    <ToppingOptionRadioSelector
+                        options={toppingOptions}
+                        selectedOptions={selectedToppingInfo}
+                        onOptionChange={handleOptionChange}
+                    />
+                </>
+            )}
+            {/* エラーメッセージ表示 */}
+            {errorMsg && (
+                <Alert severity="error" sx={{ width: "100%", mb: 4 }}>
+                    {errorMsg}
+                </Alert>
+            )}
+
+            {/* 成功メッセージ表示 */}
+            {successMsg && (
+                <Alert severity="success" sx={{ width: "100%", mb: 4 }}>
+                    {successMsg}
+                </Alert>
+            )}
+
+            {/* アップロードボタン */}
+            <Box display="flex" justifyContent="center" mt={6}>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    type="submit"
+                    disabled={uploading}
+                    className="w-2/3 font-bold py-2"
+                >
+                    {uploading ? <CircularProgress size={24} color="inherit" /> : "画像アップロード"}
+                </Button>
+            </Box>
+        </form>
+    )
+}

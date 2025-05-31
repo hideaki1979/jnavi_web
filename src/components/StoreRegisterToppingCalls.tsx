@@ -15,14 +15,14 @@ export function StoreRegisterToppingCallsCheck({
     callType
 }: StoreRegisterToppingCallsCheckProps) {
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 space-x-6">
             {Object.values(toppingOptions).map(({ topping, call_options }) => (
                 <FormControl key={`${callType}-${topping.id}`} className="mt-4">
-                    <Typography variant="subtitle1" component="fieldset" className="w-full font-bold">
+                    <Typography variant="subtitle1" component="fieldset" className="font-bold text-gray-800">
                         {topping.topping_name}
                     </Typography>
                     <FormGroup
-                        className="grid grid-cols-3 gap-2"
+                        className="grid grid-cols-3"
                     >
                         {call_options.map(option => (
                             <FormControlLabel
@@ -37,7 +37,7 @@ export function StoreRegisterToppingCallsCheck({
                                     />
                                 }
                                 label={
-                                    <Typography variant="body2">{option.call_option_name}</Typography>
+                                    <Typography variant="body2" className="text-gray-800">{option.call_option_name}</Typography>
                                 }
                             />
                         ))}

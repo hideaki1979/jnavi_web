@@ -42,57 +42,56 @@ export default function MapPage() {
         setSelectedStore(store)
         setDrawerOpen(true)
     }
-
     // console.log(mapData)
-
     if (isLoading || isError) {
         return <LoadingErrorContainer loading={isLoading} error={isError ? (error as Error).message : null} />
     }
 
     return (
-        <Box
-        >
-            <Typography variant="h6" className="w-full text-center mb-4 font-bold">店舗マップ（登録店舗は黄色、赤は閉店です。）</Typography>
-            <APIProvider apiKey={apiKey}>
-                <Box
-                    width="80vw"
-                    height="70vh"
-                >
-                    <Map
-                        mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID}
-                        defaultCenter={center}
-                        defaultZoom={14}
-                        style={{ width: "100%", height: "100%" }}
-                        gestureHandling={"greedy"}
-                        disableDefaultUI={true}
+        <>
+            <Box sx={{ paddingTop: 2 }}>
+                <Typography variant="h6" className="w-full text-center mb-4 font-bold">店舗マップ（登録店舗は黄色、赤は閉店です。）</Typography>
+                <APIProvider apiKey={apiKey}>
+                    <Box
+                        width="100vw"
+                        height="70vh"
                     >
-                        {mapData?.map((store: MapData) => (
-                            <AdvancedMarker
-                                key={store.id}
-                                position={{ lat: Number(store.latitude), lng: Number(store.longitude) }}
-                                onClick={() => {
-                                    handlerMarkerClick(store.store)
-                                }}
-                                title={store.store.branch_name
-                                    ? `${store.store.store_name} ${store.store.branch_name}`
-                                    : store.store.store_name
-                                }
-                            >
-                                <Pin
-                                    background={store.store.is_close ? "#FF0000" : "#FFFF00"}
-                                    borderColor={store.store.is_close ? "#B71C1C" : "#BDB800"}
-                                    glyphColor={store.store.is_close ? "#FFFFFF" : "#333333"}
-                                />
-                            </AdvancedMarker>
-                        ))}
-                    </Map>
-                    <StoreInfoDrawer
-                        open={drawerOpen}
-                        store={selectedStore}
-                        onClose={() => setDrawerOpen(false)}
-                    />
-                </Box>
-            </APIProvider>
-        </Box>
+                        <Map
+                            mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID}
+                            defaultCenter={center}
+                            defaultZoom={14}
+                            style={{ width: "100%", height: "100%" }}
+                            gestureHandling={"greedy"}
+                            disableDefaultUI={true}
+                        >
+                            {mapData?.map((store: MapData) => (
+                                <AdvancedMarker
+                                    key={store.id}
+                                    position={{ lat: Number(store.latitude), lng: Number(store.longitude) }}
+                                    onClick={() => {
+                                        handlerMarkerClick(store.store)
+                                    }}
+                                    title={store.store.branch_name
+                                        ? `${store.store.store_name} ${store.store.branch_name}`
+                                        : store.store.store_name
+                                    }
+                                >
+                                    <Pin
+                                        background={store.store.is_close ? "#FF0000" : "#FFFF00"}
+                                        borderColor={store.store.is_close ? "#B71C1C" : "#BDB800"}
+                                        glyphColor={store.store.is_close ? "#FFFFFF" : "#333333"}
+                                    />
+                                </AdvancedMarker>
+                            ))}
+                        </Map>
+                        <StoreInfoDrawer
+                            open={drawerOpen}
+                            store={selectedStore}
+                            onClose={() => setDrawerOpen(false)}
+                        />
+                    </Box>
+                </APIProvider>
+            </Box>
+        </>
     )
 }
