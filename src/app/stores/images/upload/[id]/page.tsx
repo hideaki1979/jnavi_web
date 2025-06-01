@@ -134,7 +134,7 @@ export default function StoreImageUploadPage() {
     return (
         <form
             onSubmit={handleSubmit(onSubmit)}
-            className="border border-gray-300 shadow-md rounded-md p-4 max-w-xl w-full bg-gray-200 text-slate-800"
+            className="border border-gray-300 shadow-md mx-auto rounded-md p-4 max-w-xl w-full bg-gray-200 text-slate-800"
         >
             <Typography variant="h5" fontWeight="bold" className="my-8 text-center">
                 店舗別画像アップロード

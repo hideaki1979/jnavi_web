@@ -1,5 +1,62 @@
-export default function StoreImageModal() {
+import { StoreImageDownloadData } from "@/types/Store";
+import { Box, Dialog, DialogContent, DialogTitle, Divider, Typography } from "@mui/material";
+import Image from "next/image";
+
+interface StoreImageModalProps {
+    open: boolean;
+    image: StoreImageDownloadData | null;
+    onClose: () => void;
+    menuTypeLabels: Record<string, string>;
+}
+
+export default function StoreImageModal({ open, image, onClose, menuTypeLabels }: StoreImageModalProps) {
+    if (!image) return null
     return (
-        <div>StoreImageModal</div>
+        <Dialog
+            open={open} onClose={onClose} maxWidth="sm" fullWidth
+        >
+            <DialogTitle sx={{ p: 4 }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                    <Typography variant="h6" fontWeight="bold">
+                        【{menuTypeLabels[image.menu_type]}】{image.menu_name}
+                    </Typography>
+                </Box>
+            </DialogTitle>
+            <DialogContent sx={{ p: 2 }}>
+                <Box mb={4} display="flex" justifyContent="center"
+                >
+                    <Image
+                        src={image.image_url}
+                        alt={image.menu_name}
+                        width={300}
+                        height={200}
+                        style={{ borderRadius: 8, objectFit: "contain", maxWidth: "100%", height: "auto" }}
+                        loading="lazy"
+                    />
+                </Box>
+                <Divider />
+                <Box sx={{ p: 4 }}>
+                    <Typography variant="subtitle1" fontWeight="bold" mb={2}>
+                        トッピングコール情報
+                    </Typography>
+                    {image.topping_calls && image.topping_calls.length > 0 ? (
+                        image.topping_calls.map((topping) => (
+                            <Box key={topping.topping_id} display="flex" mb={2}>
+                                <Typography variant="body2" fontWeight="bold">
+                                    {topping.topping_name}：
+                                </Typography>
+                                <Typography variant="body2">
+                                    {topping.call_option_name}
+                                </Typography>
+                            </Box>
+                        ))
+                    ) : (
+                        <Typography variant="body1" color="text.secondary">
+                            トッピング情報無し
+                        </Typography>
+                    )}
+                </Box>
+            </DialogContent>
+        </Dialog>
     )
 }

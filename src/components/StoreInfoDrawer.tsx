@@ -1,5 +1,5 @@
 import { FormattedToppingOptionNameStoreData, MapStore, StoreImageDownloadData } from "@/types/Store";
-import { Accordion, AccordionDetails, AccordionSummary, Box, Divider, Drawer, IconButton, ImageList, ImageListItem, ImageListItemBar, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Divider, Drawer, IconButton, ImageList, ImageListItem, ImageListItemBar, Tooltip, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useQuery } from "@tanstack/react-query";
 import { getStoreById, getStoreImages } from "@/app/api/stores";
@@ -8,6 +8,8 @@ import LoadingErrorContainer from "./feedback/LoadingErrorContainer";
 import { AddPhotoAlternate, EditNote, ExpandMore } from "@mui/icons-material";
 import { RenderToppingOptions } from "./RenderToppingOptions";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import StoreImageModal from "./modals/StoreImageModal";
 
 type StoreInfoDrawerProps = {
   open: boolean;
@@ -36,13 +38,20 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
 
   const router = useRouter()
 
-  // if (isImageLoading || isImageError) {
-  //   return <LoadingErrorContainer loading={isImageLoading} error={isImageError ? (imageError as Error).message : null} />
-  // }
+  // 画像モーダル用の状態
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<StoreImageDownloadData | null>(null)
 
-  // if (isStoreLoading || isStoreError) {
-  //   return <LoadingErrorContainer loading={isStoreLoading} error={isStoreError ? (storeError as Error).message : null} />
-  // }
+  const handleImageClick = (img: StoreImageDownloadData) => {
+    setSelectedImage(img)
+    setModalOpen(true)
+  }
+
+  const handleModalClose = () => {
+    setModalOpen(false)
+    setSelectedImage(null)
+  }
+
   const isLoading = isImageLoading || isStoreLoading
   const hasError = isImageError || isStoreError
   const errorMessage = isImageError ? (imageError as Error).message : isStoreError ? (storeError as Error).message : null
@@ -60,7 +69,8 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
             borderTopLeftRadius: { xs: 16, sm: 0 },
             borderTopRightRadius: { xs: 16, sm: 0 },
             p: 3,
-            boxSizing: "border-box"
+            boxSizing: "border-box",
+            backgroundColor: "#f8f4f4"
           }
         }
       }}
@@ -81,12 +91,36 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
         ) : (
           <>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <IconButton aria-label="更新" onClick={() => { }}>
-                <EditNote />
-              </IconButton>
-              <IconButton aria-label="画像アップロード" onClick={() => router.push(`/stores/images/upload/${String(store?.id)}`)}>
-                <AddPhotoAlternate />
-              </IconButton>
+              <Tooltip
+                title="店舗編集画面"
+                slotProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: '0.85rem', // 12px相当
+                      fontWeight: 500
+                    }
+                  }
+                }}
+              >
+                <IconButton aria-label="更新" onClick={() => { }}>
+                  <EditNote />
+                </IconButton>
+              </Tooltip>
+              <Tooltip
+                title="画像アップロード画面"
+                slotProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: '0.85rem', // 12px相当
+                      fontWeight: 500
+                    }
+                  }
+                }}
+              >
+                <IconButton aria-label="画像アップロード" onClick={() => router.push(`/stores/images/upload/${String(store?.id)}`)}>
+                  <AddPhotoAlternate />
+                </IconButton>
+              </Tooltip>
             </Box>
 
             <Box sx={{ pt: 5 }}>
@@ -121,10 +155,17 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                           height={180}
                           loading="lazy"
                           style={{ borderRadius: 8, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
+                          onClick={() => handleImageClick(img)}
                         />
                         <ImageListItemBar
                           title={`【${MENU_TYPE_LABELS[img.menu_type]}】${img.menu_name}`}
                           position="bottom"
+                          sx={{
+                            '& .MuiImageListItemBar-title': {
+                              fontSize: '0.85rem', // 12px相当
+                              lineHeight: 1.2
+                            }
+                          }}
                         />
                       </ImageListItem>
                     ))}
@@ -132,6 +173,13 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                 </Box>
               ) : null}
             </Box>
+            {/* 画像モーダル */}
+            <StoreImageModal
+              open={modalOpen}
+              image={selectedImage}
+              onClose={handleModalClose}
+              menuTypeLabels={MENU_TYPE_LABELS}
+            />
             <Box>
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 営業時間：{storeData?.business_hours}
@@ -140,7 +188,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                 定休日：{storeData?.regular_holidays}
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                事前食券有無：{storeData?.prior_meal_voucher}
+                事前食券有無：{storeData?.prior_meal_voucher ? "有り" : "無し"}
               </Typography>
             </Box>
             <Divider sx={{ my: 2 }} />
@@ -194,6 +242,19 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                 </Typography>
               </>
             )}
+            {/* 閉店ボタン */}
+            <Box sx={{ mt: 4, pt: 2, borderTop: 2, borderColor: 'divider' }}>
+              <Button
+                variant="contained"
+                color="error"
+                fullWidth
+                startIcon={<CloseIcon />}
+                onClick={() => { }}
+                sx={{ py: 2, fontWeight: "bold" }}
+              >
+                店舗を閉店する
+              </Button>
+            </Box>
           </>
         )}
       </Box>
