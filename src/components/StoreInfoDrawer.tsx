@@ -1,8 +1,8 @@
-import { FormattedToppingOptionNameStoreData, MapStore, StoreImageDownloadData } from "@/types/Store";
+import { FormattedToppingOptionNameStoreData, MapStore, ResultDialogType, StoreImageDownloadData } from "@/types/Store";
 import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Divider, Drawer, IconButton, ImageList, ImageListItem, ImageListItemBar, Tooltip, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { useQuery } from "@tanstack/react-query";
-import { getStoreById, getStoreImages } from "@/app/api/stores";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getStoreById, getStoreImages, storeClose } from "@/app/api/stores";
 import Image from "next/image";
 import LoadingErrorContainer from "./feedback/LoadingErrorContainer";
 import { AddPhotoAlternate, EditNote, ExpandMore } from "@mui/icons-material";
@@ -10,6 +10,8 @@ import { RenderToppingOptions } from "./RenderToppingOptions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import StoreImageModal from "./modals/StoreImageModal";
+import { StoreCloseConfirmDialog } from "./modals/StoreCloseConfirmDialog";
+import { ResultDialog } from "./modals/ResultDialog";
 
 type StoreInfoDrawerProps = {
   open: boolean;
@@ -38,9 +40,18 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
 
   const router = useRouter()
 
+  const queryClient = useQueryClient()
+
   // 画像モーダル用の状態
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedImage, setSelectedImage] = useState<StoreImageDownloadData | null>(null)
+
+  // ダイアログ用の状態
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [resultDialogOpen, setResultDialogOpen] = useState(false)
+  const [resultDialogType, setResultDialogType] = useState<ResultDialogType>('success')
+  const [resultMessage, setResultMessage] = useState("")
+  const [isClosing, setIsClosing] = useState(false)
 
   const handleImageClick = (img: StoreImageDownloadData) => {
     setSelectedImage(img)
@@ -50,6 +61,39 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
   const handleModalClose = () => {
     setModalOpen(false)
     setSelectedImage(null)
+  }
+
+  const handleCloseStore = async () => {
+    if (!store) return
+    setIsClosing(true)
+    try {
+      const res = await storeClose(String(store?.id), store?.store_name)
+      if (res.status === 'success') {
+        setConfirmDialogOpen(false)
+        setResultDialogType('success')
+        setResultMessage('以下の店舗を閉店しました。')
+        setResultDialogOpen(true)
+      }
+    } catch (error) {
+      console.error('閉店処理に失敗しました：', error)
+      setConfirmDialogOpen(false)
+      setResultDialogType('error')
+      setResultMessage(error instanceof Error ? error.message : '閉店処理中にエラーが発生しました。')
+      setResultDialogOpen(true)
+
+    } finally {
+      setIsClosing(false)
+    }
+  }
+
+  const handleResultConfirm = () => {
+    setResultDialogOpen(false)
+    if (resultDialogType === 'success') {
+      // キャッシュを無効化して画面遷移（再度Map情報を取得するため）
+      queryClient.invalidateQueries({ queryKey: ['mapData'] })
+      onClose()
+      router.replace('/stores/map')
+    }
   }
 
   const isLoading = isImageLoading || isStoreLoading
@@ -117,7 +161,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                   }
                 }}
               >
-                <IconButton aria-label="画像アップロード" onClick={() => router.push(`/stores/images/upload/${String(store?.id)}`)}>
+                <IconButton aria-label="画像アップロード" onClick={() => router.push(`/stores/images/${String(store?.id)}/upload`)}>
                   <AddPhotoAlternate />
                 </IconButton>
               </Tooltip>
@@ -249,12 +293,39 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                 color="error"
                 fullWidth
                 startIcon={<CloseIcon />}
-                onClick={() => { }}
+                onClick={() => setConfirmDialogOpen(true)}
                 sx={{ py: 2, fontWeight: "bold" }}
               >
                 店舗を閉店する
               </Button>
             </Box>
+            {/* 閉店確認ダイアログ */}
+            <StoreCloseConfirmDialog
+              open={confirmDialogOpen}
+              title="店舗閉店の確認"
+              message="以下の店舗を閉店状態にします。よろしいでしょうか？"
+              targetName={store?.branch_name
+                ? `${store.store_name} ${store.branch_name}`
+                : store?.store_name || ''
+              }
+              onClose={() => setConfirmDialogOpen(false)}
+              onConfirm={handleCloseStore}
+              isLoading={isClosing}
+              confirmButtonText="閉店する"
+              confirmButtonColor="error"
+            />
+            {/* 閉店結果ダイアログ */}
+            <ResultDialog
+              open={resultDialogOpen}
+              type={resultDialogType}
+              title={resultDialogType === 'success' ? "閉店処理完了" : "閉店処理エラー"}
+              message={resultMessage}
+              targetName={store?.branch_name
+                ? `${store.store_name} ${store.branch_name}`
+                : store?.store_name || ''
+              }
+              onConfirm={handleResultConfirm}
+            />
           </>
         )}
       </Box>

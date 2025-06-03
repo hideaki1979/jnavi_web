@@ -167,3 +167,12 @@ export interface FormattedToppingOptionNameStoreData {
     preCallFormattedIds: FormattedToppingOptionIds;
     postCallFormattedIds: FormattedToppingOptionIds;
 }
+
+// 閉店処理APIレスポンス情報
+export interface StoreCloseApiRes {
+    data: boolean;
+    status: string;
+    message: string;
+}
+
+export type ResultDialogType = "success" | "error" | "warning"

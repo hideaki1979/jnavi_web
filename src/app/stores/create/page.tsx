@@ -10,8 +10,8 @@ import { formattedToppingCalls } from "@/lib/toppingCallFormatter"
 import { FormattedToppingOptionIds, ResultToppingCall } from "@/types/ToppingCall"
 import { StoreFormInput, StoreInputSchema } from "@/validations/store"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AccessTime, EventBusy, Map, Store } from "@mui/icons-material"
-import { Alert, Button, Typography } from "@mui/material"
+import { AccessTime, EventBusy, ExpandMore, Map, Store } from "@mui/icons-material"
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Button, CircularProgress, Typography } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -24,13 +24,16 @@ const CreateStorePage = () => {
 
     // DBから取得したトッピング・コール情報（初期表示時取得）
     const [toppingOptionData, setToppingOptionData] = useState<Record<string, ResultToppingCall>>({})
-    // 選択したトッピング・コール情報
-    const [selectedCallOptions, setSelectedCallOptions] = useState<FormattedToppingOptionIds>({})
+    // 選択したトッピング・コール情報（事前）
+    const [selectedPreCallOptions, setSelectedPreCallOptions] = useState<FormattedToppingOptionIds>({})
+    // 選択したトッピング・コール情報（着丼前）
+    const [selectedPostCallOptions, setSelectedPostCallOptions] = useState<FormattedToppingOptionIds>({})
     // submitエラー有無
     const [submitError, setSubmitError] = useState<string | null>(null)
     // 登録完了メッセージ
     const [regSuccessMsg, setRegSuccessMsg] = useState<string | null>(null)
-
+    // 登録処理時のローディング
+    const [isSubmitLoading, setIsSubmitLoading] = useState(false)
 
     const { control, handleSubmit, formState: { errors }, reset } = useForm<StoreFormInput>({
         resolver: zodResolver(StoreInputSchema),
@@ -67,13 +70,37 @@ const CreateStorePage = () => {
             initSelectedOptions[Number(key)] = []
         })
         // console.log(initSelectedOptions)
-        setSelectedCallOptions({ ...initSelectedOptions })
+        setSelectedPreCallOptions({ ...initSelectedOptions })
+        setSelectedPostCallOptions({ ...initSelectedOptions })
     }, [data])
 
     // console.log(Object.values(toppingOptionData))
 
-    const handleChangeToppingOptionCheck = (toppingId: number, optionId: number, isChecked: boolean) => {
-        setSelectedCallOptions(prev => {
+    const handleChangePreCallOptionCheck = (toppingId: number, optionId: number, isChecked: boolean) => {
+        setSelectedPreCallOptions(prev => {
+            const currentOptions = [...(prev[toppingId] || [])]
+
+            if (isChecked) {
+                // オプション追加
+                if (!currentOptions.includes(optionId)) {
+                    return {
+                        ...prev,
+                        [toppingId]: [...currentOptions, optionId]
+                    }
+                }
+            } else {
+                // オプション削除
+                return {
+                    ...prev,
+                    [toppingId]: currentOptions.filter(id => id !== optionId)
+                }
+            }
+            return prev
+        })
+    }
+
+    const handleChangePostCallOptionCheck = (toppingId: number, optionId: number, isChecked: boolean) => {
+        setSelectedPostCallOptions(prev => {
             const currentOptions = [...(prev[toppingId] || [])]
 
             if (isChecked) {
@@ -97,25 +124,31 @@ const CreateStorePage = () => {
 
     const onSubmit = async (formData: StoreFormInput) => {
         try {
+            setIsSubmitLoading(true)
             // console.log("フォームデータ：", formData)
             // console.log("選択したトッピングとコール：", selectedCallOptions)
-            const toppingCallsData = formattedToppingCalls(selectedCallOptions)
-            // console.log("編集後のトッピングコール：", toppingCallsData)
+            // 事前コールと着丼前コールのデータをマージ
+            const preCallsData = formattedToppingCalls(selectedPreCallOptions, "pre_call")
+            const postCallsData = formattedToppingCalls(selectedPostCallOptions, "post_call")
+            const toppingCallsData = [...preCallsData, ...postCallsData]
+            console.log("編集後のトッピングコール：", toppingCallsData)
 
             // 送信データ（formData+toppingCallsData）を作成
             const submitData = {
                 ...formData,
                 topping_calls: toppingCallsData
             }
-            // console.log("送信データ：", submitData)
+            console.log("送信データ：", submitData)
 
             const res = await createStore(submitData)
             setRegSuccessMsg(res)
+            setIsSubmitLoading(false)
             reset()
             setTimeout(() => router.push('/stores/map'), 2500)
         } catch (error) {
             console.error("店舗登録処理でエラー", error)
             setSubmitError("店舗登録処理に失敗しました。")
+            setIsSubmitLoading(false)
         }
     }
     // 初期表示時のローディング
@@ -139,26 +172,58 @@ const CreateStorePage = () => {
             <StoreFormInputText name="regular_holidays" control={control} label="定休日" errors={errors} startAdornment={<EventBusy />} required margin="normal" />
             <StoreSwitch name="prior_meal_voucher" control={control} label="事前食券購入有無" />
 
-            <StoreRegisterToppingCallsCheck
-                toppingOptions={toppingOptionData}
-                selectedOption={selectedCallOptions}
-                onOptionChange={(toppingId, optionId, isChecked) => handleChangeToppingOptionCheck(toppingId, optionId, isChecked)}
-                callType="pre_call"
-            />
+            {/* 事前トッピングコール情報 */}
+            <Accordion defaultExpanded sx={{ mb: 2 }}>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                        事前トッピングコール
+                    </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                    <StoreRegisterToppingCallsCheck
+                        toppingOptions={toppingOptionData}
+                        selectedOption={selectedPreCallOptions}
+                        onOptionChange={(toppingId, optionId, isChecked) => handleChangePreCallOptionCheck(toppingId, optionId, isChecked)}
+                        callType="pre_call"
+                    />
+                </AccordionDetails>
+            </Accordion>
+
+            {/* 着丼前トッピングコール情報 */}
+            <Accordion defaultExpanded sx={{ mb: 2 }}>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                        着丼前トッピングコール
+                    </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                    <StoreRegisterToppingCallsCheck
+                        toppingOptions={toppingOptionData}
+                        selectedOption={selectedPostCallOptions}
+                        onOptionChange={(toppingId, optionId, isChecked) => handleChangePostCallOptionCheck(toppingId, optionId, isChecked)}
+                        callType="post_call"
+                    />
+                </AccordionDetails>
+            </Accordion>
             <StoreFormInputText name="topping_details" control={control} label="トッピング補足情報" errors={errors} margin="normal" multiline rows={3} />
             <StoreFormInputText name="call_details" control={control} label="コール補足情報" errors={errors} margin="normal" multiline rows={3} />
             <StoreSwitch name="is_all_increased" control={control} label="全マシコール有無" />
             <StoreSwitch name="is_lot" control={control} label="ロット制有無" />
             <StoreFormInputText name="lot_detail" control={control} label="ロット詳細情報" errors={errors} margin="normal" multiline rows={3} />
-            <Button variant="contained" type="submit" className="mt-4 w-full font-bold">
-                店舗登録
-            </Button>
             {submitError && (
                 <Alert severity="error" className="my-4" variant="filled">{submitError}</Alert>
             )}
             {regSuccessMsg && (
                 <Alert severity="success" className="my-4" variant="filled">{regSuccessMsg}</Alert>
             )}
+            <Button
+                variant="contained"
+                type="submit"
+                className="mt-4 w-full font-bold"
+                disabled={isSubmitLoading}
+            >
+                {isSubmitLoading ? <CircularProgress size={24} color="inherit" /> : "店舗登録"}
+            </Button>
         </form>
     )
 }

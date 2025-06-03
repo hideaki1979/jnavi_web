@@ -50,7 +50,7 @@ export default function StoreImageUploadPage() {
         enabled: !!id
     })
 
-    console.log(toppingCallData)
+    // console.log(toppingCallData)
     const toppingOptions: SimulationToppingOption[] = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
 
 

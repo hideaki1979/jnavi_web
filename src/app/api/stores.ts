@@ -1,5 +1,5 @@
 import ApiClient from "@/lib/ApiClient";
-import { FormattedToppingOptionNameStoreData, MapApiResponse, MapData, SimulationSelectStoresData, SimulationSelectToppingCallsData, StoreImageDownloadData, StoreInput } from "@/types/Store";
+import { FormattedToppingOptionNameStoreData, MapApiResponse, MapData, SimulationSelectStoresData, SimulationSelectToppingCallsData, StoreCloseApiRes, StoreImageDownloadData, StoreInput } from "@/types/Store";
 
 const api = ApiClient.getInstance()
 
@@ -79,5 +79,28 @@ export const getStoreById = async (id: string): Promise<FormattedToppingOptionNa
             error,
             "店舗情報取得時に予期せぬエラーが発生しました"
         )
+    }
+}
+
+/**
+ * 店舗の閉店処理を行うAPI関数
+ * @param id 閉店する店舗のID
+ * @param storeName 閉店する店舗の店舗名（指定されていない場合は空文字列）
+ * @returns 閉店結果のAPIレスポンス
+ * @throws 店舗閉店処理でエラーが発生した場合
+ */
+
+export const storeClose = async (id: string, storeName: string): Promise<StoreCloseApiRes> => {
+    try {
+        const res = await api.patch(`/stores/${id}/close`, {
+            storeName: storeName
+        })
+        return res.data
+    } catch (error) {
+        throw ApiClient.handlerError(
+            error,
+            "店舗情報取得時に予期せぬエラーが発生しました"
+        )
+
     }
 }
