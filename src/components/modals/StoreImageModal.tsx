@@ -1,5 +1,6 @@
 import { StoreImageDownloadData } from "@/types/Store";
-import { Box, Dialog, DialogContent, DialogTitle, Divider, Typography } from "@mui/material";
+import { Close } from "@mui/icons-material";
+import { Box, Dialog, DialogContent, DialogTitle, Divider, IconButton, Typography } from "@mui/material";
 import Image from "next/image";
 
 interface StoreImageModalProps {
@@ -20,6 +21,15 @@ export default function StoreImageModal({ open, image, onClose, menuTypeLabels }
                     <Typography variant="h6" fontWeight="bold">
                         【{menuTypeLabels[image.menu_type]}】{image.menu_name}
                     </Typography>
+                    <IconButton
+                        aria-label="close"
+                        onClick={onClose}
+                        sx={{
+                            color: (theme) => theme.palette.grey[700]
+                        }}
+                    >
+                        <Close />
+                    </IconButton>
                 </Box>
             </DialogTitle>
             <DialogContent sx={{ p: 2 }}>

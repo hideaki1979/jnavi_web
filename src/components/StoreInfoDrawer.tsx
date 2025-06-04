@@ -146,7 +146,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                   }
                 }}
               >
-                <IconButton aria-label="更新" onClick={() => { }}>
+                <IconButton aria-label="更新" onClick={() => router.push(`/stores/${String(store?.id)}/edit`)}>
                   <EditNote />
                 </IconButton>
               </Tooltip>

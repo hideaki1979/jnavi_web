@@ -8,6 +8,7 @@ import { StoreRegisterToppingCallsCheck } from "@/components/StoreRegisterToppin
 import StoreSwitch from "@/components/StoreSwitch"
 import { formattedToppingCalls } from "@/lib/toppingCallFormatter"
 import { FormattedToppingOptionIds, ResultToppingCall } from "@/types/ToppingCall"
+import { createToppingOptionHandler } from "@/utils/toppingOptionUtils"
 import { StoreFormInput, StoreInputSchema } from "@/validations/store"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AccessTime, EventBusy, ExpandMore, Map, Store } from "@mui/icons-material"
@@ -34,8 +35,12 @@ const CreateStorePage = () => {
     const [regSuccessMsg, setRegSuccessMsg] = useState<string | null>(null)
     // 登録処理時のローディング
     const [isSubmitLoading, setIsSubmitLoading] = useState(false)
+    // ハンドラー関数を生成
+    const handleChangePreCallOptionCheck = createToppingOptionHandler(setSelectedPreCallOptions)
+    const handleChangePostCallOptionCheck = createToppingOptionHandler(setSelectedPostCallOptions)
 
-    const { control, handleSubmit, formState: { errors }, reset } = useForm<StoreFormInput>({
+
+    const { control, handleSubmit, formState: { errors } } = useForm<StoreFormInput>({
         resolver: zodResolver(StoreInputSchema),
         defaultValues: {
             store_name: "",
@@ -74,76 +79,23 @@ const CreateStorePage = () => {
         setSelectedPostCallOptions({ ...initSelectedOptions })
     }, [data])
 
-    // console.log(Object.values(toppingOptionData))
-
-    const handleChangePreCallOptionCheck = (toppingId: number, optionId: number, isChecked: boolean) => {
-        setSelectedPreCallOptions(prev => {
-            const currentOptions = [...(prev[toppingId] || [])]
-
-            if (isChecked) {
-                // オプション追加
-                if (!currentOptions.includes(optionId)) {
-                    return {
-                        ...prev,
-                        [toppingId]: [...currentOptions, optionId]
-                    }
-                }
-            } else {
-                // オプション削除
-                return {
-                    ...prev,
-                    [toppingId]: currentOptions.filter(id => id !== optionId)
-                }
-            }
-            return prev
-        })
-    }
-
-    const handleChangePostCallOptionCheck = (toppingId: number, optionId: number, isChecked: boolean) => {
-        setSelectedPostCallOptions(prev => {
-            const currentOptions = [...(prev[toppingId] || [])]
-
-            if (isChecked) {
-                // オプション追加
-                if (!currentOptions.includes(optionId)) {
-                    return {
-                        ...prev,
-                        [toppingId]: [...currentOptions, optionId]
-                    }
-                }
-            } else {
-                // オプション削除
-                return {
-                    ...prev,
-                    [toppingId]: currentOptions.filter(id => id !== optionId)
-                }
-            }
-            return prev
-        })
-    }
-
     const onSubmit = async (formData: StoreFormInput) => {
         try {
             setIsSubmitLoading(true)
-            // console.log("フォームデータ：", formData)
-            // console.log("選択したトッピングとコール：", selectedCallOptions)
             // 事前コールと着丼前コールのデータをマージ
             const preCallsData = formattedToppingCalls(selectedPreCallOptions, "pre_call")
             const postCallsData = formattedToppingCalls(selectedPostCallOptions, "post_call")
             const toppingCallsData = [...preCallsData, ...postCallsData]
-            console.log("編集後のトッピングコール：", toppingCallsData)
 
             // 送信データ（formData+toppingCallsData）を作成
             const submitData = {
                 ...formData,
                 topping_calls: toppingCallsData
             }
-            console.log("送信データ：", submitData)
 
             const res = await createStore(submitData)
             setRegSuccessMsg(res)
             setIsSubmitLoading(false)
-            reset()
             setTimeout(() => router.push('/stores/map'), 2500)
         } catch (error) {
             console.error("店舗登録処理でエラー", error)
@@ -183,7 +135,7 @@ const CreateStorePage = () => {
                     <StoreRegisterToppingCallsCheck
                         toppingOptions={toppingOptionData}
                         selectedOption={selectedPreCallOptions}
-                        onOptionChange={(toppingId, optionId, isChecked) => handleChangePreCallOptionCheck(toppingId, optionId, isChecked)}
+                        onOptionChange={handleChangePreCallOptionCheck}
                         callType="pre_call"
                     />
                 </AccordionDetails>
@@ -200,7 +152,7 @@ const CreateStorePage = () => {
                     <StoreRegisterToppingCallsCheck
                         toppingOptions={toppingOptionData}
                         selectedOption={selectedPostCallOptions}
-                        onOptionChange={(toppingId, optionId, isChecked) => handleChangePostCallOptionCheck(toppingId, optionId, isChecked)}
+                        onOptionChange={handleChangePostCallOptionCheck}
                         callType="post_call"
                     />
                 </AccordionDetails>

@@ -17,6 +17,21 @@ export const createStore = async (
     }
 }
 
+export const updateStore = async (
+    storeId: string,
+    storeData: StoreInput
+): Promise<string> => {
+    try {
+        const res = await api.put(`/stores/${storeId}`, storeData)
+        return res.data.message
+    } catch (error) {
+        throw ApiClient.handlerError(
+            error,
+            "店舗情報登録時にエラーが発生しました。"
+        )
+    }
+}
+
 export const getMapAll = async (): Promise<MapData[]> => {
     try {
         const res = await api.get<MapApiResponse>('/maps')
