@@ -96,7 +96,7 @@ const CreateStorePage = () => {
             const res = await createStore(submitData)
             setRegSuccessMsg(res)
             setIsSubmitLoading(false)
-            setTimeout(() => router.push('/stores/map'), 2500)
+            setTimeout(() => router.replace('/stores/map'), 2500)
         } catch (error) {
             console.error("店舗登録処理でエラー", error)
             setSubmitError("店舗登録処理に失敗しました。")

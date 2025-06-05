@@ -1,3 +1,5 @@
+"use server"
+
 import ApiClient from "@/lib/ApiClient"
 
 const api = ApiClient.getInstance()
