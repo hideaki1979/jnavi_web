@@ -13,6 +13,7 @@ import Link from "next/link"
 import { createUser } from "@/app/api/user"
 import { handleFirebaseError } from "@/utils/firebaseErrorMessages"
 import { AuthSocialButtons } from "./AuthSocialButtons"
+import { auth } from "@/lib/firebase"
 
 interface AuthFormProps {
     mode: 'login' | 'signup'
@@ -42,12 +43,15 @@ export function AuthForm({ mode }: AuthFormProps) {
             if (isSignup) {
                 const signUpData = data as SignupFormInput
                 const user = await signUpWithEmail(signUpData.name, signUpData.email, signUpData.password)
+                const idToken = await auth.currentUser?.getIdToken()
+                if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
+
                 await createUser({
                     uid: user.uid,
                     email: signUpData.email,
                     displayName: signUpData.name,
                     authProvider: 'email'
-                })
+                }, idToken)
                 setSuccessMsg("アカウント作成が成功しました。")
                 setTimeout(() => router.replace(`/auth/login`), 1500)
 
