@@ -3,7 +3,7 @@
 import { signInWithEmail, signUpWithEmail } from "@/lib/auth"
 import { LoginFormInput, loginSchema, SignupFormInput, signupSchema } from "@/validations/auth"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Alert, Box, Button, Divider, Typography } from "@mui/material"
+import { Alert, Box, Button, CircularProgress, Divider, Typography } from "@mui/material"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Control, useForm } from "react-hook-form"
@@ -129,7 +129,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             <Button type="submit" variant="contained" fullWidth disabled={loading}
                 sx={{ mt: 4, mb: 4, py: 2, fontWeight: "bold" }}
             >
-                {loading ? "処理中..." : (isSignup ? "アカウント作成" : "ログイン")}
+                {loading ? <CircularProgress size={24} color="inherit" /> : (isSignup ? "アカウント作成" : "ログイン")}
             </Button>
             {isSignup
                 ? (<Typography textAlign="center">

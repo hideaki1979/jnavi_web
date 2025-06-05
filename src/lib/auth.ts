@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, User } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, User, signOut as firebaseSignOut } from "firebase/auth";
 import { auth, facebookProvider, githubProvider, googleProvider } from "./firebase";
 
 // Google認証
@@ -35,5 +35,5 @@ export const signInWithEmail = async (email: string, password: string): Promise<
 
 // サインアウト
 export const signOut = async (): Promise<void> => {
-    await signOut()
+    await firebaseSignOut(auth)
 }

@@ -1,3 +1,5 @@
+"use server"
+
 import ApiClient from "@/lib/ApiClient";
 import { User } from "@/types/user";
 import { getAuth } from "firebase/auth";

@@ -21,7 +21,7 @@ export function getFirebaseAuthErrorMessage(errorCode: string): string {
         'auth/popup-closed-by-user': '認証ウィンドウが閉じられました。',
         'auth/cancelled-popup-request': '認証リクエストがキャンセルされました。',
         'auth/popup-blocked': 'ポップアップがブロックされました。ブラウザの設定を確認してください。',
-        
+
         // その他の一般的なエラー
         'auth/internal-error': '内部エラーが発生しました。しばらく時間をおいてから再度お試しください。',
         'permission-denied': 'アクセス権限がありません。',
@@ -34,17 +34,17 @@ export function getFirebaseAuthErrorMessage(errorCode: string): string {
 /**
  * Firebaseエラーオブジェクトから日本語メッセージを取得する
  */
-export function handleFirebaseError(error: any): string {
+export function handleFirebaseError(error: unknown): string {
     // Firebaseエラーの場合
-    if (error?.code) {
+    if (error && typeof error === 'object' && 'code' in error && typeof error.code === 'string') {
         return getFirebaseAuthErrorMessage(error.code);
     }
-    
+
     // 一般的なエラーの場合
     if (error instanceof Error) {
         return error.message;
     }
-    
+
     // その他の場合
     return '予期せぬエラーが発生しました。';
 }
