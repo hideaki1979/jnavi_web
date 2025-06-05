@@ -1,5 +1,6 @@
-import { createUser } from "@/app/api/user";
+import { createUser, getUserByUid } from "@/app/api/user";
 import { signInWithFacebook, signInWithGitHub, signInWithGoogle } from "@/lib/auth"
+import { auth } from "@/lib/firebase";
 import { User } from "@/types/user";
 import { handleFirebaseError } from "@/utils/firebaseErrorMessages";
 import { Facebook, GitHub, Google } from "@mui/icons-material"
@@ -22,13 +23,19 @@ export function AuthSocialButtons({ onError }: AuthSocialButtonsProps) {
         setLoading(provider)
         try {
             const user = await signInFunction()
+            const idToken = await auth.currentUser?.getIdToken()
+            if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
+            const userData = await getUserByUid(user.uid, idToken)
+            console.log(JSON.stringify(userData, null, 2))
 
-            await createUser({
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName,
-                authProvider: provider
-            })
+            if (!userData) {
+                await createUser({
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    authProvider: provider
+                }, idToken)
+            }
 
             router.replace(`/stores/map`)
         } catch (error) {
