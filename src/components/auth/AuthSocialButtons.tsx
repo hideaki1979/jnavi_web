@@ -4,7 +4,6 @@ import { User } from "@/types/user";
 import { handleFirebaseError } from "@/utils/firebaseErrorMessages";
 import { Facebook, GitHub, Google } from "@mui/icons-material"
 import { Box, Button, CircularProgress } from "@mui/material"
-import { error } from "console";
 import { useRouter } from "next/navigation"
 import { useState } from "react";
 
@@ -32,7 +31,7 @@ export function AuthSocialButtons({ onError }: AuthSocialButtonsProps) {
             })
 
             router.replace(`/stores/map`)
-        } catch {
+        } catch (error) {
             const errMsg = handleFirebaseError(error)
             onError?.(errMsg)
         }
