@@ -1,7 +1,9 @@
 "use client"
 
-import { AccountCircle, AddBusiness, Menu as MenuIcon, PersonAdd, School } from "@mui/icons-material";
+import { auth } from "@/lib/firebase";
+import { AccountCircle, AddBusiness, Logout, Menu as MenuIcon, PersonAdd, School } from "@mui/icons-material";
 import { AppBar, Box, Button, IconButton, Menu, MenuItem, Toolbar, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
@@ -34,27 +36,47 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
         handleMenuClose()
     }
 
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth)
+            router.push(`/auth/login`)
+            handleMenuClose()
+        } catch (error) {
+            console.error(`ログアウト失敗： ${error}`)
+        }
+    }
+
     const navigationItems = [
         {
+            id: "login",
             label: "ログイン",
             icon: <AccountCircle />,
             path: "/auth/login"
         },
         {
+            id: "signup",
             label: "アカウント作成",
             icon: <PersonAdd />,
             path: "/auth/signup"
         },
         {
+            id: "simulation",
             label: "シミュレーション",
             icon: <School />,
             path: "/stores/simulation/ticket"
         },
         {
+            id: "createStore",
             label: "店舗登録",
             icon: <AddBusiness />,
             path: "/stores/create"
         },
+        {
+            id: "logout",
+            label: "ログアウト",
+            icon: <Logout />,
+            action: handleSignOut
+        }
     ]
 
     return (
@@ -88,10 +110,10 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
                             <Box display="flex" gap={2}>
                                 {navigationItems.map((item) => (
                                     <Button
-                                        key={item.path}
+                                        key={item.id}
                                         color="inherit"
                                         startIcon={item.icon}
-                                        onClick={() => handleNavigation(item.path)}
+                                        onClick={() => item.action ? item.action() : handleNavigation(item.path)}
                                         sx={{
                                             textTransform: "none",
                                             fontWeight: 500,
@@ -132,7 +154,7 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
                                     {navigationItems.map((item) => (
                                         <MenuItem
                                             key={item.path}
-                                            onClick={() => handleNavigation(item.path)}
+                                            onClick={() => item.action ? item.action() : handleNavigation(item.path)}
                                             sx={{ gap: 2 }}
                                         >
                                             {item.icon}

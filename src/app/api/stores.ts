@@ -1,3 +1,5 @@
+"use server"
+
 import ApiClient from "@/lib/ApiClient";
 import { FormattedToppingOptionNameStoreData, MapApiResponse, MapData, SimulationSelectStoresData, SimulationSelectToppingCallsData, StoreCloseApiRes, StoreImageDownloadData, StoreInput } from "@/types/Store";
 

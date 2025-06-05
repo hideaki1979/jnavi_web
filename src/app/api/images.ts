@@ -1,3 +1,5 @@
+"use server"
+
 import ApiClient from "@/lib/ApiClient";
 import { StoreImageUploadData } from "@/types/Image";
 
