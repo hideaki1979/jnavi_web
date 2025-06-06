@@ -1,5 +1,5 @@
 import { Warning } from "@mui/icons-material";
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
+import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
 
 interface StoreCloseConfirmDialogProps {
     open: boolean;
@@ -75,7 +75,7 @@ export function StoreCloseConfirmDialog({
                     color={confirmButtonColor}
                     variant="contained"
                 >
-                    {isLoading ? "処理中・・・" : confirmButtonText}
+                    {isLoading ? <CircularProgress size={24} color="inherit" /> : confirmButtonText}
                 </Button>
             </DialogActions>
         </Dialog>

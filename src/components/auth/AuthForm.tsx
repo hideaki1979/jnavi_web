@@ -14,6 +14,7 @@ import { createUser } from "@/app/api/user"
 import { handleFirebaseError } from "@/utils/firebaseErrorMessages"
 import { AuthSocialButtons } from "./AuthSocialButtons"
 import { auth } from "@/lib/firebase"
+import { ValidationErrorList } from "../feedback/validationErrorList"
 
 interface AuthFormProps {
     mode: 'login' | 'signup'
@@ -21,6 +22,7 @@ interface AuthFormProps {
 
 export function AuthForm({ mode }: AuthFormProps) {
     const [error, setError] = useState<string | null>(null)
+    const [validationErrors, setValidationErrors] = useState<{ msg: string, param?: string }[]>([])
     const [loading, setLoading] = useState(false)
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
     const router = useRouter()
@@ -38,6 +40,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     const onSubmit = async (data: LoginFormInput | SignupFormInput) => {
         setLoading(true)
         setError(null)
+        setValidationErrors([])
 
         try {
             if (isSignup) {
@@ -61,9 +64,13 @@ export function AuthForm({ mode }: AuthFormProps) {
                 router.replace(`/stores/map`)
 
             }
-        } catch (error) {
-            const errMsg = handleFirebaseError(error)
+        } catch (err) {
+            const errMsg = handleFirebaseError(err)
             setError(errMsg)
+            // errors配列があればセット
+            if (typeof err === "object" && err !== null && "errors" in err && Array.isArray(err.errors)) {
+                setValidationErrors(err.errors)
+            }
         } finally {
             setLoading(false)
         }
@@ -83,6 +90,8 @@ export function AuthForm({ mode }: AuthFormProps) {
                     {error}
                 </Alert>
             )}
+            <ValidationErrorList errors={validationErrors} />
+
             {isSignup && (
                 <AuthFormInputText<SignupFormInput>
                     name="name"
@@ -150,7 +159,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 </Typography>)
             }
             <Divider sx={{ my: 2 }} textAlign="center" >または</Divider>
-            <AuthSocialButtons />
+            <AuthSocialButtons onError={setError} onErrors={setValidationErrors} />
         </Box>
     )
 }
