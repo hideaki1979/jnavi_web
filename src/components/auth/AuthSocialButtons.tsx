@@ -1,3 +1,5 @@
+"use client"
+
 import { createUser, getUserByUid } from "@/app/api/user";
 import { signInWithFacebook, signInWithGitHub, signInWithGoogle } from "@/lib/auth"
 import { auth } from "@/lib/firebase";
@@ -10,9 +12,10 @@ import { useState } from "react";
 
 interface AuthSocialButtonsProps {
     onError?: (error: string) => void;
+    onErrors?: (errors: { msg: string, param?: string }[]) => void;
 }
 
-export function AuthSocialButtons({ onError }: AuthSocialButtonsProps) {
+export function AuthSocialButtons({ onError, onErrors }: AuthSocialButtonsProps) {
     const router = useRouter()
     const [loading, setLoading] = useState<string | null>(null)
 
@@ -26,13 +29,17 @@ export function AuthSocialButtons({ onError }: AuthSocialButtonsProps) {
             const idToken = await auth.currentUser?.getIdToken()
             if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
             const userData = await getUserByUid(user.uid, idToken)
-            console.log(JSON.stringify(userData, null, 2))
+            // console.log(JSON.stringify(user, null, 2))
+            // console.log(user.uid)
+            // console.log(user.email)
+            // console.log(user.displayName)
+            // console.log(user.authProvider)
 
             if (!userData) {
                 await createUser({
                     uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName,
+                    email: user.email ?? '',
+                    displayName: user.displayName ?? '',
                     authProvider: provider
                 }, idToken)
             }
@@ -41,6 +48,10 @@ export function AuthSocialButtons({ onError }: AuthSocialButtonsProps) {
         } catch (error) {
             const errMsg = handleFirebaseError(error)
             onError?.(errMsg)
+            // errors配列があればセット
+            if (typeof error === 'object' && error !== null && 'errors' in error && Array.isArray(error.errors)) {
+                onErrors?.(error.errors)
+            }
         }
     }
 

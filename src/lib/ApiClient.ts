@@ -29,10 +29,15 @@ class ApiClient {
         defaultMessage: string = "予期せぬエラーが発生しました。"
     ): Error {
         if (axios.isAxiosError(error)) {
-            const axiosError = error as AxiosError<{ message?: string }>
-            return new Error(
+            const axiosError = error as AxiosError<{ message?: string, errors?: unknown }>
+            const err = new Error(
                 `API呼出中にエラーが発生：${axiosError.response?.data?.message || axiosError.message}`
             )
+            if (axiosError.response?.data.errors) {
+                // errors配列をErrorオブジェクトに追加
+                (err as Error & { errors?: unknown }).errors = axiosError.response.data.errors
+            }
+            return err as Error & { errors?: unknown }
         }
 
         if (error instanceof Error) {
