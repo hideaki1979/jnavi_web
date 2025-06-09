@@ -80,7 +80,17 @@ export function AuthForm({ mode }: AuthFormProps) {
         <Box
             component="form"
             onSubmit={handleSubmit(onSubmit)}
-            sx={{ maxWidth: 540, mx: "auto", p: 4, backgroundColor: "grey.300", color: "grey.700" }}
+            sx={{
+                maxWidth: 540,
+                mx: "auto",
+                p: 4,
+                backgroundColor: "grey.300",
+                color: "grey.700",
+                borderRadius: 2,
+                boxShadow: 2,
+                height: "100vh",
+                overflowY: "auto"
+            }}
         >
             <Typography variant="h5" fontWeight="bold" textAlign="center">
                 {isSignup ? "アカウント作成" : "ログイン"}
