@@ -5,6 +5,7 @@ import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter"
 import QueryProviders from "./queryClientProvider";
 import { Suspense } from "react";
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 
 const notoSansJP = Noto_Sans_JP({
   variable: "--font-noto-sans-jp",
@@ -32,9 +33,11 @@ export default function RootLayout({
       >
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <QueryProviders>
-            <Suspense fallback={<LoadingErrorContainer loading={true} />}>
-              {children}
-            </Suspense>
+            <AuthProvider>
+              <Suspense fallback={<LoadingErrorContainer loading={true} />}>
+                {children}
+              </Suspense>
+            </AuthProvider>
           </QueryProviders>
         </AppRouterCacheProvider>
       </body>
