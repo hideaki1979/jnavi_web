@@ -151,7 +151,7 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
                                     key={item.id}
                                     color="inherit"
                                     startIcon={item.icon}
-                                    onClick={() => 'action' in item && item.action ? item.action() : handleNavigation(item.path!)}
+                                    onClick={() => 'action' in item && item.action ? item.action() : handleNavigation?.(item.path!)}
                                     sx={{
                                         textTransform: "none",
                                         fontWeight: 500,
@@ -192,7 +192,7 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
                                 {navigationItems.map((item) => (
                                     <MenuItem
                                         key={item.id}
-                                        onClick={() => 'action' in item && item.action ? item.action() : handleNavigation(item.path!)}
+                                        onClick={() => 'action' in item && item.action ? item.action() : handleNavigation?.(item.path!)}
                                         sx={{ gap: 2 }}
                                     >
                                         {item.icon}

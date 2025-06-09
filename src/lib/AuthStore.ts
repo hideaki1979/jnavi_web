@@ -8,7 +8,8 @@ interface AuthStore {
     isAuthenticated: boolean;
     setUser: (user: User | null) => void;
     setLoading: (loading: boolean) => void;
-    initialize: () => void;
+    isInitialized: boolean;
+    initialize: () => (() => void);
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -21,9 +22,23 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     setLoading: (loading: boolean) => {
         set({ isLoading: loading })
     },
+    isInitialized: false,
     initialize: () => {
+        if (get().isInitialized) {
+            console.warn("AuthStore is already initialized")
+            return () => { }
+        }
+        set({ isInitialized: true })
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-            get().setUser(user)
+            try {
+                get().setUser(user)
+            } catch (error) {
+                console.error("Error Updating AuthStore", error)
+                get().setLoading(false)
+            }
+        }, (error) => {
+            console.error("Error Change AuthStore", error)
+            get().setLoading(false)
         })
         // クリーンアップ関数を返す
         return unsubscribe
