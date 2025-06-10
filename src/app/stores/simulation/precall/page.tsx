@@ -2,7 +2,7 @@
 
 import { getStoreToppingCalls } from "@/app/api/stores"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
-import { ToppingOptionSelector } from "@/components/simulation/ToppingOpitonSelector"
+import { ToppingOptionSelector } from "@/components/simulation/ToppingOptionSelector"
 import { generateCallText } from "@/utils/toppingFormatter"
 import { ArrowForward, Block } from "@mui/icons-material"
 import { Alert, Box, Button, Card, CardMedia, Typography, useTheme } from "@mui/material"
