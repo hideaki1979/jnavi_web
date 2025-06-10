@@ -206,7 +206,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                     rowHeight={180}
                   >
                     {imageData.map((img) => (
-                      <ImageListItem key={img.id} sx={{ minWidth: 240 }}>
+                      <ImageListItem key={img.id} sx={{ minWidth: 240, position: 'relative' }}>
                         <Image
                           src={img.image_url}
                           alt={img.menu_name}

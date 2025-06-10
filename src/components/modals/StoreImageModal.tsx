@@ -46,20 +46,16 @@ export default function StoreImageModal({ open, image, onClose, menuTypeLabels }
                 </Box>
             </DialogTitle>
             <DialogContent sx={{ p: 2 }}>
-                <Box mb={4} display="flex" justifyContent="center"
+                <Box mb={4} display="flex" justifyContent="center" alignItems="center"
+                    sx={{ position: "relative", width: "100%", height: 240 }}
                 >
                     <Image
                         src={image.image_url}
                         alt={image.menu_name}
-                        width={300}
-                        height={200}
+                        fill
                         style={{
                             borderRadius: 8,
                             objectFit: "contain",
-                            maxWidth: "300px",
-                            maxHeight: "200px",
-                            width: "auto",
-                            height: "auto"
                         }}
                         loading="lazy"
                     />
