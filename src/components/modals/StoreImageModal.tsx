@@ -2,6 +2,7 @@
  * 店舗画像の拡大表示用モーダルコンポーネント。
  * - 画像のプレビュー・閉じる操作を提供
  */
+import { UI_CONSTANTS } from "@/constants/ui";
 import { StoreImageDownloadData } from "@/types/Store";
 import { Close } from "@mui/icons-material";
 import { Box, Dialog, DialogContent, DialogTitle, Divider, IconButton, Typography } from "@mui/material";
@@ -47,7 +48,7 @@ export default function StoreImageModal({ open, image, onClose, menuTypeLabels }
             </DialogTitle>
             <DialogContent sx={{ p: 2 }}>
                 <Box mb={4} display="flex" justifyContent="center" alignItems="center"
-                    sx={{ position: "relative", width: "100%", height: 240 }}
+                    sx={{ position: "relative", width: "100%", height: UI_CONSTANTS.IMAGE_MODAL.CONTAINER_HEIGHT }}
                 >
                     <Image
                         src={image.image_url}
