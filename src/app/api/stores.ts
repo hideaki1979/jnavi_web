@@ -42,6 +42,15 @@ export const createStore = async (
  * @param storeData 店舗情報
  * @returns APIレスポンスのメッセージ
  */
+/**
+ * 店舗情報を更新するAPI通信を行う関数。
+ * - 店舗情報更新APIにPUTリクエストを送信
+ * - 成功時にはAPIレスポンスのメッセージを返す
+ * - エラー時にはエラーハンドリングを行う
+ * @param storeId 店舗ID
+ * @param storeData 更新する店舗情報
+ * @returns APIレスポンスのメッセージ
+ */
 export const updateStore = async (
     storeId: string,
     storeData: StoreInput
@@ -52,7 +61,7 @@ export const updateStore = async (
     } catch (error) {
         throw ApiClient.handlerError(
             error,
-            "店舗情報登録時にエラーが発生しました。"
+            "店舗情報更新時にエラーが発生しました。"
         )
     }
 }
@@ -91,7 +100,7 @@ export const getStoreImages = async (storeId: string): Promise<StoreImageDownloa
     } catch (error) {
         throw ApiClient.handlerError(
             error,
-            "店舗情報取得時にエラーが発生しました。"
+            "店舗画像情報取得時にエラーが発生しました。"
         )
     }
 }
@@ -111,7 +120,7 @@ export const getStoreAll = async (): Promise<SimulationSelectStoresData[]> => {
     } catch (error) {
         throw ApiClient.handlerError(
             error,
-            "店舗画像情報取得時にエラーが発生しました。"
+            "店舗情報全件取得時にエラーが発生しました。"
         )
     }
 }
@@ -157,7 +166,7 @@ export const getStoreById = async (id: string): Promise<FormattedToppingOptionNa
     } catch (error) {
         throw ApiClient.handlerError(
             error,
-            "店舗情報取得時に予期せぬエラーが発生しました"
+            "店舗情報取得時（1件取得）に予期せぬエラーが発生しました"
         )
     }
 }
@@ -179,7 +188,7 @@ export const storeClose = async (id: string, storeName: string): Promise<StoreCl
     } catch (error) {
         throw ApiClient.handlerError(
             error,
-            "店舗情報取得時に予期せぬエラーが発生しました"
+            "店舗閉店処理時に予期せぬエラーが発生しました"
         )
 
     }
