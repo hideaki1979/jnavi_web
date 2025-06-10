@@ -107,7 +107,7 @@ export const getStoreImages = async (storeId: string): Promise<StoreImageDownloa
 export const getStoreAll = async (): Promise<SimulationSelectStoresData[]> => {
     try {
         const res = await api.get("/stores")
-        console.log(JSON.stringify(res, null, 2))
+        // console.log("Store data:", res.data)
         return res.data.data
     } catch (error) {
         throw ApiClient.handlerError(
