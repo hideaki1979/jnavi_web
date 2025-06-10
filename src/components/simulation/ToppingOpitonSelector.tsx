@@ -7,6 +7,18 @@ interface ToppingOptionSelectorProps {
     onOptionChange: (toppingId: string, optionId: string) => void;
 }
 
+/**
+ * トッピングオプションの選択を管理するコンポーネント。
+ * 
+ * - トッピングごとにラジオボタンを表示し、選択したオプションを管理。
+ * - 選択されたオプションは `selectedOptions` に基づいて表示される。
+ * - オプションが選択されると `onOptionChange` コールバックが呼び出される。
+ * 
+ * @param {SimulationToppingOption[]} options - トッピングオプションの配列。
+ * @param {Record<string, string>} selectedOptions - 選択されたトッピングオプションを示す記録。
+ * @param {Function} onOptionChange - オプションが選択されたときに呼び出されるコールバック関数。
+ */
+
 export function ToppingOptionSelector({ options, selectedOptions, onOptionChange }: ToppingOptionSelectorProps) {
     const theme = useTheme()
 

@@ -1,5 +1,10 @@
 import { Box, CircularProgress, Typography } from "@mui/material";
 
+/**
+ * ローディング・エラー状態の表示コンポーネント。
+ * - 読み込み中スピナーやエラーメッセージを表示
+ */
+
 interface LoadingErrorContainerProps {
     loading: boolean;
     error?: string | null;

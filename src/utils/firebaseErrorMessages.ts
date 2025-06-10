@@ -1,4 +1,10 @@
 /**
+ * Firebase認証エラーコードを日本語メッセージに変換するユーティリティ。
+ * - getFirebaseAuthErrorMessage: エラーコードを日本語メッセージに変換
+ * - handleFirebaseError: Firebaseエラーオブジェクトから日本語メッセージを取得
+ */
+
+/**
  * Firebaseの認証エラーコードを日本語メッセージに変換する
  */
 export function getFirebaseAuthErrorMessage(errorCode: string): string {

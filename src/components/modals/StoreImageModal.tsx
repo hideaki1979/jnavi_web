@@ -1,3 +1,7 @@
+/**
+ * 店舗画像の拡大表示用モーダルコンポーネント。
+ * - 画像のプレビュー・閉じる操作を提供
+ */
 import { StoreImageDownloadData } from "@/types/Store";
 import { Close } from "@mui/icons-material";
 import { Box, Dialog, DialogContent, DialogTitle, Divider, IconButton, Typography } from "@mui/material";
@@ -10,6 +14,15 @@ interface StoreImageModalProps {
     menuTypeLabels: Record<string, string>;
 }
 
+/**
+ * 店舗画像の拡大表示用モーダルコンポーネント。
+ *
+ * - 画像のプレビュー・閉じる操作を提供
+ * - 画像のトッピングコール情報を表示
+ *
+ * @param {{ open: boolean; image: StoreImageDownloadData | null; onClose: () => void; menuTypeLabels: Record<string, string> }} props
+ * @returns {JSX.Element}
+ */
 export default function StoreImageModal({ open, image, onClose, menuTypeLabels }: StoreImageModalProps) {
     if (!image) return null
     return (

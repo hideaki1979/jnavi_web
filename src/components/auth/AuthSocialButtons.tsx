@@ -15,6 +15,13 @@ interface AuthSocialButtonsProps {
     onErrors?: (errors: { msg: string, param?: string }[]) => void;
 }
 
+/**
+ * SNS認証（Google, Facebook, Github）用ボタンコンポーネント。
+ * -各SNS認証のハンドリング、ユーザー作成・取得処理
+ * @param {AuthSocialButtonsProps} props
+ * @prop {string} [onError] エラーハンドリング関数、Firebaseのエラーメッセージを引数に受け取ります。
+ * @prop {({ msg: string, param?: string }[]) => void} [onErrors] エラーハンドリング関数、Firebaseのエラーメッセージの配列を引数に受け取ります。
+ */
 export function AuthSocialButtons({ onError, onErrors }: AuthSocialButtonsProps) {
     const router = useRouter()
     const [loading, setLoading] = useState<string | null>(null)

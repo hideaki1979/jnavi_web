@@ -19,6 +19,15 @@ import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 
+/**
+ * 店舗編集画面
+ *
+ * - 店舗情報を取得
+ * - トッピングコール情報を取得
+ * - 店舗情報を編集して、トッピングコール情報を更新
+ *
+ * @returns
+ */
 export default function StoreUpdatePages() {
 
     const router = useRouter()
@@ -102,6 +111,14 @@ export default function StoreUpdatePages() {
             setToppingOptionData(toppingCallData)
         }
     }, [toppingCallData])
+
+    /**
+     * 店舗情報を更新する際にフォームデータを送信する非同期関数。
+     * - 事前コールと着丼前コールの選択オプションを整形し、送信データに含める。
+     * - 店舗情報更新APIに送信データを送信し、成功時には成功メッセージを表示。
+     * - エラー発生時にはエラーメッセージを表示し、コンソールにエラーを出力。
+     * @param formData フォーム入力データ
+     */
 
     const onSubmit = async (formData: StoreFormInput) => {
         try {

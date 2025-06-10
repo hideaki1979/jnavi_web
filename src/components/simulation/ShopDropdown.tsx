@@ -7,6 +7,14 @@ interface ShopDropdownProps {
     onChange: (event: SelectChangeEvent<string>) => void;
 }
 
+/**
+ * シミュレーション画面の店舗選択用のドロップダウンコンポーネント
+ *
+ * @param {SimulationSelectStoresData[]} stores 店舗情報の配列
+ * @param {string} selectedStore 選択中の店舗ID
+ * @param {(event: SelectChangeEvent<string>) => void} onChange 選択された店舗IDを保持するstateを更新するためのコールバック
+ * @returns ドロップダウンコンポーネント
+ */
 export function ShopDropDown({ stores, selectedStore, onChange }: ShopDropdownProps) {
     return (
         <FormControl fullWidth margin="normal">

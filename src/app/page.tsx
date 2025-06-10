@@ -1,5 +1,15 @@
 import { redirect } from "next/navigation";
 
+/**
+ * トップページ
+ *
+ * このページは"/"にアクセスしたときに表示されます。
+ * ただし、Next.jsのredirectによって、"/stores/map"にリダイレクトされます。
+ *
+ * 以下は、将来的にこのページを本格的に作成するためのサンプルです。
+ * 
+ */
+
 export default function Home() {
   return redirect('/stores/map')
 

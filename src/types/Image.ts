@@ -1,6 +1,7 @@
 // 画像情報アップロード用のデータ型
 export interface StoreImageUploadData {
     store_id: number | string;
+    user_id: string;
     menu_type: number;
     menu_name: string;
     image_base64: string | null;

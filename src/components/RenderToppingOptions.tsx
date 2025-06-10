@@ -1,5 +1,15 @@
 import { Box, Chip, Typography } from "@mui/material"
 
+
+/**
+ * トッピングの名称と選択されたオプションのリストをプロパティに取り、チップ状に表示するコンポーネント。
+ * - options: トッピングの名称と選択されたオプションのハッシュ
+ *          {
+ *              "toppingName1": ["optionName1", "optionName2", ...],
+ *              "toppingName2": ["optionName3", "optionName4", ...],
+ *              ...
+ *          }
+ */
 export function RenderToppingOptions(options?: Record<string, string[]>) {
     if (!options) return null
     return Object.entries(options).map(([toppingName, optionList]) => (

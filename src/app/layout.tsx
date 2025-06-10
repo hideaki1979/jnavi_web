@@ -21,6 +21,17 @@ export const metadata: Metadata = {
   description: "二郎・二郎系の店舗情報（トッピング情報）を管理するアプリです",
 };
 
+/**
+ * アプリケーションのルートレイアウトコンポーネント。
+ * 
+ * - 日本語のフォントを適用したHTMLドキュメントを提供
+ * - グローバルな状態管理や認証プロバイダを設定
+ * - サスペンスを用いて非同期処理中のローディング状態を表示
+ * 
+ * @param children - レイアウト内にレンダリングされる子要素
+ * @returns JSX.Element
+ */
+
 export default function RootLayout({
   children,
 }: Readonly<{

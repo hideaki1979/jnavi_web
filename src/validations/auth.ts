@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+/**
+ * 認証フォーム（ログイン・サインアップ）のバリデーションスキーマ定義。
+ * - loginSchema: ログインフォームのバリデーション
+ * - signupSchema: サインアップフォームのバリデーション
+ */
+
 export const loginSchema = z.object({
     email: z.string().email("正しいメールアドレスを入力してください"),
     password: z.string().min(8, "パスワードは8文字以上で入力してください")

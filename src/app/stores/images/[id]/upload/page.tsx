@@ -15,6 +15,7 @@ import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { Alert, Box, Button, CircularProgress, Divider, MenuItem, TextField, Typography } from "@mui/material"
 import Image from "next/image"
 import { ToppingOptionRadioSelector } from "@/components/toppingCallOptions/ToppingOptionRadioSelector"
+import { useAuthStore } from "@/lib/AuthStore"
 
 const MENU_TYPE = [
     { label: "通常メニュー", value: "1" },
@@ -32,6 +33,8 @@ export default function StoreImageUploadPage() {
     const [errorMsg, setErrorMsg] = useState<string>("")
     const [successMsg, setSuccessMsg] = useState<string>("")
     const inputRef = useRef<HTMLInputElement>(null)
+    // AuthStoreからユーザー情報を取得
+    const user = useAuthStore((state) => state.user)
 
     // react-hook-form
     const { control, handleSubmit, setValue, formState: { errors } } = useForm<ImageUploadFormValues>({
@@ -96,6 +99,13 @@ export default function StoreImageUploadPage() {
                 setUploading(false)
                 return
             }
+
+            // ユーザー認証チェックを追加
+            if (!user?.uid) {
+                setErrorMsg("ユーザー認証が必要です")
+                setUploading(false)
+                return
+            }
             const base64 = await new Promise<string>((resolve, reject) => {
                 const reader = new FileReader()
                 reader.onload = () => resolve(reader.result as string)
@@ -110,6 +120,7 @@ export default function StoreImageUploadPage() {
 
             const uploadImageData = {
                 store_id: id,
+                user_id: user?.uid,
                 menu_type: Number(values.menuType),
                 menu_name: values.menuName,
                 image_base64: base64,

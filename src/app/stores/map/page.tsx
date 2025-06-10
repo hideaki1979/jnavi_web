@@ -12,6 +12,14 @@ import { useEffect, useState } from "react";
 const defaultCenter = { lat: 35.681236, lng: 139.767125 } // 東京駅
 const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!
 
+/**
+ * 店舗マップ画面コンポーネント
+ * - 店舗情報を表示するマップを表示
+ * - 現在地を取得して中心に設定
+ * - マップ上に店舗情報をマーカーとして表示
+ * - マーカーをクリックすると店舗情報を表示するドロワーコンポーネントを表示
+ * - ドロワーコンポーネントは閉じるボタンをクリックすることで消える
+ */
 export default function MapPage() {
     const { data: mapData, isLoading, isError, error } = useQuery({
         queryKey: ['mapData'],
@@ -38,6 +46,10 @@ export default function MapPage() {
         )
     }, [])
 
+    /**
+     * マーカークリックハンドラ
+     * @param store マーカーに紐づく店舗情報
+     */
     const handlerMarkerClick = (store: MapStore) => {
         setSelectedStore(store)
         setDrawerOpen(true)

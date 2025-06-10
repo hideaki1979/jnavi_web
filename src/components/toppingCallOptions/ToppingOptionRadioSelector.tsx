@@ -8,6 +8,19 @@ interface ToppingOptionRadioSelectorProps {
     onOptionChange: (toppingId: string, optionId: string, storeToppingCallId: string) => void;
 }
 
+/**
+ * トッピングオプション選択用ラジオボタンコンポーネント。
+ *
+ * - `options`: トッピングオプションの配列
+ * - `selectedOptions`: 選択されたトッピングオプション情報のハッシュ
+ * - `onOptionChange`: 選択されたトッピングオプションが変更されたときのコールバック
+ *
+ * 以下の要素を返す:
+ * - 1つのトッピングに対して1つの`FormControl`を生成
+ * - 1つの`FormControl`に対して1つの`FormLabel`と1つの`RadioGroup`を生成
+ * - `RadioGroup`にはトッピングの各オプションに対して1つの`FormControlLabel`を生成
+ * - 選択されたトッピングオプションが変更されたとき、`onOptionChange`をコールバック
+ */
 export function ToppingOptionRadioSelector({
     options,
     selectedOptions,

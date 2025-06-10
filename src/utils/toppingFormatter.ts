@@ -1,6 +1,11 @@
 import { SimulationToppingOption } from "@/types/ToppingCall";
 
 /**
+ * トッピング選択からコールテキストを生成するフォーマッター。
+ * - generateCallText: 選択されたトッピングオプションからコールテキストを生成
+ */
+
+/**
  * コールテキストを生成（precall, postcall用）
  */
 export function generateCallText(

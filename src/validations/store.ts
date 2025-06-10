@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+/**
+ * 店舗情報フォームのバリデーションスキーマ定義。
+ * - StoreInputSchema: 店舗入力フォームのバリデーション
+ */
+
 export const StoreInputSchema = z.object({
     store_name: z.string().min(1, "店舗名は必須です"),
     branch_name: z.string().optional(),

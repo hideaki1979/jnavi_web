@@ -1,5 +1,10 @@
 import { Box, List, ListItem, Typography } from "@mui/material";
 
+/**
+ * バリデーションエラーのリスト表示コンポーネント。
+ * - エラー配列をリスト形式で表示
+ */
+
 interface ValidationErrorListProps {
     errors?: { msg: string; param?: string }[];
 }
