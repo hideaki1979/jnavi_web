@@ -108,7 +108,7 @@ export interface MapApiResponse {
 export interface StoreImageDownloadData {
     id: number | string;
     store_id: number | string;
-    user_id: number | string;
+    user_id: string;
     menu_type: number | string;
     menu_name: string;
     image_url: string;

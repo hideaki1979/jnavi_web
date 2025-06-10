@@ -29,20 +29,25 @@ export default function MapPage() {
     const [center, setCenter] = useState(defaultCenter)
     const [selectedStore, setSelectedStore] = useState<MapStore | null>(null)
     const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
+    const [isLocationLoading, setIsLocationLoading] = useState(true)
 
     useEffect(() => {
-        if (!navigator.geolocation) return
+        if (!navigator.geolocation) {
+            setIsLocationLoading(false)
+            return
+        }
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 setCenter({
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 })
+                setIsLocationLoading(false)
             },
             (error) => {
                 console.error("現在地情報取得エラー：", error)
+                setIsLocationLoading(false)
             }
-
         )
     }, [])
 
@@ -55,8 +60,8 @@ export default function MapPage() {
         setDrawerOpen(true)
     }
     // console.log(mapData)
-    if (isLoading || isError) {
-        return <LoadingErrorContainer loading={isLoading} error={isError ? (error as Error).message : null} />
+    if (isLoading || isError || isLocationLoading) {
+        return <LoadingErrorContainer loading={isLoading || isLocationLoading} error={isError ? (error as Error).message : null} />
     }
 
     return (
