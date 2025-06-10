@@ -33,6 +33,15 @@ export const createStore = async (
     }
 }
 
+/**
+ * 店舗情報を更新するAPI通信を行う関数。
+ * - 店舗情報更新APIにPUTリクエストを送信
+ * - 成功時にはAPIレスポンスのメッセージを返す
+ * - エラー時にはエラーハンドリングを行う
+ * @param storeId 店舗ID
+ * @param storeData 店舗情報
+ * @returns APIレスポンスのメッセージ
+ */
 export const updateStore = async (
     storeId: string,
     storeData: StoreInput
@@ -48,6 +57,13 @@ export const updateStore = async (
     }
 }
 
+/**
+ * マップ情報を全て取得するAPI通信を行う関数。
+ * - マップ情報取得APIにGETリクエストを送信
+ * - 成功時にはAPIレスポンスのマップ情報を返す
+ * - エラー時にはエラーハンドリングを行う
+ * @returns マップ情報
+ */
 export const getMapAll = async (): Promise<MapData[]> => {
     try {
         const res = await api.get<MapApiResponse>('/maps')
@@ -75,7 +91,7 @@ export const getStoreImages = async (storeId: string): Promise<StoreImageDownloa
     } catch (error) {
         throw ApiClient.handlerError(
             error,
-            "店舗画像情報取得時にエラーが発生しました。"
+            "店舗情報取得時にエラーが発生しました。"
         )
     }
 }
@@ -167,4 +183,4 @@ export const storeClose = async (id: string, storeName: string): Promise<StoreCl
         )
 
     }
-}
+}        
