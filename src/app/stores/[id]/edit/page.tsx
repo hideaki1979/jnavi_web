@@ -26,7 +26,7 @@ import { useForm } from "react-hook-form"
  * - トッピングコール情報を取得
  * - 店舗情報を編集して、トッピングコール情報を更新
  *
- * @returns
+* @returns {JSX.Element}
  */
 export default function StoreUpdatePages() {
 

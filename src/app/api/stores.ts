@@ -42,15 +42,7 @@ export const createStore = async (
  * @param storeData 店舗情報
  * @returns APIレスポンスのメッセージ
  */
-/**
- * 店舗情報を更新するAPI通信を行う関数。
- * - 店舗情報更新APIにPUTリクエストを送信
- * - 成功時にはAPIレスポンスのメッセージを返す
- * - エラー時にはエラーハンドリングを行う
- * @param storeId 店舗ID
- * @param storeData 更新する店舗情報
- * @returns APIレスポンスのメッセージ
- */
+
 export const updateStore = async (
     storeId: string,
     storeData: StoreInput

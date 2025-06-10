@@ -22,6 +22,11 @@ const MENU_TYPE = [
     { label: "限定メニュー", value: "2" }
 ]
 
+/**
+ * 画像アップロード画面
+ * @param id - 店舗ID
+ * @returns 画像アップロード画面
+ */
 export default function StoreImageUploadPage() {
     const router = useRouter()
     const params = useParams()
