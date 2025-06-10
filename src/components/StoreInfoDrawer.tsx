@@ -210,10 +210,9 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                         <Image
                           src={img.image_url}
                           alt={img.menu_name}
-                          width={240}
-                          height={180}
+                          fill
                           loading="lazy"
-                          style={{ borderRadius: 8, width: "auto", height: "100%", objectFit: "cover", cursor: "pointer" }}
+                          style={{ borderRadius: 8, objectFit: "cover", cursor: "pointer" }}
                           onClick={() => handleImageClick(img)}
                         />
                         <ImageListItemBar
