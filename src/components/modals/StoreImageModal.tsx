@@ -53,7 +53,14 @@ export default function StoreImageModal({ open, image, onClose, menuTypeLabels }
                         alt={image.menu_name}
                         width={300}
                         height={200}
-                        style={{ borderRadius: 8, objectFit: "contain", maxWidth: "100%", height: "auto" }}
+                        style={{
+                            borderRadius: 8,
+                            objectFit: "contain",
+                            maxWidth: "300px",
+                            maxHeight: "200px",
+                            width: "auto",
+                            height: "auto"
+                        }}
                         loading="lazy"
                     />
                 </Box>

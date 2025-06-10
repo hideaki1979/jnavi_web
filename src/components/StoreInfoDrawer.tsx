@@ -182,7 +182,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
               </Box>
             )}
 
-            <Box sx={{ pt: 5 }}>
+            <Box sx={{ pt: 2 }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 {store?.branch_name
                   ? `${store.store_name} ${store.branch_name}`
@@ -213,7 +213,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                           width={240}
                           height={180}
                           loading="lazy"
-                          style={{ borderRadius: 8, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
+                          style={{ borderRadius: 8, width: "auto", height: "100%", objectFit: "cover", cursor: "pointer" }}
                           onClick={() => handleImageClick(img)}
                         />
                         <ImageListItemBar

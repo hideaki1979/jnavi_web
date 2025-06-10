@@ -160,7 +160,14 @@ export default function StoreImageUploadPage() {
             <Box display="flex" flexDirection="column" alignItems="center">
                 {imageUrl ? (
                     <Box width="100%" display="flex" flexDirection="column" alignItems="center" mb={2}>
-                        <Image src={imageUrl} alt="選択したラーメン画像" width={280} height={160} className="rounded-md mb-4 object-contain" />
+                        <Box position="relative" width="280px" height="160px" className="rounded-md mb-4 overflow-hidden">
+                            <Image
+                                src={imageUrl}
+                                alt="選択したラーメン画像"
+                                fill
+                                style={{ objectFit: "contain" }}
+                            />
+                        </Box>
                         <Button variant="outlined" color="secondary" onClick={() => {
                             setValue("imageFile", undefined as unknown as File, { shouldValidate: true })
                             setImageUrl("")
