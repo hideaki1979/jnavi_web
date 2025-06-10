@@ -24,7 +24,7 @@ const MENU_TYPE = [
 
 /**
  * 画像アップロード画面
- * @param id - 店舗ID
+ * @param id 店舗ID
  * @returns 画像アップロード画面
  */
 export default function StoreImageUploadPage() {

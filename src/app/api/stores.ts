@@ -39,7 +39,7 @@ export const createStore = async (
  * - 成功時にはAPIレスポンスのメッセージを返す
  * - エラー時にはエラーハンドリングを行う
  * @param storeId 店舗ID
- * @param storeData 店舗情報
+ * @param storeData 更新する店舗情報
  * @returns APIレスポンスのメッセージ
  */
 
