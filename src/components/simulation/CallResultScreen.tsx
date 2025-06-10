@@ -12,7 +12,16 @@ interface CallResultScreenProps {
     nextQuery?: Record<string, string>
 }
 
-export function CallResutScreen({ callText, nextHref, nextQuery }: CallResultScreenProps) {
+/**
+ * @description
+ * 着丼前コールシミュレーションの結果を表示する画面コンポーネント。
+ * - urlパラメーター `callText` にコールの内容を指定する
+ * - `nextHref` に指定されたURLに遷移するボタンを提供
+ * - `nextQuery` に指定されたクエリー文字列を `nextHref` に付与する
+ * - 音声合成機能を使用して、コール内容を音声で読み上げる
+ * - 音声合成機能がサポートされていないブラウザでは、音声合成非対応ブラウザというテキストを表示
+ */
+export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultScreenProps) {
     const [isSpeaking, setIsSpeaking] = useState(false)
     const [isSpeechSupported, setIsSpeechSupported] = useState(false)
     const router = useRouter()

@@ -1,3 +1,7 @@
+/**
+ * 結果表示用ダイアログコンポーネント。
+ * - 成功・エラー・警告などの結果をダイアログで表示
+ */
 import { ResultDialogType } from "@/types/Store";
 import { CheckCircle, Error, Warning } from "@mui/icons-material";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
@@ -30,6 +34,24 @@ const DIALOG_CONFIG = {
         backgroundColor: "#fff4e6"
     }
 }
+
+/**
+ * ResultDialogコンポーネント。
+ * 
+ * - 成功、エラー、警告などの結果を表示する汎用的なダイアログ。
+ * - 各種結果タイプに応じて異なるアイコンと背景色を表示。
+ * 
+ * @param {ResultDialogProps} props
+ * @param {boolean} props.open - ダイアログの表示状態。
+ * @param {ResultDialogType} props.type - 結果のタイプ（成功、エラー、警告）。
+ * @param {string} props.title - ダイアログのタイトル。
+ * @param {string} props.message - 結果のメッセージ。
+ * @param {string} [props.targetName] - 対象の名前（オプション）。
+ * @param {() => void} props.onConfirm - ダイアログを閉じる際のコールバック。
+ * @param {string} [props.confirmButtonText="OK"] - 確認ボタンのテキスト。
+ * 
+ * @returns {JSX.Element} 結果を表示するダイアログコンポーネント。
+ */
 
 export function ResultDialog({
     open,

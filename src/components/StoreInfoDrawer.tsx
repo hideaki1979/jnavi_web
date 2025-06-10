@@ -12,6 +12,7 @@ import { useState } from "react";
 import StoreImageModal from "./modals/StoreImageModal";
 import { StoreCloseConfirmDialog } from "./modals/StoreCloseConfirmDialog";
 import { ResultDialog } from "./modals/ResultDialog";
+import { useAuthStore } from "@/lib/AuthStore";
 
 type StoreInfoDrawerProps = {
   open: boolean;
@@ -24,6 +25,15 @@ const MENU_TYPE_LABELS: Record<string, string> = {
   "2": "限定"
 }
 
+/**
+ * 店舗情報の詳細表示用ドロワーコンポーネント。
+ *
+ * 店舗情報、画像、トッピングコール情報、店舗閉店ボタンなどを表示します。
+ *
+ * @param {boolean} open ドロワーの開閉状態
+ * @param {MapStore | null} store 店舗情報
+ * @param {() => void} onClose ドロワーの閉じるハンドラ
+ */
 export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) {
 
   const { data: imageData, isLoading: isImageLoading, isError: isImageError, error: imageError } = useQuery<StoreImageDownloadData[], Error>({
@@ -52,6 +62,9 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
   const [resultDialogType, setResultDialogType] = useState<ResultDialogType>('success')
   const [resultMessage, setResultMessage] = useState("")
   const [isClosing, setIsClosing] = useState(false)
+
+  // Zustandから認証状態を取得
+  const { isAuthenticated } = useAuthStore()
 
   const handleImageClick = (img: StoreImageDownloadData) => {
     setSelectedImage(img)
@@ -134,38 +147,40 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
           <LoadingErrorContainer loading={isLoading} error={errorMessage} />
         ) : (
           <>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Tooltip
-                title="店舗編集画面"
-                slotProps={{
-                  tooltip: {
-                    sx: {
-                      fontSize: '0.85rem', // 12px相当
-                      fontWeight: 500
+            {isAuthenticated && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Tooltip
+                  title="店舗編集画面"
+                  slotProps={{
+                    tooltip: {
+                      sx: {
+                        fontSize: '0.85rem', // 12px相当
+                        fontWeight: 500
+                      }
                     }
-                  }
-                }}
-              >
-                <IconButton aria-label="更新" onClick={() => router.push(`/stores/${String(store?.id)}/edit`)}>
-                  <EditNote />
-                </IconButton>
-              </Tooltip>
-              <Tooltip
-                title="画像アップロード画面"
-                slotProps={{
-                  tooltip: {
-                    sx: {
-                      fontSize: '0.85rem', // 12px相当
-                      fontWeight: 500
+                  }}
+                >
+                  <IconButton aria-label="更新" onClick={() => router.push(`/stores/${String(store?.id)}/edit`)}>
+                    <EditNote />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip
+                  title="画像アップロード画面"
+                  slotProps={{
+                    tooltip: {
+                      sx: {
+                        fontSize: '0.85rem', // 12px相当
+                        fontWeight: 500
+                      }
                     }
-                  }
-                }}
-              >
-                <IconButton aria-label="画像アップロード" onClick={() => router.push(`/stores/images/${String(store?.id)}/upload`)}>
-                  <AddPhotoAlternate />
-                </IconButton>
-              </Tooltip>
-            </Box>
+                  }}
+                >
+                  <IconButton aria-label="画像アップロード" onClick={() => router.push(`/stores/images/${String(store?.id)}/upload`)}>
+                    <AddPhotoAlternate />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            )}
 
             <Box sx={{ pt: 5 }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>

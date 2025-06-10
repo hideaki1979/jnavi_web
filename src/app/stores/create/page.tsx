@@ -19,6 +19,16 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 
 
+/**
+ * 店舗登録画面コンポーネント
+ *
+ * - トッピングコール情報を取得し、店舗情報を登録するフォームを提供
+ * - 事前トッピングコールと着丼前トッピングコールの選択を管理
+ * - フォーム送信で店舗情報を登録し、成功メッセージまたはエラーメッセージを表示
+ *
+ * @returns JSX.Element
+ */
+
 const CreateStorePage = () => {
 
     const router = useRouter()
@@ -79,6 +89,14 @@ const CreateStorePage = () => {
         setSelectedPostCallOptions({ ...initSelectedOptions })
     }, [data])
 
+    /**
+     * 店舗登録処理を行う関数。
+     * - トッピングコール情報をマージして、formData+toppingCallsDataを生成
+     * - 生成したデータを送信し、店舗登録を実行
+     * - 成功時には、画面に成功メッセージを表示
+     * - エラー時には、画面にエラーメッセージを表示
+     * @param formData 店舗情報
+     */
     const onSubmit = async (formData: StoreFormInput) => {
         try {
             setIsSubmitLoading(true)

@@ -7,6 +7,19 @@ export const metadata: Metadata = {
     description: "J-Naviの店舗情報用の画面です。",
 };
 
+/**
+ * StoreLayout コンポーネント。
+ * 
+ * - アプリケーションのレイアウトを提供します。
+ * - ヘッダーを表示し、子要素をメインコンテンツとして配置します。
+ * - フレックスレイアウトを使用して、画面全体に対応するデザインを実現します。
+ * 
+ * @param {object} props - コンポーネントのプロパティ。
+ * @param {React.ReactNode} props.children - メインコンテンツとして表示する子要素。
+ * 
+ * @returns {JSX.Element} レイアウトコンポーネント。
+ */
+
 export default async function StoreLayout({
     children,
 }: Readonly<{

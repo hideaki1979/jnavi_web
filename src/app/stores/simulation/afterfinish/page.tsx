@@ -20,6 +20,14 @@ interface CheckItemsState {
     nothing: boolean;
 }
 
+/**
+ * AfterFinishPage コンポーネント。
+ * - 食後のクイズページを表示します。
+ * - ユーザーはチェックボックスを使用して、退店時の行動を選択できます。
+ * - 正しい選択をした場合、「正解」が表示され、次のページに移動します。
+ * - 間違った選択をした場合、「不正解」が表示され、次のページに移動します。
+ */
+
 export default function AfterFinishPage() {
     const theme = useTheme()
     const router = useRouter()
@@ -32,7 +40,11 @@ export default function AfterFinishPage() {
         nothing: false
     })
 
-    // チェックボックス変更イベントハンドラー
+
+    /**
+     * チェックボックスの状態を反転する。
+     * @param {keyof CheckItemsState} name チェックボックスのname属性
+     */
     const handleCheckboxChanged = (name: keyof CheckItemsState) => {
         setCheckItems((prev) => ({
             ...prev,
@@ -40,7 +52,12 @@ export default function AfterFinishPage() {
         }))
     }
 
-    // 回答ページに画面遷移
+
+    /**
+     * 次のページに移動します。
+     * - チェックボックスの状態によって「正解」か「不正解」が
+     *   クエリー文字列に設定されます。
+     */
     const handleNextPage = () => {
         let resultText = ""
         if (checkItems.bowl && checkItems.tissue &&

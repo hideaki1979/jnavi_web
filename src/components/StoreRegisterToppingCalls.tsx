@@ -8,6 +8,16 @@ interface StoreRegisterToppingCallsCheckProps {
     callType: "pre_call" | "post_call"
 }
 
+/**
+ * 店舗登録時のトッピングコール選択・管理コンポーネント。
+ * - トッピングコールの選択・状態管理
+ *
+ * @param toppingOptions - トッピングコールの情報
+ * @param selectedOption - 選択されたトッピングコールの情報
+ * @param onOptionChange - 選択されたトッピングコールの状態が変更されたときのハンドラ関数
+ * @param callType - トッピングコールの種類（pre_call, post_call）
+ * @returns - トッピングコール選択・管理コンポーネント
+ */
 export function StoreRegisterToppingCallsCheck({
     toppingOptions,
     selectedOption = {},

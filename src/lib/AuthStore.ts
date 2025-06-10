@@ -2,6 +2,14 @@ import { onAuthStateChanged, User } from "firebase/auth"
 import { create } from "zustand"
 import { auth } from "./firebase";
 
+/**
+ * Firebase Authenticationの認証状態（ユーザー情報・認証済みか・ローディング状態）をZustandでグローバル管理するストア。
+ * - user: FirebaseのUserオブジェクト
+ * - isAuthenticated: 認証済みかどうか
+ * - isLoading: ローディング中かどうか
+ * - initialize: FirebaseのonAuthStateChangedで認証状態を監視し、状態を更新
+ */
+
 interface AuthStore {
     user: User | null;
     isLoading: boolean;

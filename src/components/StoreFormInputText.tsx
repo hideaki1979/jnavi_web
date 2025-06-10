@@ -1,3 +1,7 @@
+/**
+ * 店舗情報フォーム用のテキスト入力コンポーネント。
+ * - バリデーション・エラー表示等
+ */
 import { StoreFormInput } from "@/validations/store";
 import { InputAdornment, TextField } from "@mui/material"
 import { ReactNode } from "react";
@@ -15,6 +19,21 @@ type StoreFormInputProps = {
     multiline?: boolean;
     rows?: number;
 }
+
+/**
+ * 店舗情報フォーム用のテキスト入力コンポーネント。
+ *
+ * - `name`で指定されたフィールドの値を状態として保持し、`control`を通じて
+ *   react-hook-formのコントロールに紐づけます。
+ * - `label`で指定されたラベルを表示します。
+ * - `required`が`true`の場合、必須項目とする旨を表示します。
+ * - `errors`に指定されたエラーメッセージを表示します。
+ * - `margin`を指定して入力フィールドのマージンを設定します。
+ * - `size`を指定して入力フィールドのサイズを設定します。
+ * - `startAdornment`に指定された要素をテキストフィールドの開始位置に配置します。
+ * - `multiline`が`true`の場合、テキストフィールドは複数行対応になります。
+ * - `rows`で指定された行数分の高さを持つテキストフィールドを表示します。
+ */
 
 export const StoreFormInputText = ({
     name,

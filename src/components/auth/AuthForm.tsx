@@ -1,3 +1,7 @@
+/**
+ * ログイン・サインアップフォームのUI・認証処理コンポーネント。
+ * - メール/パスワード認証、SNS認証、バリデーション、エラー表示等
+ */
 "use client"
 
 import { signInWithEmail, signUpWithEmail } from "@/lib/auth"
@@ -20,6 +24,14 @@ interface AuthFormProps {
     mode: 'login' | 'signup'
 }
 
+/**
+ * @description
+ * ログイン・サインアップフォームのUI・認証処理コンポーネント。
+ * - メール/パスワード認証、SNS認証、バリデーション、エラー表示等
+ * @param {AuthFormProps} props
+ * @prop {string} mode login or signup
+ * @returns {JSX.Element}
+ */
 export function AuthForm({ mode }: AuthFormProps) {
     const [error, setError] = useState<string | null>(null)
     const [validationErrors, setValidationErrors] = useState<{ msg: string, param?: string }[]>([])
@@ -37,6 +49,15 @@ export function AuthForm({ mode }: AuthFormProps) {
             : { email: "", password: "" }
     })
 
+    /**
+     * @description
+     * 認証フォームの送信ハンドラ。
+     * - サインアップ：メール/パスワード認証、ユーザー作成
+     * - ログイン：メール/パスワード認証、認証成功でstores/mapに遷移
+     * - エラーハンドリング：Firebaseのエラーメッセージを表示
+     * @param {LoginFormInput | SignupFormInput} data
+     * @returns {Promise<void>}
+     */
     const onSubmit = async (data: LoginFormInput | SignupFormInput) => {
         setLoading(true)
         setError(null)

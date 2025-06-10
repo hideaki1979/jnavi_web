@@ -1,6 +1,11 @@
 import { Warning } from "@mui/icons-material";
 import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
 
+/**
+ * 店舗閉店確認ダイアログコンポーネント。
+ * - 閉店確認のUI・操作を提供
+ */
+
 interface StoreCloseConfirmDialogProps {
     open: boolean;
     title: string;
@@ -13,6 +18,27 @@ interface StoreCloseConfirmDialogProps {
     cancelButtonText?: string;
     confirmButtonColor?: 'error' | 'primary' | 'secondary' | 'success' | 'info' | 'warning';
 }
+
+/**
+ * StoreCloseConfirmDialogコンポーネント。
+ * 
+ * - 店舗閉店を確認するためのダイアログを提供します。
+ * - ユーザーに閉店操作の確認を求め、キャンセルや実行ボタンをクリックすることで操作を完了できます。
+ * - ローディング状態を表示することができ、実行ボタンの色をカスタマイズ可能です。
+ * 
+ * @param {boolean} open - ダイアログの表示状態。
+ * @param {string} title - ダイアログのタイトル。
+ * @param {string} message - 確認メッセージ。
+ * @param {string} [targetName] - 閉店対象の名前（オプション）。
+ * @param {() => void} onClose - キャンセルボタンをクリックした際のコールバック。
+ * @param {() => void} onConfirm - 実行ボタンをクリックした際のコールバック。
+ * @param {boolean} [isLoading=false] - ローディング状態を表すフラグ。
+ * @param {string} [confirmButtonText="実行"] - 実行ボタンのテキスト。
+ * @param {string} [cancelButtonText="キャンセル"] - キャンセルボタンのテキスト。
+ * @param {'error' | 'primary' | 'secondary' | 'success' | 'info' | 'warning'} [confirmButtonColor="primary"] - 実行ボタンの色。
+ * 
+ * @returns {JSX.Element} 店舗閉店確認のダイアログコンポーネント。
+ */
 
 export function StoreCloseConfirmDialog({
     open,

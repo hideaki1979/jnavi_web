@@ -12,6 +12,14 @@ interface HeaderProps {
     title?: string;
 }
 
+/**
+ * アプリ全体のヘッダーコンポーネント。
+ *
+ * - ナビゲーション、ユーザー操作、サインアウト等を提供
+ * - 画面サイズに応じてデスクトップ用ナビゲーションとモバイル用ハンバーガーメニューを切り替える
+ * - Zustandを使用して認証状態を取得し、認証状態に応じてメニュー項目を選択
+ * - ローディング中の場合は何も表示しない
+ */
 export function Header({ title = "J-Navi" }: HeaderProps) {
     const router = useRouter()
     const theme = useTheme()
@@ -21,19 +29,44 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
     // Zustandから認証状態を取得
     const { isAuthenticated, isLoading } = useAuthStore()
 
+    /**
+     * ヘッダーメニューを開くハンドラ
+     *
+     * @param {React.MouseEvent<HTMLElement>} event - クリックイベント
+     */
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget)
     }
 
+    /**
+     * メニューを閉じるハンドラ
+     *
+     * state変数`anchorEl`を`null`に設定することで、メニューを閉じる
+     */
     const handleMenuClose = () => {
         setAnchorEl(null)
     }
+
+    /**
+     * ナビゲーションハンドラ
+     *
+     * 指定されたパスにルーターをプッシュし、メニューを閉じます。
+     *
+     * @param {string} path - ナビゲーションするパス
+     */
 
     const handleNavigation = (path: string) => {
         router.push(path)
         handleMenuClose()
     }
 
+    /**
+     * サインアウトハンドラ
+     *
+     * Firebase Authenticationのサインアウトを実行し、結果に応じて
+     * - 成功時： `/auth/login` にルーターをプッシュし、メニューを閉じる
+     * - 失敗時： エラーメッセージをコンソールに表示
+     */
     const handleSignOut = async () => {
         try {
             await signOut(auth)

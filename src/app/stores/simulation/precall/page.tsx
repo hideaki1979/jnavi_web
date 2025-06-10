@@ -10,6 +10,12 @@ import { useQuery } from "@tanstack/react-query"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useMemo, useState } from "react"
 
+/**
+ * 事前コールシミュレーション画面コンポーネント。
+ * - 店舗IDをパラメータとして受け取り、店舗別のトッピングコール情報を取得。
+ * - トッピングコール情報を選択できるインターフェースを提供。
+ * - 選択されたトッピングコール情報をもとに、コールテキストを生成し、ResultPageに遷移。
+ */
 export default function PrecallPage() {
     const theme = useTheme()
     const router = useRouter()

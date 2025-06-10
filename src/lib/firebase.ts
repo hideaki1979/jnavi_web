@@ -1,3 +1,9 @@
+/**
+ * Firebaseの初期化・認証プロバイダーの設定を行うモジュール。
+ * - Firebaseアプリの初期化
+ * - 認証（auth）インスタンスのエクスポート
+ * - Google/Facebook/Github認証プロバイダーのエクスポート
+ */
 import { initializeApp } from "firebase/app"
 import { FacebookAuthProvider, getAuth, GithubAuthProvider, GoogleAuthProvider } from 'firebase/auth'
 

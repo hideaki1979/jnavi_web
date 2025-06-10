@@ -1,3 +1,9 @@
+/**
+ * 店舗情報・店舗画像・トッピングコール情報など、店舗関連API通信を行う関数群。
+ * - 店舗の作成・更新・取得・画像取得
+ * - トッピングコール情報取得
+ * - 店舗の閉店処理
+ */
 "use server"
 
 import ApiClient from "@/lib/ApiClient";
@@ -5,6 +11,14 @@ import { FormattedToppingOptionNameStoreData, MapApiResponse, MapData, Simulatio
 
 const api = ApiClient.getInstance()
 
+/**
+ * 店舗情報を登録するAPI通信を行う関数。
+ * - 店舗情報登録APIにPOSTリクエストを送信
+ * - 成功時にはAPIレスポンスのメッセージを返す
+ * - エラー時にはエラーハンドリングを行う
+ * @param storeData 店舗情報
+ * @returns APIレスポンスのメッセージ
+ */
 export const createStore = async (
     storeData: StoreInput
 ): Promise<string> => {
@@ -46,6 +60,14 @@ export const getMapAll = async (): Promise<MapData[]> => {
     }
 }
 
+/**
+ * 店舗画像情報を取得するAPI通信を行う関数。
+ * - 店舗画像情報取得APIにGETリクエストを送信
+ * - 成功時にはAPIレスポンスの店舗画像情報を返す
+ * - エラー時にはエラーハンドリングを行う
+ * @param storeId 店舗ID
+ * @returns 店舗画像情報
+ */
 export const getStoreImages = async (storeId: string): Promise<StoreImageDownloadData[]> => {
     try {
         const res = await api.get(`/stores/${storeId}/images`)
@@ -58,6 +80,13 @@ export const getStoreImages = async (storeId: string): Promise<StoreImageDownloa
     }
 }
 
+/**
+ * 店舗情報を取得するAPI通信を行う関数。
+ * - 店舗情報取得APIにGETリクエストを送信
+ * - 成功時にはAPIレスポンスの店舗情報を返す
+ * - エラー時にはエラーハンドリングを行う
+ * @returns 店舗情報
+ */
 export const getStoreAll = async (): Promise<SimulationSelectStoresData[]> => {
     try {
         const res = await api.get("/stores")
@@ -70,6 +99,16 @@ export const getStoreAll = async (): Promise<SimulationSelectStoresData[]> => {
         )
     }
 }
+
+/**
+ * 店舗トッピングコール情報を取得するAPI通信を行う関数。
+ * - 指定した店舗IDとコールタイミングに基づいて、トッピングコール情報を取得
+ * - 成功時にはAPIレスポンスのトッピングコール情報を返す
+ * - エラー時にはエラーハンドリングを行う
+ * @param id 店舗ID
+ * @param call_timing コールタイミング（事前または着丼前）
+ * @returns トッピングコール情報
+ */
 
 export const getStoreToppingCalls = async (id: string, call_timing: string): Promise<SimulationSelectToppingCallsData> => {
     try {
@@ -87,6 +126,14 @@ export const getStoreToppingCalls = async (id: string, call_timing: string): Pro
     }
 }
 
+/**
+ * 店舗IDを指定して店舗情報を取得するAPI通信を行う関数。
+ * - 店舗情報取得APIにGETリクエストを送信
+ * - 成功時にはAPIレスポンスの店舗情報を返す
+ * - エラー時にはエラーハンドリングを行う
+ * @param id 店舗ID
+ * @returns 店舗情報
+ */
 export const getStoreById = async (id: string): Promise<FormattedToppingOptionNameStoreData> => {
     try {
         const res = await api.get(`/stores/${id}`)

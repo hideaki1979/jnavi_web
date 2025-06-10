@@ -1,5 +1,11 @@
 import { FormattedToppingOptionIds } from "@/types/ToppingCall"
 
+/**
+ * トッピングオプションの状態管理ユーティリティ。
+ * - updateToppingOption: トッピングオプションの追加・削除
+ * - createToppingOptionHandler: ハンドラー関数を生成するヘルパー
+ */
+
 export const updateToppingOption = (
     prevState: FormattedToppingOptionIds,
     toppingId: number,

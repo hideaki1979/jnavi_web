@@ -4,6 +4,17 @@ import { Map } from "@mui/icons-material";
 import { Box, Button, Typography, useTheme } from "@mui/material";
 import { useRouter, useSearchParams } from "next/navigation";
 
+/**
+ * AnswerPageコンポーネント
+ *
+ * - 食後クイズの結果を表示するページ。
+ * - クイズの結果に応じて適切なメッセージを表示。
+ * - ユーザーが二郎・二郎系店舗の退店ルールを理解できるように案内。
+ * - 「Map画面へ」ボタンをクリックすることで、マップページに移動可能。
+ *
+ * @returns JSX.Element
+ */
+
 export default function AnswerPage() {
     const theme = useTheme()
     const params = useSearchParams()

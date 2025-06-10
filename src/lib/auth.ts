@@ -1,3 +1,9 @@
+/**
+ * Firebase Authenticationを利用した認証・ユーザー管理のための関数群。
+ * - Google/Facebook/Github認証
+ * - メールアドレスによるサインアップ・ログイン
+ * - サインアウト
+ */
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, User, signOut as firebaseSignOut } from "firebase/auth";
 import { auth, facebookProvider, githubProvider, googleProvider } from "./firebase";
 

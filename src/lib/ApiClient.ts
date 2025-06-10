@@ -1,7 +1,9 @@
 import axios, { AxiosError, AxiosInstance } from "axios"
 
 /**
- * APIクライアントの設定を行うクラス
+ * axiosを用いたAPIクライアントのシングルトン実装。
+ * - APIインスタンスの取得
+ * - 共通エラーハンドリング
  */
 class ApiClient {
     private static instance: AxiosInstance
