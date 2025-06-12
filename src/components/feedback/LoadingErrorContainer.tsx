@@ -21,7 +21,9 @@ export default function LoadingErrorContainer({ loading, error }: LoadingErrorCo
     if (error) {
         return (
             <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="40vh">
-                <Typography color="error">{error}</Typography>
+                <Typography color="error" component="div" sx={{ whiteSpace: 'pre-line', textAlign: 'center' }}>
+                    {error}
+                </Typography>
             </Box>
         )
     }

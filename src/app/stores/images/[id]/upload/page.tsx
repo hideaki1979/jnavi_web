@@ -107,10 +107,12 @@ export default function StoreImageUploadPage() {
 
             // ユーザー認証チェックを追加
             if (!user?.uid) {
-                setErrorMsg("ユーザー認証が必要です")
+                setErrorMsg("未認証なので、ログインしてください")
                 setUploading(false)
-                return
+                setTimeout(() => router.replace('/auth/login'), 1500)
+                return // ここで処理を停止
             }
+
             const base64 = await new Promise<string>((resolve, reject) => {
                 const reader = new FileReader()
                 reader.onload = () => resolve(reader.result as string)

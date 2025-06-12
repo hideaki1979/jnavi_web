@@ -4,8 +4,8 @@
  */
 import { UI_CONSTANTS } from "@/constants/ui";
 import { StoreImageDownloadData } from "@/types/Store";
-import { Close } from "@mui/icons-material";
-import { Box, Dialog, DialogContent, DialogTitle, Divider, IconButton, Typography } from "@mui/material";
+import { Close, Delete, EditNote } from "@mui/icons-material";
+import { Box, Dialog, DialogContent, DialogTitle, Divider, IconButton, Tooltip, Typography } from "@mui/material";
 import Image from "next/image";
 
 interface StoreImageModalProps {
@@ -13,6 +13,9 @@ interface StoreImageModalProps {
     image: StoreImageDownloadData | null;
     onClose: () => void;
     menuTypeLabels: Record<string, string>;
+    currentUserId?: string;
+    onUpdate?: (imageId: string | number) => void;
+    onDelete?: (imageId: string | number) => void;
 }
 
 /**
@@ -24,17 +27,65 @@ interface StoreImageModalProps {
  * @param {{ open: boolean; image: StoreImageDownloadData | null; onClose: () => void; menuTypeLabels: Record<string, string> }} props
  * @returns {JSX.Element}
  */
-export default function StoreImageModal({ open, image, onClose, menuTypeLabels }: StoreImageModalProps) {
+export default function StoreImageModal({
+    open, image, onClose, menuTypeLabels, currentUserId, onUpdate, onDelete
+}: StoreImageModalProps) {
     if (!image) return null
+
+    // 画像の所有者かどうかを判定
+    const isOwner = currentUserId && image.user_id === currentUserId
+
+    const handleUpdate = () => {
+        onUpdate?.(image.id)
+    }
+
+    const handleDelete = () => {
+        onDelete?.(image.id)
+    }
+
     return (
         <Dialog
-            open={open} onClose={onClose} maxWidth="sm" fullWidth
+            open={open} onClose={onClose} maxWidth="xs" fullWidth
         >
             <DialogTitle sx={{ p: 4 }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <Typography variant="h6" fontWeight="bold">
-                        【{menuTypeLabels[image.menu_type]}】{image.menu_name}
-                    </Typography>
+                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                    {/* 更新・削除メニュー（所有者のみ表示） */}
+                    {isOwner && (
+                        <>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                <Tooltip
+                                    title="画像編集画面"
+                                    slotProps={{
+                                        tooltip: {
+                                            sx: {
+                                                fontSize: '0.85rem', // 12px相当
+                                                fontWeight: 500
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <IconButton aria-label="更新" onClick={handleUpdate} color='primary'>
+                                        <EditNote />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip
+                                    title="画像削除"
+                                    slotProps={{
+                                        tooltip: {
+                                            sx: {
+                                                fontSize: '0.85rem', // 12px相当
+                                                fontWeight: 500
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <IconButton aria-label="画像削除" onClick={handleDelete} color='error'>
+                                        <Delete />
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
+                        </>
+                    )}
                     <IconButton
                         aria-label="close"
                         onClick={onClose}
@@ -45,6 +96,10 @@ export default function StoreImageModal({ open, image, onClose, menuTypeLabels }
                         <Close />
                     </IconButton>
                 </Box>
+
+                <Typography variant="h6" fontWeight="bold" component="div">
+                    【{menuTypeLabels[image.menu_type]}】{image.menu_name}
+                </Typography>
             </DialogTitle>
             <DialogContent sx={{ p: 2 }}>
                 <Box mb={4} display="flex" justifyContent="center" alignItems="center"
@@ -59,6 +114,7 @@ export default function StoreImageModal({ open, image, onClose, menuTypeLabels }
                             objectFit: "contain",
                         }}
                         loading="lazy"
+                        sizes='(max-width: 768px) 100vw, 50vw'
                     />
                 </Box>
                 <Divider />

@@ -1,5 +1,5 @@
 import { FormattedToppingOptionNameStoreData, MapStore, ResultDialogType, StoreImageDownloadData } from "@/types/Store";
-import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Divider, Drawer, IconButton, ImageList, ImageListItem, ImageListItemBar, Tooltip, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Divider, Drawer, IconButton, ImageList, ImageListItem, ImageListItemBar, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStoreById, getStoreImages, storeClose } from "@/app/api/stores";
@@ -13,6 +13,7 @@ import StoreImageModal from "./modals/StoreImageModal";
 import { StoreCloseConfirmDialog } from "./modals/StoreCloseConfirmDialog";
 import { ResultDialog } from "./modals/ResultDialog";
 import { useAuthStore } from "@/lib/AuthStore";
+import { deleteStoreImage } from "@/app/api/images";
 
 type StoreInfoDrawerProps = {
   open: boolean;
@@ -35,6 +36,10 @@ const MENU_TYPE_LABELS: Record<string, string> = {
  * @param {() => void} onClose ドロワーの閉じるハンドラ
  */
 export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) {
+
+  // ブラウザ幅を監視してDrawerの表示位置を決定
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   const { data: imageData, isLoading: isImageLoading, isError: isImageError, error: imageError } = useQuery<StoreImageDownloadData[], Error>({
     queryKey: ["imageData", store?.id],
@@ -64,7 +69,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
   const [isClosing, setIsClosing] = useState(false)
 
   // Zustandから認証状態を取得
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
 
   const handleImageClick = (img: StoreImageDownloadData) => {
     setSelectedImage(img)
@@ -109,13 +114,35 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
     }
   }
 
+  // 画像更新メニュー押下イベント
+  const handleImageUpdate = (imageId: string | number) => {
+    // 画像更新画面へ遷移
+    router.push(`/stores/images/${String(store?.id)}/edit/${imageId}`)
+  }
+
+  // 画像削除メニュー押下イベント
+  const handleImageDelete = async (imageId: string | number) => {
+    if (!confirm('こちらの画像を削除しても宜しいですか？')) return
+
+    try {
+      await deleteStoreImage(String(store?.id), imageId)
+      // キャッシュを更新して画像リストを再取得
+      queryClient.invalidateQueries({ queryKey: ['imageData', store?.id] })
+      setModalOpen(false)
+      setSelectedImage(null)
+    } catch (error) {
+      console.error('画像削除エラー', error)
+    }
+  }
+
+
   const isLoading = isImageLoading || isStoreLoading
   const hasError = isImageError || isStoreError
   const errorMessage = isImageError ? (imageError as Error).message : isStoreError ? (storeError as Error).message : null
 
   return (
     <Drawer
-      anchor={typeof window !== "undefined" && window.innerWidth < 650 ? "bottom" : "left"}
+      anchor={isMobile ? 'bottom' : 'left'}
       open={open}
       onClose={onClose}
       slotProps={{
@@ -214,6 +241,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                           loading="lazy"
                           style={{ borderRadius: 8, objectFit: "cover", cursor: "pointer" }}
                           onClick={() => handleImageClick(img)}
+                          sizes='(max-width: 768px) 100vw, 50vw'
                         />
                         <ImageListItemBar
                           title={`【${MENU_TYPE_LABELS[img.menu_type]}】${img.menu_name}`}
@@ -237,6 +265,9 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
               image={selectedImage}
               onClose={handleModalClose}
               menuTypeLabels={MENU_TYPE_LABELS}
+              currentUserId={user?.uid}
+              onUpdate={handleImageUpdate}
+              onDelete={handleImageDelete}
             />
             <Box>
               <Typography variant="body2" color="text.secondary" gutterBottom>
