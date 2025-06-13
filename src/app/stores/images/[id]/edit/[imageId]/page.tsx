@@ -169,7 +169,8 @@ export default function ImageUpdatePage() {
                 user_id: user.uid,
                 menu_type: Number(values.menuType),
                 menu_name: values.menuName,
-                image_base64: base64,
+                // 既存の画像に変更がない場合は image_base64 フィールドを省略する
+                ...(values.imageFile ? { image_base64: base64 } : {}),
                 ...(toppingSelections.length > 0 ? { topping_selections: toppingSelections } : {})
             }
             await updateStoreImage(storeId, imageId, editImageData)

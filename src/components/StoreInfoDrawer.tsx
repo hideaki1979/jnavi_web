@@ -141,7 +141,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
 
   // 画像削除確認ダイアログの実行ハンドラ
   const handleImageDeleteConfirm = async () => {
-
+    if (!imageDeleteTargetId) return
     setIsDeletingImage(true)
     // 削除対象の画像情報を保存（ダイアログ表示用）
     const targetImageName = selectedImage
@@ -149,7 +149,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
       : '不明画像';
 
     try {
-      await deleteStoreImage(String(store?.id), imageId)
+      await deleteStoreImage(String(store?.id), imageDeleteTargetId!)
       // キャッシュを更新して画像リストを再取得
       queryClient.invalidateQueries({ queryKey: ['imageData', store?.id] })
       setModalOpen(false)
@@ -168,6 +168,8 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
       setImageDeleteResultType('error')
       setImageDeleteResultMessage(error instanceof Error ? error.message : '画像削除中にエラーが発生しました。')
       setImageDeleteResultDialogOpen(true)
+    } finally {
+      setIsDeletingImage(false)
     }
   }
 

@@ -77,7 +77,7 @@ export const deleteStoreImage = async (storeId: string | number, imageId: string
 export const getImageById = async (storeId: string | number, imageId: string | number) => {
     try {
         const res = await api.get(`/stores/${storeId}/images/${imageId}`)
-        return res.data.data
+        return res.data
     } catch (error) {
         throw ApiClient.handlerError(
             error,
