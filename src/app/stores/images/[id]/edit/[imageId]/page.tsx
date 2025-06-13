@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams, useRouter } from 'next/navigation'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Alert, Box, Button, CircularProgress, Divider, MenuItem, TextField, Typography } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import { getImageById, updateStoreImage } from '@/app/api/images'
@@ -11,7 +11,7 @@ import { imageEditFormSchema, ImageEditFormValues, validateFileSizeBeforeCompres
 import { zodResolver } from '@hookform/resolvers/zod'
 import { getStoreToppingCalls } from '@/app/api/stores'
 import imageCompression from "browser-image-compression"
-import { SelectedToppingInfo, StoreImageEditData } from '@/types/Image'
+import { SelectedToppingInfo } from '@/types/Image'
 import Image from 'next/image'
 import LoadingErrorContainer from '@/components/feedback/LoadingErrorContainer'
 import { SimulationToppingOption } from '@/types/ToppingCall'
@@ -35,8 +35,6 @@ export default function ImageUpdatePage() {
     const [updating, setUpdating] = useState<boolean>(false)
     const [errorMessage, setErrorMessage] = useState('')
     const [successMsg, setSuccessMsg] = useState<string>("")
-
-    const inputRef = useRef<HTMLInputElement>(null)
 
     // react-hook-form+zod定義
     const { control, handleSubmit, setValue, formState: { errors }, reset } = useForm<ImageEditFormValues>({
@@ -71,8 +69,9 @@ export default function ImageUpdatePage() {
     const toppingOptions: SimulationToppingOption[] = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
 
     useEffect(() => {
+        console.log(imageData)
         if (imageData) {
-            const data = imageData as StoreImageEditData
+            const data = imageData
 
             // フォームフィールドの初期値設定
             reset({
@@ -247,7 +246,6 @@ export default function ImageUpdatePage() {
                             hidden
                             accept="image/jpeg,image/png,image/gif,image/webp"
                             onChange={handleImageChange}
-                            ref={inputRef}
                         />
                     </Button>
                 )}

@@ -7,7 +7,7 @@ import { imageUploadFormSchema, ImageUploadFormValues, validateFileSizeBeforeCom
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery } from "@tanstack/react-query"
 import { useParams, useRouter } from "next/navigation"
-import React, { useRef, useState } from "react"
+import React, { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import imageCompression from "browser-image-compression"
 import { uploadStoreImage } from "@/app/api/images"
@@ -37,7 +37,6 @@ export default function StoreImageUploadPage() {
     const [uploading, setUploading] = useState(false)
     const [errorMsg, setErrorMsg] = useState<string>("")
     const [successMsg, setSuccessMsg] = useState<string>("")
-    const inputRef = useRef<HTMLInputElement>(null)
     // AuthStoreからユーザー情報を取得
     const user = useAuthStore((state) => state.user)
 
@@ -186,7 +185,6 @@ export default function StoreImageUploadPage() {
                         className="w-full mb-2">
                         画像を選択
                         <input
-                            ref={inputRef}
                             type="file"
                             accept="image/jpeg,image/png,image/gif,image/webp"
                             hidden

@@ -48,11 +48,11 @@ export default function StoreImageModal({
             open={open} onClose={onClose} maxWidth="xs" fullWidth
         >
             <DialogTitle sx={{ p: 4 }}>
-                <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                    {/* 更新・削除メニュー（所有者のみ表示） */}
-                    {isOwner && (
-                        <>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                    {/* 左側：編集・削除アイコン（所有者のみ表示） */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        {isOwner && (
+                            <>
                                 <Tooltip
                                     title="画像編集画面"
                                     slotProps={{
@@ -83,9 +83,10 @@ export default function StoreImageModal({
                                         <Delete />
                                     </IconButton>
                                 </Tooltip>
-                            </Box>
-                        </>
-                    )}
+                            </>
+                        )}
+                    </Box>
+                    {/* 右側：閉じるボタン */}
                     <IconButton
                         aria-label="close"
                         onClick={onClose}
@@ -96,7 +97,6 @@ export default function StoreImageModal({
                         <Close />
                     </IconButton>
                 </Box>
-
                 <Typography variant="h6" fontWeight="bold" component="div">
                     【{menuTypeLabels[image.menu_type]}】{image.menu_name}
                 </Typography>

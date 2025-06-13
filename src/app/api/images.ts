@@ -1,7 +1,7 @@
 "use server"
 
 import ApiClient from "@/lib/ApiClient";
-import { StoreImageUploadData } from "@/types/Image";
+import { StoreImageEditData, StoreImageUploadData } from "@/types/Image";
 
 const api = ApiClient.getInstance()
 
@@ -74,10 +74,10 @@ export const deleteStoreImage = async (storeId: string | number, imageId: string
  * @returns 画像情報
  */
 
-export const getImageById = async (storeId: string | number, imageId: string | number) => {
+export const getImageById = async (storeId: string | number, imageId: string | number): Promise<StoreImageEditData> => {
     try {
         const res = await api.get(`/stores/${storeId}/images/${imageId}`)
-        return res.data
+        return res.data.data
     } catch (error) {
         throw ApiClient.handlerError(
             error,
