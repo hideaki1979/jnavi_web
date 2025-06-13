@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getImageById, updateStoreImage } from '@/app/api/images'
 import { useAuthStore } from '@/lib/AuthStore'
 import { Controller, useForm } from 'react-hook-form'
-import { imageUploadFormSchema, ImageUploadFormValues } from '@/validations/image'
+import { imageUploadFormSchema, ImageUploadFormValues, validateFileSizeBeforeCompression } from '@/validations/image'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { getStoreToppingCalls } from '@/app/api/stores'
 import imageCompression from "browser-image-compression"
@@ -84,7 +84,7 @@ export default function ImageUpdatePage() {
 
             // トッピング選択状態の初期設定
             const initialToppingInfo: Record<string, SelectedToppingInfo> = {}
-            data.topping_selections.forEach((selection) => {
+            data.topping_selections?.forEach((selection) => {
                 initialToppingInfo[String(selection.topping_id)] = {
                     optionId: String(selection.call_option_id),
                     storeToppingCallId: String(selection.store_topping_call_id)
@@ -99,9 +99,13 @@ export default function ImageUpdatePage() {
         const file = e.target.files?.[0]
         if (!file) return
         try {
+            // ファイル圧縮前のサイズチェック
+            validateFileSizeBeforeCompression(file)
+
+            // ファイル画像圧縮処理
             const compressed = await imageCompression(file, {
                 maxWidthOrHeight: 1080,
-                maxSizeMB: 2,
+                maxSizeMB: 5,
                 useWebWorker: true
             })
             // Blob→File型に変換
@@ -131,7 +135,7 @@ export default function ImageUpdatePage() {
         setUpdating(true)
         try {
             // 画像ファイル必須チェック
-            if (!values.imageFile) {
+            if (!values.imageFile && !imageUrl) {
                 setErrorMessage("画像ファイルは必須です")
                 setUpdating(false)
                 return
@@ -144,12 +148,15 @@ export default function ImageUpdatePage() {
                 return
             }
 
-            const base64 = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader()
-                reader.onload = () => resolve(reader.result as string)
-                reader.onerror = reject
-                reader.readAsDataURL(values.imageFile)
-            })
+            let base64 = null
+            if (values.imageFile) {
+                base64 = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader()
+                    reader.onload = () => resolve(reader.result as string)
+                    reader.onerror = reject
+                    reader.readAsDataURL(values.imageFile!)
+                })
+            }
 
             const toppingSelections = Object.entries(selectedToppingInfo).map(([toppingId, info]) => ({
                 topping_id: Number(toppingId),
@@ -173,8 +180,6 @@ export default function ImageUpdatePage() {
         } finally {
             setUpdating(false)
         }
-        router.replace(`/stores/map`)
-
     }
 
     // 初期表示時のローディング
@@ -224,7 +229,7 @@ export default function ImageUpdatePage() {
                         </Box>
                         <Button
                             variant='outlined' color='secondary' onClick={() => {
-                                setValue("imageFile", undefined as unknown as File, { shouldValidate: true })
+                                setValue("imageFile", undefined, { shouldValidate: true })
                                 setImageUrl("")
                             }}
                         >
@@ -239,14 +244,14 @@ export default function ImageUpdatePage() {
                         <input
                             type="file"
                             hidden
-                            accept="image/*"
+                            accept="image/jpeg,image/png,image/gif,image/webp"
                             onChange={handleImageChange}
                             ref={inputRef}
                         />
                     </Button>
                 )}
                 {errors.imageFile && (
-                    <Typography color='error'>
+                    <Typography color='error' variant='body2' className='mt-2'>
                         {errors.imageFile.message}
                     </Typography>
                 )}

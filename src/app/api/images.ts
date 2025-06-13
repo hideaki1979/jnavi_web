@@ -13,7 +13,7 @@ const api = ApiClient.getInstance()
 export const uploadStoreImage = async (storeId: string | number, imageData: StoreImageUploadData) => {
     try {
         const res = await api.post(`/stores/${storeId}/images`, imageData)
-        return res.data.data
+        return res.data
     } catch (error) {
         throw ApiClient.handlerError(
             error,
@@ -34,7 +34,7 @@ export const uploadStoreImage = async (storeId: string | number, imageData: Stor
 export const updateStoreImage = async (storeId: string | number, imageId: string | number, imageData: StoreImageUploadData) => {
     try {
         const res = await api.put(`/stores/${storeId}/images/${imageId}`, imageData)
-        return res.data.data
+        return res.data
     } catch (error) {
         throw ApiClient.handlerError(
             error,
@@ -64,10 +64,19 @@ export const deleteStoreImage = async (storeId: string | number, imageId: string
 }
 
 
+/**
+ * 店舗IDと画像IDを指定して画像情報を取得するAPI通信を行う関数。
+ * - 画像情報取得APIにGETリクエストを送信
+ * - 成功時にはAPIレスポンスの画像情報を返す
+ * - エラー時にはエラーハンドリングを行う
+ * @param storeId 店舗ID
+ * @param imageId 画像ID
+ * @returns 画像情報
+ */
+
 export const getImageById = async (storeId: string | number, imageId: string | number) => {
     try {
         const res = await api.get(`/stores/${storeId}/images/${imageId}`)
-        // console.log(res.data.data)
         return res.data.data
     } catch (error) {
         throw ApiClient.handlerError(
