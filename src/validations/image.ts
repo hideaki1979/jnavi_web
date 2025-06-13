@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// 圧縮後のファイルサイズ制限（10MB）
+// 圧縮前のファイルサイズ制限（20MB）
 const MAX_FILE_SIZE_BEFORE_COMPRESSION = 20 * 1024 * 1024;
 
 /**
@@ -21,6 +21,17 @@ export const imageUploadFormSchema = z.object({
     menuName: z.string().min(1, "メニュー名は必須です"),
     imageFile: z
         .instanceof(File, { message: "画像ファイルは必須です" })
+})
+
+/**
+ * 画像アップロードフォームのバリデーションスキーマ定義。
+ * - imageUploadFormSchema: 画像アップロードフォームのバリデーション
+ */
+export const imageEditFormSchema = z.object({
+    menuType: z.string().min(1, "メニュータイプは必須です"),
+    menuName: z.string().min(1, "メニュー名は必須です"),
+    imageFile: z
+        .instanceof(File, { message: "画像ファイルは必須です" })
         .refine(
             (file) => file?.type.startsWith('image/'),
             { message: "画像ファイルを選択してください" }
@@ -29,3 +40,4 @@ export const imageUploadFormSchema = z.object({
 })
 
 export type ImageUploadFormValues = z.infer<typeof imageUploadFormSchema>
+export type ImageEditFormValues = z.infer<typeof imageEditFormSchema>

@@ -6,7 +6,7 @@ import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogC
  * - 閉店確認のUI・操作を提供
  */
 
-interface StoreCloseConfirmDialogProps {
+interface ConfirmDialogProps {
     open: boolean;
     title: string;
     message: string;
@@ -40,7 +40,7 @@ interface StoreCloseConfirmDialogProps {
  * @returns {JSX.Element} 店舗閉店確認のダイアログコンポーネント。
  */
 
-export function StoreCloseConfirmDialog({
+export function ConfirmDialog({
     open,
     title,
     message,
@@ -51,7 +51,7 @@ export function StoreCloseConfirmDialog({
     confirmButtonText = "実行",
     cancelButtonText = "キャンセル",
     confirmButtonColor = "primary"
-}: StoreCloseConfirmDialogProps) {
+}: ConfirmDialogProps) {
     return (
         <Dialog
             open={open}

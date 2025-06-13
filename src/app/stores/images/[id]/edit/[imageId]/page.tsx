@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getImageById, updateStoreImage } from '@/app/api/images'
 import { useAuthStore } from '@/lib/AuthStore'
 import { Controller, useForm } from 'react-hook-form'
-import { imageUploadFormSchema, ImageUploadFormValues, validateFileSizeBeforeCompression } from '@/validations/image'
+import { imageEditFormSchema, ImageEditFormValues, validateFileSizeBeforeCompression } from '@/validations/image'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { getStoreToppingCalls } from '@/app/api/stores'
 import imageCompression from "browser-image-compression"
@@ -39,8 +39,8 @@ export default function ImageUpdatePage() {
     const inputRef = useRef<HTMLInputElement>(null)
 
     // react-hook-form+zod定義
-    const { control, handleSubmit, setValue, formState: { errors }, reset } = useForm<ImageUploadFormValues>({
-        resolver: zodResolver(imageUploadFormSchema),
+    const { control, handleSubmit, setValue, formState: { errors }, reset } = useForm<ImageEditFormValues>({
+        resolver: zodResolver(imageEditFormSchema),
         defaultValues: {
             menuType: "",
             menuName: "",
@@ -99,13 +99,13 @@ export default function ImageUpdatePage() {
         const file = e.target.files?.[0]
         if (!file) return
         try {
-            // ファイル圧縮前のサイズチェック
+            // ファイル圧縮前のサイズチェック（圧縮前のサイズが２０MBを超えた場合エラー）
             validateFileSizeBeforeCompression(file)
 
             // ファイル画像圧縮処理
             const compressed = await imageCompression(file, {
                 maxWidthOrHeight: 1080,
-                maxSizeMB: 5,
+                maxSizeMB: 5,   // 圧縮後のファイルサイズ
                 useWebWorker: true
             })
             // Blob→File型に変換
@@ -131,7 +131,7 @@ export default function ImageUpdatePage() {
     }
 
     // 画像ファイルアップロード
-    async function onSubmit(values: ImageUploadFormValues) {
+    async function onSubmit(values: ImageEditFormValues) {
         setUpdating(true)
         try {
             // 画像ファイル必須チェック
@@ -174,7 +174,7 @@ export default function ImageUpdatePage() {
             }
             await updateStoreImage(storeId, imageId, editImageData)
             setSuccessMsg('画像情報更新が完了しました')
-            setTimeout(() => router.replace(`/stores/map`))
+            setTimeout(() => router.replace(`/stores/map`), 1500)
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : "画像情報更新処理に失敗")
         } finally {
@@ -194,7 +194,7 @@ export default function ImageUpdatePage() {
             errors.push(`画像データ取得失敗：${(imageError as Error).message}`)
         }
         if (isToppingCallError && toppingCallError) {
-            errors.push(`画像データ取得失敗：${(toppingCallError as Error).message}`)
+            errors.push(`トッピングコール情報取得失敗：${(toppingCallError as Error).message}`)
         }
         return errors.join('\n')
     }

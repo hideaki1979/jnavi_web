@@ -10,7 +10,7 @@ import { RenderToppingOptions } from "./RenderToppingOptions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import StoreImageModal from "./modals/StoreImageModal";
-import { StoreCloseConfirmDialog } from "./modals/StoreCloseConfirmDialog";
+import { ConfirmDialog } from "./modals/ConfirmDialog";
 import { ResultDialog } from "./modals/ResultDialog";
 import { useAuthStore } from "@/lib/AuthStore";
 import { deleteStoreImage } from "@/app/api/images";
@@ -61,14 +61,19 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedImage, setSelectedImage] = useState<StoreImageDownloadData | null>(null)
 
-  // ダイアログ用の状態
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  // 閉店処理確認・結果ダイアログ用の状態
+  const [storeCloseConfirmDialogOpen, setStoreCloseConfirmDialogOpen] = useState(false)
   const [resultDialogOpen, setResultDialogOpen] = useState(false)
   const [resultDialogType, setResultDialogType] = useState<ResultDialogType>('success')
   const [resultMessage, setResultMessage] = useState("")
   const [isClosing, setIsClosing] = useState(false)
 
-  // 画像削除用ダイアログの状態を追加
+  // 画像削除確認ダイアログの状態を追加
+  const [imageDeleteConfirmDialogOpen, setImageDeleteConfirmDialogOpen] = useState(false)
+  const [imageDeleteTargetId, setImageDeleteTargetId] = useState<string | number | null>(null)
+  const [isDeletingImage, setIsDeletingImage] = useState(false)
+
+  // 画像削除結果用ダイアログの状態を追加
   const [imageDeleteResultDialogOpen, setImageDeleteResultDialogOpen] = useState(false)
   const [imageDeleteResultType, setImageDeleteResultType] = useState<ResultDialogType>('success')
   const [imageDeleteResultMessage, setImageDeleteResultMessage] = useState("")
@@ -92,14 +97,14 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
     try {
       const res = await storeClose(String(store?.id), store?.store_name)
       if (res.status === 'success') {
-        setConfirmDialogOpen(false)
+        setStoreCloseConfirmDialogOpen(false)
         setResultDialogType('success')
         setResultMessage('以下の店舗を閉店しました。')
         setResultDialogOpen(true)
       }
     } catch (error) {
       console.error('閉店処理に失敗しました：', error)
-      setConfirmDialogOpen(false)
+      setStoreCloseConfirmDialogOpen(false)
       setResultDialogType('error')
       setResultMessage(error instanceof Error ? error.message : '閉店処理中にエラーが発生しました。')
       setResultDialogOpen(true)
@@ -121,13 +126,23 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
 
   // 画像更新メニュー押下イベント
   const handleImageUpdate = (imageId: string | number) => {
+    if (!store?.id) return
+
     // 画像更新画面へ遷移
     router.push(`/stores/images/${String(store?.id)}/edit/${imageId}`)
   }
 
   // 画像削除メニュー押下イベント
   const handleImageDelete = async (imageId: string | number) => {
-    if (!confirm('こちらの画像を削除しても宜しいですか？')) return
+    // 削除対象のIDを保存してダイアログを表示
+    setImageDeleteTargetId(imageId)
+    setImageDeleteConfirmDialogOpen(true)
+  }
+
+  // 画像削除確認ダイアログの実行ハンドラ
+  const handleImageDeleteConfirm = async () => {
+
+    setIsDeletingImage(true)
     // 削除対象の画像情報を保存（ダイアログ表示用）
     const targetImageName = selectedImage
       ? `【${MENU_TYPE_LABELS[selectedImage.menu_type]}】${selectedImage.menu_name}`
@@ -139,17 +154,27 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
       queryClient.invalidateQueries({ queryKey: ['imageData', store?.id] })
       setModalOpen(false)
       setSelectedImage(null)
+      setImageDeleteConfirmDialogOpen(false)
+      setImageDeleteTargetId(null)
       // 成功ダイアログ表示
       setImageDeleteResultType('success')
       setImageDeleteResultMessage(`${targetImageName}を削除しました。`)
       setImageDeleteResultDialogOpen(true)
     } catch (error) {
       console.error('画像削除エラー', error)
+      setImageDeleteConfirmDialogOpen(false)
+      setImageDeleteTargetId(null)
       // エラーダイアログを表示
       setImageDeleteResultType('error')
       setImageDeleteResultMessage(error instanceof Error ? error.message : '画像削除中にエラーが発生しました。')
       setImageDeleteResultDialogOpen(true)
     }
+  }
+
+  // 画像削除確認ダイアログのキャンセルハンドラ
+  const handleImageDeleteCancel = () => {
+    setImageDeleteConfirmDialogOpen(false)
+    setImageDeleteTargetId(null)
   }
 
   // 画像削除結果ダイアログの確認ハンドラ
@@ -360,22 +385,22 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                 color="error"
                 fullWidth
                 startIcon={<CloseIcon />}
-                onClick={() => setConfirmDialogOpen(true)}
+                onClick={() => setStoreCloseConfirmDialogOpen(true)}
                 sx={{ py: 2, fontWeight: "bold" }}
               >
                 店舗を閉店する
               </Button>
             </Box>
             {/* 閉店確認ダイアログ */}
-            <StoreCloseConfirmDialog
-              open={confirmDialogOpen}
+            <ConfirmDialog
+              open={storeCloseConfirmDialogOpen}
               title="店舗閉店の確認"
               message="以下の店舗を閉店状態にします。よろしいでしょうか？"
               targetName={store?.branch_name
                 ? `${store.store_name} ${store.branch_name}`
                 : store?.store_name || ''
               }
-              onClose={() => setConfirmDialogOpen(false)}
+              onClose={() => setStoreCloseConfirmDialogOpen(false)}
               onConfirm={handleCloseStore}
               isLoading={isClosing}
               confirmButtonText="閉店する"
@@ -392,6 +417,20 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
                 : store?.store_name || ''
               }
               onConfirm={handleResultConfirm}
+            />
+            {/* 画像削除確認ダイアログ */}
+            <ConfirmDialog
+              open={imageDeleteConfirmDialogOpen}
+              title="画像情報削除確認"
+              message="以下の画像を削除します。宜しいでしょうか？"
+              targetName={selectedImage
+                ? `【${MENU_TYPE_LABELS[selectedImage.menu_type]}】${selectedImage.menu_name}`
+                : '不明画像'}
+              onClose={handleImageDeleteCancel}
+              onConfirm={handleImageDeleteConfirm}
+              isLoading={isDeletingImage}
+              confirmButtonText="削除する"
+              confirmButtonColor="error"
             />
             {/* 画像削除結果ダイアログ */}
             <ResultDialog
