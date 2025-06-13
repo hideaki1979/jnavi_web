@@ -3,11 +3,11 @@
 import { getStoreToppingCalls } from "@/app/api/stores"
 import { SelectedToppingInfo } from "@/types/Image"
 import { SimulationToppingOption } from "@/types/ToppingCall"
-import { imageUploadFormSchema, ImageUploadFormValues } from "@/validations/image"
+import { imageUploadFormSchema, ImageUploadFormValues, validateFileSizeBeforeCompression } from "@/validations/image"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery } from "@tanstack/react-query"
 import { useParams, useRouter } from "next/navigation"
-import React, { useRef, useState } from "react"
+import React, { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import imageCompression from "browser-image-compression"
 import { uploadStoreImage } from "@/app/api/images"
@@ -37,7 +37,6 @@ export default function StoreImageUploadPage() {
     const [uploading, setUploading] = useState(false)
     const [errorMsg, setErrorMsg] = useState<string>("")
     const [successMsg, setSuccessMsg] = useState<string>("")
-    const inputRef = useRef<HTMLInputElement>(null)
     // AuthStoreからユーザー情報を取得
     const user = useAuthStore((state) => state.user)
 
@@ -67,9 +66,13 @@ export default function StoreImageUploadPage() {
         const file = e.target.files?.[0]
         if (!file) return
         try {
+            // ファイル圧縮前のサイズチェック
+            validateFileSizeBeforeCompression(file)
+
+            // ファイル画像圧縮処理
             const compressed = await imageCompression(file, {
                 maxWidthOrHeight: 1080,
-                maxSizeMB: 2,
+                maxSizeMB: 5,
                 useWebWorker: true,
             })
             // Blob→File型に変換
@@ -107,15 +110,17 @@ export default function StoreImageUploadPage() {
 
             // ユーザー認証チェックを追加
             if (!user?.uid) {
-                setErrorMsg("ユーザー認証が必要です")
+                setErrorMsg("未認証なので、ログインしてください")
                 setUploading(false)
-                return
+                setTimeout(() => router.replace('/auth/login'), 1500)
+                return // ここで処理を停止
             }
+
             const base64 = await new Promise<string>((resolve, reject) => {
                 const reader = new FileReader()
                 reader.onload = () => resolve(reader.result as string)
                 reader.onerror = reject
-                reader.readAsDataURL(values.imageFile)
+                reader.readAsDataURL(values.imageFile!)
             })
             const toppingSelections = Object.entries(selectedToppingInfo).map(([toppingId, info]) => ({
                 topping_id: Number(toppingId),
@@ -180,16 +185,15 @@ export default function StoreImageUploadPage() {
                         className="w-full mb-2">
                         画像を選択
                         <input
-                            ref={inputRef}
                             type="file"
-                            accept="image/*"
+                            accept="image/jpeg,image/png,image/gif,image/webp"
                             hidden
                             onChange={handleImageChange}
                         />
                     </Button>
                 )}
                 {errors.imageFile && (
-                    <Typography color="error" variant="caption">
+                    <Typography color="error" variant='body2' className='mt-2'>
                         {errors.imageFile.message}
                     </Typography>
                 )}
