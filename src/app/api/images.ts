@@ -13,6 +13,7 @@ const api = ApiClient.getInstance()
 export const uploadStoreImage = async (storeId: string | number, imageData: StoreImageUploadData) => {
     try {
         const res = await api.post(`/stores/${storeId}/images`, imageData)
+        console.log("動作確認テスト成功しました。")
         return res.data
     } catch (error) {
         throw ApiClient.handlerError(

@@ -1,3 +1,4 @@
+import { ApiClientError, ApiErrorResponse } from "@/types/validation"
 import axios, { AxiosError, AxiosInstance } from "axios"
 
 /**
@@ -24,29 +25,35 @@ class ApiClient {
     }
 
     /**
-     * エラーハンドラー
+     * エラーハンドラー - express-validationのエラー情報に対応
      */
     public static handlerError(
         error: unknown,
         defaultMessage: string = "予期せぬエラーが発生しました。"
-    ): Error {
+    ): ApiClientError {
         if (axios.isAxiosError(error)) {
-            const axiosError = error as AxiosError<{ message?: string, errors?: unknown }>
-            const err = new Error(
-                `API呼出中にエラーが発生：${axiosError.response?.data?.message || axiosError.message}`
-            )
-            if (axiosError.response?.data.errors) {
-                // errors配列をErrorオブジェクトに追加
-                (err as Error & { errors?: unknown }).errors = axiosError.response.data.errors
+            const axiosError = error as AxiosError<ApiErrorResponse>
+            const responseData = axiosError.response?.data
+
+            // APIからのエラーメッセージを優先
+            const errorMessage = responseData?.message || axiosError.message
+
+            const customError = new Error(
+                `API呼出中にエラー発生：${errorMessage}`
+            ) as ApiClientError
+
+            // express-validationのエラー配列があれば追加
+            if (responseData?.errors && Array.isArray(responseData.errors)) {
+                customError.errors = responseData.errors
             }
-            return err as Error & { errors?: unknown }
+            return customError
         }
 
         if (error instanceof Error) {
-            return new Error(`${defaultMessage}：${error.message}`)
+            return new Error(`${defaultMessage}：${error.message}`) as ApiClientError
         }
 
-        return new Error(defaultMessage)
+        return new Error(defaultMessage) as ApiClientError
     }
 }
 

@@ -17,6 +17,8 @@ import LoadingErrorContainer from '@/components/feedback/LoadingErrorContainer'
 import { SimulationToppingOption } from '@/types/ToppingCall'
 import { ToppingOptionRadioSelector } from '@/components/toppingCallOptions/ToppingOptionRadioSelector'
 import { UI_CONSTANTS } from '@/constants/ui'
+import { useApiError } from '@/hooks/useApiError'
+import { ValidationErrorList } from '@/components/feedback/validationErrorList'
 
 const MENU_TYPE = [
     { label: '通常メニュー', value: '1' },
@@ -33,8 +35,10 @@ export default function ImageUpdatePage() {
     const [imageUrl, setImageUrl] = useState('')
     const [selectedToppingInfo, setSelectedToppingInfo] = useState<Record<string, SelectedToppingInfo>>({})
     const [updating, setUpdating] = useState<boolean>(false)
-    const [errorMessage, setErrorMessage] = useState('')
     const [successMsg, setSuccessMsg] = useState<string>("")
+
+    // API エラーハンドリング
+    const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
 
     // react-hook-form+zod定義
     const { control, handleSubmit, setValue, formState: { errors }, reset } = useForm<ImageEditFormValues>({
@@ -69,7 +73,6 @@ export default function ImageUpdatePage() {
     const toppingOptions: SimulationToppingOption[] = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
 
     useEffect(() => {
-        console.log(imageData)
         if (imageData) {
             const data = imageData
 
@@ -117,7 +120,7 @@ export default function ImageUpdatePage() {
             setImageUrl(URL.createObjectURL(compressedFile))
             setValue("imageFile", compressedFile, { shouldValidate: true })
         } catch (err) {
-            setErrorMessage(err instanceof Error ? err.message : '画像の最適化に失敗しました。')
+            setError(err instanceof Error ? err : new Error('画像の最適化に失敗しました'))
         }
     }
 
@@ -135,13 +138,13 @@ export default function ImageUpdatePage() {
         try {
             // 画像ファイル必須チェック
             if (!values.imageFile && !imageUrl) {
-                setErrorMessage("画像ファイルは必須です")
+                setError(new Error("画像ファイルは必須です"))
                 setUpdating(false)
                 return
             }
             // ユーザー認証チェック
             if (!user?.uid) {
-                setErrorMessage("未認証なので、ログインしてください")
+                setError(new Error("未認証なので、ログインしてください"))
                 setUpdating(false)
                 setTimeout(() => router.replace('/auth/login'), 1500)
                 return
@@ -173,10 +176,11 @@ export default function ImageUpdatePage() {
                 ...(toppingSelections.length > 0 ? { topping_selections: toppingSelections } : {})
             }
             await updateStoreImage(storeId, imageId, editImageData)
+            clearErrors() // 成功時はエラーをクリア
             setSuccessMsg('画像情報更新が完了しました')
             setTimeout(() => router.replace(`/stores/map`), 1500)
         } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : "画像情報更新処理に失敗")
+            setError(error)
         } finally {
             setUpdating(false)
         }
@@ -313,6 +317,10 @@ export default function ImageUpdatePage() {
                     {successMsg}
                 </Alert>
             )}
+
+            {/* バリデーションエラー表示 */}
+            <ValidationErrorList errors={validationErrors} />
+
             {/* 更新ボタン */}
             <Box display="flex" justifyContent="center" mt={4}>
                 <Button
