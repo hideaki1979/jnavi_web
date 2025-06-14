@@ -7,11 +7,9 @@ class ApiClientErrorImpl extends Error implements ApiClientError {
     public cause?: unknown
 
     constructor(message: string, errors?: ExpressValidationError[], cause?: unknown) {
-        super(message)
+        super(message, { cause })
         this.name = "ApiClientError"
         this.errors = errors
-        this.cause = cause
-
     }
 }
 
