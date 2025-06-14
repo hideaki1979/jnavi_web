@@ -3,9 +3,11 @@
 import { createStore } from "@/app/api/stores"
 import { getToppingCallOptions } from "@/app/api/toppingCalls"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
+import { ValidationErrorList } from "@/components/feedback/validationErrorList"
 import { StoreFormInputText } from "@/components/StoreFormInputText"
 import { StoreRegisterToppingCallsCheck } from "@/components/StoreRegisterToppingCalls"
 import StoreSwitch from "@/components/StoreSwitch"
+import { useApiError } from "@/hooks/useApiError"
 import { formattedToppingCalls } from "@/lib/toppingCallFormatter"
 import { FormattedToppingOptionIds, ResultToppingCall } from "@/types/ToppingCall"
 import { createToppingOptionHandler } from "@/utils/toppingOptionUtils"
@@ -39,12 +41,13 @@ const CreateStorePage = () => {
     const [selectedPreCallOptions, setSelectedPreCallOptions] = useState<FormattedToppingOptionIds>({})
     // 選択したトッピング・コール情報（着丼前）
     const [selectedPostCallOptions, setSelectedPostCallOptions] = useState<FormattedToppingOptionIds>({})
-    // submitエラー有無
-    const [submitError, setSubmitError] = useState<string | null>(null)
     // 登録完了メッセージ
     const [regSuccessMsg, setRegSuccessMsg] = useState<string | null>(null)
     // 登録処理時のローディング
     const [isSubmitLoading, setIsSubmitLoading] = useState(false)
+    // API エラーハンドリング
+    const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
+
     // ハンドラー関数を生成
     const handleChangePreCallOptionCheck = createToppingOptionHandler(setSelectedPreCallOptions)
     const handleChangePostCallOptionCheck = createToppingOptionHandler(setSelectedPostCallOptions)
@@ -112,12 +115,13 @@ const CreateStorePage = () => {
             }
 
             const res = await createStore(submitData)
+            clearErrors() // 成功時はエラーをクリア
             setRegSuccessMsg(res)
             setIsSubmitLoading(false)
             setTimeout(() => router.replace('/stores/map'), 2500)
         } catch (error) {
             console.error("店舗登録処理でエラー", error)
-            setSubmitError("店舗登録処理に失敗しました。")
+            setError(error)
             setIsSubmitLoading(false)
         }
     }
@@ -180,9 +184,11 @@ const CreateStorePage = () => {
             <StoreSwitch name="is_all_increased" control={control} label="全マシコール有無" />
             <StoreSwitch name="is_lot" control={control} label="ロット制有無" />
             <StoreFormInputText name="lot_detail" control={control} label="ロット詳細情報" errors={errors} margin="normal" multiline rows={3} />
-            {submitError && (
-                <Alert severity="error" className="my-4" variant="filled">{submitError}</Alert>
+            {errorMessage && (
+                <Alert severity="error" className="my-4" variant="filled">{errorMessage}</Alert>
             )}
+            {/* バリデーションエラー表示 */}
+            <ValidationErrorList errors={validationErrors} />
             {regSuccessMsg && (
                 <Alert severity="success" className="my-4" variant="filled">{regSuccessMsg}</Alert>
             )}

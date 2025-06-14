@@ -1,4 +1,17 @@
+import { ApiClientError, ApiErrorResponse, ExpressValidationError } from "@/types/validation"
 import axios, { AxiosError, AxiosInstance } from "axios"
+
+// カスタムエラークラスを追加
+class ApiClientErrorImpl extends Error implements ApiClientError {
+    public errors?: ExpressValidationError[] | undefined
+    public cause?: unknown
+
+    constructor(message: string, errors?: ExpressValidationError[], cause?: unknown) {
+        super(message, { cause })
+        this.name = "ApiClientError"
+        this.errors = errors
+    }
+}
 
 /**
  * axiosを用いたAPIクライアントのシングルトン実装。
@@ -24,29 +37,38 @@ class ApiClient {
     }
 
     /**
-     * エラーハンドラー
+     * エラーハンドラー - express-validationのエラー情報に対応
      */
     public static handlerError(
         error: unknown,
         defaultMessage: string = "予期せぬエラーが発生しました。"
-    ): Error {
+    ): ApiClientError {
         if (axios.isAxiosError(error)) {
-            const axiosError = error as AxiosError<{ message?: string, errors?: unknown }>
-            const err = new Error(
-                `API呼出中にエラーが発生：${axiosError.response?.data?.message || axiosError.message}`
+            const axiosError = error as AxiosError<ApiErrorResponse>
+            const responseData = axiosError.response?.data
+
+            // APIからのエラーメッセージを優先
+            const errorMessage = responseData?.message || axiosError.message
+
+            // カスタムエラークラスを使用する
+            const customError = new ApiClientErrorImpl(
+                `API呼出中にエラー発生：${errorMessage}`,
+                responseData?.errors,
+                axiosError  // 元のAxiosErrorを保持
             )
-            if (axiosError.response?.data.errors) {
-                // errors配列をErrorオブジェクトに追加
-                (err as Error & { errors?: unknown }).errors = axiosError.response.data.errors
+
+            // express-validationのエラー配列があれば追加
+            if (responseData?.errors && Array.isArray(responseData.errors)) {
+                customError.errors = responseData.errors
             }
-            return err as Error & { errors?: unknown }
+            return customError
         }
 
         if (error instanceof Error) {
-            return new Error(`${defaultMessage}：${error.message}`)
+            return new ApiClientErrorImpl(`${defaultMessage}：${error.message}`, undefined, error)
         }
 
-        return new Error(defaultMessage)
+        return new ApiClientErrorImpl(defaultMessage)
     }
 }
 

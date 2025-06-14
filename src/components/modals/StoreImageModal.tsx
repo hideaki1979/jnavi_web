@@ -50,7 +50,7 @@ export default function StoreImageModal({
             <DialogTitle sx={{ p: 4 }}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                     {/* 左側：編集・削除アイコン（所有者のみ表示） */}
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, marginBottom: 2 }}>
                         {isOwner && (
                             <>
                                 <Tooltip
