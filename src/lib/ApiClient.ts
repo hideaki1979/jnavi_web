@@ -1,5 +1,19 @@
-import { ApiClientError, ApiErrorResponse } from "@/types/validation"
+import { ApiClientError, ApiErrorResponse, ExpressValidationError } from "@/types/validation"
 import axios, { AxiosError, AxiosInstance } from "axios"
+
+// カスタムエラークラスを追加
+class ApiClientErrorImpl extends Error implements ApiClientError {
+    public errors?: ExpressValidationError[] | undefined
+    public cause?: unknown
+
+    constructor(message: string, errors?: ExpressValidationError[], cause?: unknown) {
+        super(message)
+        this.name = "ApiClientError"
+        this.errors = errors
+        this.cause = cause
+
+    }
+}
 
 /**
  * axiosを用いたAPIクライアントのシングルトン実装。
@@ -38,9 +52,12 @@ class ApiClient {
             // APIからのエラーメッセージを優先
             const errorMessage = responseData?.message || axiosError.message
 
-            const customError = new Error(
-                `API呼出中にエラー発生：${errorMessage}`
-            ) as ApiClientError
+            // カスタムエラークラスを使用する
+            const customError = new ApiClientErrorImpl(
+                `API呼出中にエラー発生：${errorMessage}`,
+                responseData?.errors,
+                axiosError  // 元のAxiosErrorを保持
+            )
 
             // express-validationのエラー配列があれば追加
             if (responseData?.errors && Array.isArray(responseData.errors)) {
@@ -50,10 +67,10 @@ class ApiClient {
         }
 
         if (error instanceof Error) {
-            return new Error(`${defaultMessage}：${error.message}`) as ApiClientError
+            return new ApiClientErrorImpl(`${defaultMessage}：${error.message}`, undefined, error)
         }
 
-        return new Error(defaultMessage) as ApiClientError
+        return new ApiClientErrorImpl(defaultMessage)
     }
 }
 
