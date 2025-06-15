@@ -48,12 +48,17 @@ export const updateStoreImage = async (storeId: string | number, imageId: string
  * - 画像の削除
  * @param storeId 店舗ID
  * @param imageId 画像ID
+ * @param idToken 認証用IDトークン
  * @returns APIレスポンス
  */
 
-export const deleteStoreImage = async (storeId: string | number, imageId: string | number) => {
+export const deleteStoreImage = async (storeId: string | number, imageId: string | number, idToken: string) => {
     try {
-        const res = await api.delete(`/stores/${storeId}/images/${imageId}`)
+        const res = await api.delete(`/stores/${storeId}/images/${imageId}`, {
+            headers: {
+                'Authorization': `Bearer ${idToken}`
+            }
+        })
         return res.data
     } catch (error) {
         throw ApiClient.handlerError(
@@ -62,7 +67,6 @@ export const deleteStoreImage = async (storeId: string | number, imageId: string
         )
     }
 }
-
 
 /**
  * 店舗IDと画像IDを指定して画像情報を取得するAPI通信を行う関数。
