@@ -14,6 +14,7 @@ import { ConfirmDialog } from "./modals/ConfirmDialog";
 import { ResultDialog } from "./modals/ResultDialog";
 import { useAuthStore } from "@/lib/AuthStore";
 import { deleteStoreImage } from "@/app/api/images";
+import { auth } from "@/lib/firebase";
 
 type StoreInfoDrawerProps = {
   open: boolean;
@@ -150,7 +151,9 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
       : '不明画像';
 
     try {
-      await deleteStoreImage(String(store.id), imageDeleteTargetId!)
+      const idToken = await auth.currentUser?.getIdToken()
+      if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
+      await deleteStoreImage(String(store.id), imageDeleteTargetId!, idToken)
       // キャッシュを更新して画像リストを再取得
       queryClient.invalidateQueries({ queryKey: ['imageData', store?.id] })
       setModalOpen(false)
