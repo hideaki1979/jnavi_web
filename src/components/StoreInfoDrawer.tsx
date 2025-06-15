@@ -151,7 +151,8 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
       : '不明画像';
 
     try {
-      const idToken = await auth.currentUser?.getIdToken()
+      if (!auth.currentUser) throw new Error('ユーザーがログインしていません。再度ログインしてください。')
+      const idToken = await auth.currentUser.getIdToken()
       if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
       await deleteStoreImage(String(store.id), imageDeleteTargetId!, idToken)
       // キャッシュを更新して画像リストを再取得

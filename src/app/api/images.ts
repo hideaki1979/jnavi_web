@@ -48,6 +48,7 @@ export const updateStoreImage = async (storeId: string | number, imageId: string
  * - 画像の削除
  * @param storeId 店舗ID
  * @param imageId 画像ID
+ * @param idToken 認証用IDトークン
  * @returns APIレスポンス
  */
 
@@ -55,7 +56,6 @@ export const deleteStoreImage = async (storeId: string | number, imageId: string
     try {
         const res = await api.delete(`/stores/${storeId}/images/${imageId}`, {
             headers: {
-                "Content-Type": 'application/json',
                 'Authorization': `Bearer ${idToken}`
             }
         })
