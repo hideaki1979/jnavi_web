@@ -16,7 +16,7 @@ interface SpeechSynthesisState {
     isInitialized: boolean;
     availableVoices: SpeechSynthesisVoice[];
     currentUtterance: SpeechSynthesisUtterance | null;
-    stateMonitorInterval: NodeJS.Timeout | null;
+    stateMonitorInterval: ReturnType<typeof setInterval> | null;
 }
 
 const speechState: SpeechSynthesisState = {

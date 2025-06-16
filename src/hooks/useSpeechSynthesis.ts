@@ -6,7 +6,6 @@ interface UseSpeechSynthesisOptions {
     pitch?: number;
     volume?: number;
     voice?: SpeechSynthesisVoice;
-    autoDetectLanguage?: boolean;
 }
 
 interface UseSpeechSynthesisReturn {
