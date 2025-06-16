@@ -54,11 +54,14 @@ function checkSpeechSynthesisSupport(): boolean {
     return true
 }
 
+let initPromise: Promise<void> | null = null
 /**
  * Speech Synthesis APIの初期化
- */
+*/
 function initializeSpeechSynthesis(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    if (initPromise) return initPromise
+
+    initPromise = new Promise((resolve, reject) => {
         if (speechState.isInitialized) {
             resolve()
             return
@@ -107,6 +110,7 @@ function initializeSpeechSynthesis(): Promise<void> {
         }
         loadVoices();
     })
+    return initPromise
 }
 
 /**
@@ -395,7 +399,7 @@ function ensureSpeechCleanup(): void {
     const hasApiState = window.speechSynthesis.speaking || window.speechSynthesis.pending
     if (hasInternalState || hasApiState) {
         window.speechSynthesis.cancel()
-        clearSpeechState()
+        // クリアは onend または state monitor に委ねる
     }
 }
 
