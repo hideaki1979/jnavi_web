@@ -69,6 +69,7 @@ function initializeSpeechSynthesis(): Promise<void> {
 
         if (!checkSpeechSynthesisSupport()) {
             speechState.isSupported = false
+            initPromise = null  // ← 次回呼び出しで再度初期化できるようにリセット
             reject(new Error('Speech Synthesis APIがサポートされてません'))
             return
         }
