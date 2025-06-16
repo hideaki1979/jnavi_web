@@ -82,7 +82,7 @@ function initializeSpeechSynthesis(): Promise<void> {
                 const voicesChangedHandler = () => {
                     const voicesAfterChange = window.speechSynthesis.getVoices()
                     if (voicesAfterChange.length > 0) {
-                        speechState.availableVoices = voices
+                        speechState.availableVoices = voicesAfterChange
                         speechState.isInitialized = true
                         window.speechSynthesis.removeEventListener('voiceschanged', voicesChangedHandler)
                         resolve()
@@ -96,7 +96,7 @@ function initializeSpeechSynthesis(): Promise<void> {
                     window.speechSynthesis.removeEventListener('voiceschanged', voicesChangedHandler)
                     speechState.isInitialized = true
                     resolve()
-                })
+                }, 5000)
             }
         }
         loadVoices();

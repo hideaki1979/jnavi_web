@@ -1,7 +1,7 @@
 "use client"
 
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
-import { ArrowForward, PauseCircle, PlayCircle } from "@mui/icons-material";
+import { ArrowForward, PauseCircle, PlayCircle, StopCircle } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/navigation";
 interface CallResultScreenProps {
@@ -22,15 +22,20 @@ interface CallResultScreenProps {
 export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultScreenProps) {
     const router = useRouter()
     const theme = useTheme()
-    const { speak, cancel, isSpeaking, isSupported } = useSpeechSynthesis({
+    const { speak, cancel, pause, resume, isSpeaking, isPaused, isSupported } = useSpeechSynthesis({
         rate: 0.7,
         pitch: 1.0,
         volume: 1.0
     })
 
     async function handleSpeech() {
-        if (isSpeaking) {
-            cancel()
+        if (isSpeaking && !isPaused) {
+            pause()
+            return
+        }
+
+        if (isPaused) {
+            resume()
             return
         }
 
@@ -39,6 +44,10 @@ export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultSc
         } catch (error) {
             console.error('音声合成処理エラー：', error)
         }
+    }
+
+    function handleStop() {
+        cancel()
     }
 
     function handleNext() {
@@ -63,12 +72,36 @@ export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultSc
                 <Typography variant="h6" fontWeight="bold" sx={{ mb: 4, textAlign: "center" }}>
                     事前コール内容
                 </Typography>
-                <Box display="flex" alignItems="center" mb={4}>
-                    <IconButton onClick={handleSpeech} color="primary" size="large" aria-label="音声再生">
-                        {isSpeaking ? <PauseCircle fontSize="large" /> : <PlayCircle fontSize="large" />}
+                <Box display="flex" alignItems="center" mb={4} gap={2}>
+                    <IconButton
+                        onClick={handleSpeech}
+                        color="primary"
+                        size="large"
+                        aria-label={
+                            isSpeaking && !isPaused ? '音声一時停止'
+                                : isPaused ? '音声再開'
+                                    : "音声再生"
+                        }>
+                        {isSpeaking && !isPaused ? (
+                            <PauseCircle fontSize="large" />
+                        ) : (<PlayCircle fontSize="large" />)}
                     </IconButton>
-                    <Typography variant="body1" ml={4}>
-                        {isSupported ? "音声読み上げ" : "音声合成非対応ブラウザ"}
+                    {(isSpeaking || isPaused) && (
+                        <IconButton
+                            onClick={handleStop} color='secondary'
+                            size='large' aria-label="音声停止"
+                        >
+                            <StopCircle fontSize='large' />
+                        </IconButton>
+                    )}
+                    <Typography variant="body1">
+                        {isSupported ? (
+                            isSpeaking && !isPaused ? '再生中（クリックで一時停止）'
+                                : isPaused ? '一時停止中（クリックで再開）'
+                                    : '音声読み上げ'
+                        ) : (
+                            '音声合成非対応ブラウザ'
+                        )}
                     </Typography>
                 </Box>
                 <Typography variant="body1" mb={4} textAlign="center" whiteSpace="pre-line" lineHeight={2}>

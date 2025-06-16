@@ -139,7 +139,7 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}): Use
         if (!isSupported || !isPaused) return
 
         resumeSpeech()
-        setIsPaused(true)
+        setIsPaused(false)
     }, [isSupported, isPaused])
 
     const setVoice = useCallback((voice: SpeechSynthesisVoice | null) => {
