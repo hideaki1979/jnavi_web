@@ -187,11 +187,8 @@ export async function speakText(options: SpeakOptions): Promise<SpeechSynthesisU
             options.onError?.(new Error('Speech Synthesisはサポート対象外です'))
             return null
         }
-        // 既存の音声合成を停止
-        if (speechState.currentUtterance) {
-            window.speechSynthesis.cancel()
-            clearSpeechState()
-        }
+        // 統合されたクリーンアップ処理
+        ensureSpeechCleanup()
 
         const {
             text,
@@ -278,10 +275,7 @@ export async function speakText(options: SpeakOptions): Promise<SpeechSynthesisU
                 console.warn('onErrorハンドラーでエラーが発生しました:', error)
             }
         }
-        // 音声合成の実行
-        if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-            window.speechSynthesis.cancel()
-        }
+
         window.speechSynthesis.speak(utterance)
 
         return utterance
@@ -389,6 +383,19 @@ export async function getJapaneseVoices(): Promise<SpeechSynthesisVoice[]> {
     } catch (error) {
         console.warn('日本語音声一覧の取得に失敗しました:', error)
         return []
+    }
+}
+
+/**
+ * 音声合成の包括的なクリーンアップ
+ * 内部状態とAPI状態の両方をチェックして確実にクリアする
+ */
+function ensureSpeechCleanup(): void {
+    const hasInternalState = speechState.currentUtterance !== null
+    const hasApiState = window.speechSynthesis.speaking || window.speechSynthesis.pending
+    if (hasInternalState || hasApiState) {
+        window.speechSynthesis.cancel()
+        clearSpeechState()
     }
 }
 
