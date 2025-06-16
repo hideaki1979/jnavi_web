@@ -1,11 +1,10 @@
 "use client"
 
-import { cancelSpeech, speakText } from "@/lib/speech-synthesis";
-import { ArrowForward, PauseCircle, PlayCircle } from "@mui/icons-material";
+import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
+import { cleanupSpeechSynthesis } from "@/lib/speech-synthesis";
+import { ArrowForward, PauseCircle, PlayCircle, StopCircle } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-
 interface CallResultScreenProps {
     callText: string;
     nextHref: string;
@@ -22,30 +21,39 @@ interface CallResultScreenProps {
  * - 音声合成機能がサポートされていないブラウザでは、音声合成非対応ブラウザというテキストを表示
  */
 export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultScreenProps) {
-    const [isSpeaking, setIsSpeaking] = useState(false)
-    const [isSpeechSupported, setIsSpeechSupported] = useState(false)
     const router = useRouter()
     const theme = useTheme()
+    const { speak, cancel, pause, resume, isSpeaking, isPaused, isSupported } = useSpeechSynthesis({
+        rate: 0.8,
+        pitch: 1.0,
+        volume: 1.0
+    })
 
-    useEffect(() => {
-        setIsSpeechSupported(typeof window !== "undefined" && !!window.speechSynthesis)
-    }, [])
-
-    function handleSpeech() {
-        if (isSpeaking) {
-            cancelSpeech()
-            setIsSpeaking(false)
+    async function handleSpeech() {
+        if (isSpeaking && !isPaused) {
+            pause()
             return
         }
-        setIsSpeaking(true)
-        speakText({
-            text: callText,
-            onEnd: () => setIsSpeaking(false),
-            onError: () => setIsSpeaking(false)
-        })
+
+        if (isPaused) {
+            resume()
+            return
+        }
+
+        try {
+            await speak(callText)
+        } catch (error) {
+            console.error('音声合成処理エラー：', error)
+        }
+    }
+
+    function handleStop() {
+        cancel()
     }
 
     function handleNext() {
+        // ページ遷移前に音声合成をクリーンアップ
+        cleanupSpeechSynthesis()
         const url = nextQuery
             ? `${nextHref}?${new URLSearchParams(nextQuery).toString()}`
             : nextHref
@@ -67,12 +75,36 @@ export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultSc
                 <Typography variant="h6" fontWeight="bold" sx={{ mb: 4, textAlign: "center" }}>
                     事前コール内容
                 </Typography>
-                <Box display="flex" alignItems="center" mb={4}>
-                    <IconButton onClick={handleSpeech} color="primary" size="large" aria-label="音声再生">
-                        {isSpeaking ? <PauseCircle fontSize="large" /> : <PlayCircle fontSize="large" />}
+                <Box display="flex" alignItems="center" mb={4} gap={2}>
+                    <IconButton
+                        onClick={handleSpeech}
+                        color="primary"
+                        size="large"
+                        aria-label={
+                            isSpeaking && !isPaused ? '音声一時停止'
+                                : isPaused ? '音声再開'
+                                    : "音声再生"
+                        }>
+                        {isSpeaking && !isPaused ? (
+                            <PauseCircle fontSize="large" />
+                        ) : (<PlayCircle fontSize="large" />)}
                     </IconButton>
-                    <Typography variant="body1" ml={4}>
-                        {isSpeechSupported ? "音声読み上げ" : "音声合成非対応ブラウザ"}
+                    {(isSpeaking || isPaused) && (
+                        <IconButton
+                            onClick={handleStop} color='secondary'
+                            size='large' aria-label="音声停止"
+                        >
+                            <StopCircle fontSize='large' />
+                        </IconButton>
+                    )}
+                    <Typography variant="body1">
+                        {isSupported ? (
+                            isSpeaking && !isPaused ? '再生中（クリックで一時停止）'
+                                : isPaused ? '一時停止中（クリックで再開）'
+                                    : '音声読み上げ'
+                        ) : (
+                            '音声合成非対応ブラウザ'
+                        )}
                     </Typography>
                 </Box>
                 <Typography variant="body1" mb={4} textAlign="center" whiteSpace="pre-line" lineHeight={2}>

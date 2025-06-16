@@ -1,9 +1,10 @@
 "use client"
 
+import { useResponsive } from "@/hooks/useResponsive";
 import { useAuthStore } from "@/lib/AuthStore";
 import { auth } from "@/lib/firebase";
 import { AccountCircle, AddBusiness, Logout, Menu as MenuIcon, PersonAdd, School } from "@mui/icons-material";
-import { AppBar, Box, Button, IconButton, Menu, MenuItem, Toolbar, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { AppBar, Box, Button, IconButton, Menu, MenuItem, Toolbar, Typography, useTheme } from "@mui/material";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -23,7 +24,7 @@ interface HeaderProps {
 export function Header({ title = "J-Navi" }: HeaderProps) {
     const router = useRouter()
     const theme = useTheme()
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+    const { isMobile } = useResponsive()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
     // Zustandから認証状態を取得
