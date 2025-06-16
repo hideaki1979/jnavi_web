@@ -66,8 +66,8 @@ export default function TicketMachinePage() {
     }
 
     return (
-        <Box p={4} bgcolor="#cac8c8" color="#000">
-            <Typography variant="h6" align="center" fontWeight="bold" mb={4}>
+        <Box px={4} py={6} bgcolor="#cac8c8" color="#000">
+            <Typography variant="h6" align="center" fontWeight="bold" mb={2}>
                 コールシミュレーション
             </Typography>
             {errorMsg && (

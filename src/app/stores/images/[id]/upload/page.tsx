@@ -16,6 +16,8 @@ import { Alert, Box, Button, CircularProgress, Divider, MenuItem, TextField, Typ
 import Image from "next/image"
 import { ToppingOptionRadioSelector } from "@/components/toppingCallOptions/ToppingOptionRadioSelector"
 import { useAuthStore } from "@/lib/AuthStore"
+import { ValidationErrorList } from "@/components/feedback/validationErrorList"
+import { useApiError } from "@/hooks/useApiError"
 
 const MENU_TYPE = [
     { label: "通常メニュー", value: "1" },
@@ -35,7 +37,8 @@ export default function StoreImageUploadPage() {
     const [imageUrl, setImageUrl] = useState<string>("")
     const [selectedToppingInfo, setSelectedToppingInfo] = useState<Record<string, SelectedToppingInfo>>({})
     const [uploading, setUploading] = useState(false)
-    const [errorMsg, setErrorMsg] = useState<string>("")
+    // API エラーハンドリング
+    const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
     const [successMsg, setSuccessMsg] = useState<string>("")
     // AuthStoreからユーザー情報を取得
     const user = useAuthStore((state) => state.user)
@@ -86,7 +89,7 @@ export default function StoreImageUploadPage() {
             setImageUrl(URL.createObjectURL(compressedFile))
             setValue("imageFile", compressedFile, { shouldValidate: true })
         } catch (error) {
-            setErrorMsg(error instanceof Error ? error.message : "画像の最適化に失敗しました")
+            setError(error instanceof Error ? error.message : "画像の最適化に失敗しました")
         }
     }
 
@@ -103,14 +106,14 @@ export default function StoreImageUploadPage() {
         setUploading(true)
         try {
             if (!values.imageFile) {
-                setErrorMsg("画像ファイルは必須です")
+                setError("画像ファイルは必須です")
                 setUploading(false)
                 return
             }
 
             // ユーザー認証チェックを追加
             if (!user?.uid) {
-                setErrorMsg("未認証なので、ログインしてください")
+                setError("未認証なので、ログインしてください")
                 setUploading(false)
                 setTimeout(() => router.replace('/auth/login'), 1500)
                 return // ここで処理を停止
@@ -138,11 +141,11 @@ export default function StoreImageUploadPage() {
             }
 
             await uploadStoreImage(id, uploadImageData)
-
+            clearErrors()
             setSuccessMsg("画像ファイルアップロードが成功しました。")
             setTimeout(() => router.push('/stores/map'), 2500)
         } catch (error) {
-            setErrorMsg(error instanceof Error ? error.message : "画像アップロードに失敗しました")
+            setError(error)
         } finally {
             setUploading(false)
         }
@@ -247,11 +250,14 @@ export default function StoreImageUploadPage() {
                 </>
             )}
             {/* エラーメッセージ表示 */}
-            {errorMsg && (
+            {errorMessage && (
                 <Alert severity="error" sx={{ width: "100%", mb: 4 }}>
-                    {errorMsg}
+                    {errorMessage}
                 </Alert>
             )}
+
+            {/* バリデーションエラー表示 */}
+            <ValidationErrorList errors={validationErrors} />
 
             {/* 成功メッセージ表示 */}
             {successMsg && (

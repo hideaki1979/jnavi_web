@@ -3,10 +3,12 @@
 import { getStoreById, updateStore } from "@/app/api/stores"
 import { getToppingCallOptions } from "@/app/api/toppingCalls"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
+import { ValidationErrorList } from "@/components/feedback/validationErrorList"
 import { StoreFormInputText } from "@/components/StoreFormInputText"
 import { StoreRegisterToppingCallsCheck } from "@/components/StoreRegisterToppingCalls"
 import { StoreSubmitButton } from "@/components/StoreSubmitButton"
 import StoreSwitch from "@/components/StoreSwitch"
+import { useApiError } from "@/hooks/useApiError"
 import { formattedToppingCalls } from "@/lib/toppingCallFormatter"
 import { FormattedToppingOptionIds, ResultToppingCall } from "@/types/ToppingCall"
 import { createToppingOptionHandler } from "@/utils/toppingOptionUtils"
@@ -46,9 +48,10 @@ export default function StoreUpdatePages() {
     const handleChangePostCallOptionCheck = createToppingOptionHandler(setSelectedPostCallOptions)
 
     // Submit関連
-    const [submitError, setSubmitError] = useState<string | null>(null)
     const [isSubmitLoading, setIsSubmitLoading] = useState<boolean>(false)
     const [updateSuccessMsg, setUpdateSuccessMsg] = useState<string | null>(null)
+    // APIエラーハンドリング
+    const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
 
     // フォームの状態管理
     const { control, handleSubmit, formState: { errors }, reset } = useForm<StoreFormInput>({
@@ -100,8 +103,6 @@ export default function StoreUpdatePages() {
             const postToppingCalls = storeData.postCallFormattedIds || {}
             setSelectedPreCallOptions(preToppingCalls)
             setSelectedPostCallOptions(postToppingCalls)
-            // console.log("事前トッピング情報：", preToppingCalls)
-            // console.log("着丼前トッピング情報：", postToppingCalls)
         }
     }, [storeData, reset])
 
@@ -132,12 +133,13 @@ export default function StoreUpdatePages() {
             }
 
             const res = await updateStore(storeId, submitData)
+            clearErrors()
             setUpdateSuccessMsg(res)
             setIsSubmitLoading(false)
             setTimeout(() => router.replace(`/stores/map`), 1500)
         } catch (error) {
             console.error("店舗登録処理でエラー", error)
-            setSubmitError("店舗登録処理に失敗しました。")
+            setError(error)
             setIsSubmitLoading(false)
         }
     }
@@ -198,11 +200,14 @@ export default function StoreUpdatePages() {
                     />
                 </AccordionDetails>
             </Accordion>
-            {submitError && (
+            {/* エラーメッセージ表示 */}
+            {errorMessage && (
                 <Alert severity="error" className="my-4" variant="filled">
-                    {submitError}
+                    {errorMessage}
                 </Alert>
             )}
+            {/* バリデーションエラー表示 */}
+            <ValidationErrorList errors={validationErrors} />
             {updateSuccessMsg && (
                 <Alert severity="success" className="my-4" variant="filled">
                     {updateSuccessMsg}
