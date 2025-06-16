@@ -240,7 +240,10 @@ export async function speakText(options: SpeakOptions): Promise<SpeechSynthesisU
         }
 
         utterance.onend = () => {
-            clearSpeechState()
+            // 今再生中のUtteranceかを確認してから状態をクリア
+            if (speechState.currentUtterance === utterance) {
+                clearSpeechState()
+            }
             try {
                 onEnd?.()
             } catch (error) {
@@ -265,7 +268,10 @@ export async function speakText(options: SpeakOptions): Promise<SpeechSynthesisU
         }
 
         utterance.onerror = (event) => {
-            clearSpeechState()
+            if (speechState.currentUtterance === utterance) {
+                clearSpeechState()
+            }
+
             try {
                 onError?.(new Error(`音声合成エラー: ${event.error}`))
             } catch (error) {
