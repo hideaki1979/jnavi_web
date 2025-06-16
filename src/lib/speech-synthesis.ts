@@ -94,7 +94,12 @@ function initializeSpeechSynthesis(): Promise<void> {
                 // タイムアウト設定（5秒後に強制的に初期化完了とする）
                 setTimeout(() => {
                     window.speechSynthesis.removeEventListener('voiceschanged', voicesChangedHandler)
+                    // タイムアウト時にも現在利用可能な音声を取得
+                    const currentVoices = window.speechSynthesis.getVoices()
+                    speechState.availableVoices = currentVoices
                     speechState.isInitialized = true
+
+                    if (currentVoices.length === 0) console.warn('音声一覧の取得がタイムアウトしました。音声合成機能が制限される可能性があります。')
                     resolve()
                 }, 5000)
             }
@@ -133,8 +138,14 @@ export async function speakText(options: SpeakOptions): Promise<SpeechSynthesisU
         }
         // 既存の音声合成を停止
         if (speechState.currentUtterance) {
-            window.speechSynthesis.cancel()
-            speechState.currentUtterance = null
+            const previousUtterance = speechState.currentUtterance
+
+            // onendハンドラが呼ばれない場合に備えて、少し遅延させてから状態をクリア
+            setTimeout(() => {
+                if (speechState.currentUtterance === previousUtterance) {
+                    speechState.currentUtterance = null
+                }
+            }, 100)
         }
 
         const {
@@ -175,25 +186,45 @@ export async function speakText(options: SpeakOptions): Promise<SpeechSynthesisU
         // イベントハンドラーの設定
         utterance.onstart = () => {
             speechState.currentUtterance = utterance
-            onStart?.()
+            try {
+                onStart?.()
+            } catch (error) {
+                console.warn('onStartハンドラーでエラーが発生しました:', error)
+            }
         }
 
         utterance.onend = () => {
             speechState.currentUtterance = null
-            onEnd?.()
+            try {
+                onEnd?.()
+            } catch (error) {
+                console.warn('onEndハンドラーでエラーが発生しました:', error)
+            }
         }
 
         utterance.onpause = () => {
-            onPause?.()
+            try {
+                onPause?.()
+            } catch (error) {
+                console.warn('onPauseハンドラーでエラーが発生しました:', error)
+            }
         }
 
         utterance.onresume = () => {
-            onResume?.()
+            try {
+                onResume?.()
+            } catch (error) {
+                console.warn('onResumeハンドラーでエラーが発生しました:', error)
+            }
         }
 
         utterance.onerror = (event) => {
             speechState.currentUtterance = null
-            onError?.(new Error(`音声合成エラー: ${event.error}`))
+            try {
+                onError?.(new Error(`音声合成エラー: ${event.error}`))
+            } catch (error) {
+                console.warn('onErrorハンドラーでエラーが発生しました:', error)
+            }
         }
         // 音声合成の実行
         window.speechSynthesis.speak(utterance)
@@ -212,6 +243,7 @@ export async function speakText(options: SpeakOptions): Promise<SpeechSynthesisU
  * Web Speech APIの SpeechSynthesis を使用して、音声合成中止。
  * - Web Speech APIがサポートされていない場合は何も行わない。
  * - 現在の音声合成状態を適切にクリアする
+ * - ライフサイクルの一貫性を保つため、onendハンドラ経由でのみcurrentUtteranceをクリア
  */
 export function cancelSpeech(): void {
     if (!checkSpeechSynthesisSupport()) {
@@ -219,10 +251,24 @@ export function cancelSpeech(): void {
     }
 
     try {
+        const currentUtterance = speechState.currentUtterance
+        // cancel()を呼び出す前にutteranceを保存
         window.speechSynthesis.cancel()
-        speechState.currentUtterance = null
+
+        // cancel()は非同期でonendが呼ばれない場合があるため、明示的に状態をクリア
+        if (currentUtterance) {
+            // onendハンドラが呼ばれない場合に備えて、少し遅延させてから状態をクリア
+            setTimeout(() => {
+                if (speechState.currentUtterance === currentUtterance) {
+                    speechState.currentUtterance = null
+                }
+            }, 100)
+        }
+
     } catch (error) {
         console.warn('cancel speech synthesisに失敗しました:', error)
+        // エラー時は確実に状態をクリア
+        speechState.currentUtterance = null
     }
 }
 
