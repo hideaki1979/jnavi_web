@@ -89,7 +89,7 @@ export default function StoreImageUploadPage() {
             setImageUrl(URL.createObjectURL(compressedFile))
             setValue("imageFile", compressedFile, { shouldValidate: true })
         } catch (error) {
-            setError(error instanceof Error ? error.message : "画像の最適化に失敗しました")
+            setError(error instanceof Error ? error.message : new Error("画像の最適化に失敗しました"))
         }
     }
 
@@ -106,14 +106,14 @@ export default function StoreImageUploadPage() {
         setUploading(true)
         try {
             if (!values.imageFile) {
-                setError("画像ファイルは必須です")
+                setError(new Error("画像ファイルは必須です"))
                 setUploading(false)
                 return
             }
 
             // ユーザー認証チェックを追加
             if (!user?.uid) {
-                setError("未認証なので、ログインしてください")
+                setError(new Error("未認証なので、ログインしてください"))
                 setUploading(false)
                 setTimeout(() => router.replace('/auth/login'), 1500)
                 return // ここで処理を停止
