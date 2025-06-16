@@ -16,13 +16,15 @@ interface SpeechSynthesisState {
     isInitialized: boolean;
     availableVoices: SpeechSynthesisVoice[];
     currentUtterance: SpeechSynthesisUtterance | null;
+    stateMonitorInterval: NodeJS.Timeout | null;
 }
 
 const speechState: SpeechSynthesisState = {
     isSupported: false,
     isInitialized: false,
     availableVoices: [],
-    currentUtterance: null
+    currentUtterance: null,
+    stateMonitorInterval: null
 }
 
 /**
@@ -118,6 +120,56 @@ function getJapaneseVoice(): SpeechSynthesisVoice | null {
     return japaneseVoices.length > 0 ? japaneseVoices[0] : null
 }
 
+function startStateMonitoring(): void {
+    if (speechState.stateMonitorInterval) {
+        return  // 既に監視中
+    }
+
+    speechState.stateMonitorInterval = setInterval(() => {
+        if (!checkSpeechSynthesisSupport()) {
+            return
+        }
+
+        const synthesis = window.speechSynthesis
+        const hasCurrentUtterance = speechState.currentUtterance !== null
+        const isActuallySpeaking = synthesis.speaking || synthesis.pending
+
+        // 状態不整合の検出と修正
+        if (hasCurrentUtterance && !isActuallySpeaking) {
+            // 内部状態では音声合成中だが、実際には停止している場合
+            console.warn('音声合成状態の不整合を検出し、修正しました')
+            speechState.currentUtterance = null
+        } else if (!hasCurrentUtterance && isActuallySpeaking) {
+            // 内部状態では停止しているが、実際には音声合成中の場合
+            console.warn('予期しない音声合成を検出し、停止しました')
+            synthesis.cancel()
+        }
+
+        // 監視が不要になった場合は停止
+        if (!hasCurrentUtterance && !isActuallySpeaking) {
+            stopStateMonitoring()
+        }
+    }, 200) // 200ms毎に状態をチェック
+}
+
+/**
+ * 状態監視を停止する
+ */
+function stopStateMonitoring(): void {
+    if (speechState.stateMonitorInterval) {
+        clearInterval(speechState.stateMonitorInterval)
+        speechState.stateMonitorInterval = null
+    }
+}
+
+/**
+ * 状態を安全にクリアする（堅牢な状態管理）
+ */
+function clearSpeechState(): void {
+    speechState.currentUtterance = null
+    stopStateMonitoring()
+}
+
 /**
  * Web Speech APIの SpeechSynthesisUtterance を使用して、指定されたテキストを音声で読み上げる。
  * - クロスブラウザ対応のため、SafariやChrome等の制限事項を考慮した実装
@@ -137,14 +189,8 @@ export async function speakText(options: SpeakOptions): Promise<SpeechSynthesisU
         }
         // 既存の音声合成を停止
         if (speechState.currentUtterance) {
-            const previousUtterance = speechState.currentUtterance
-
-            // onendハンドラが呼ばれない場合に備えて、少し遅延させてから状態をクリア
-            setTimeout(() => {
-                if (speechState.currentUtterance === previousUtterance) {
-                    speechState.currentUtterance = null
-                }
-            }, 100)
+            window.speechSynthesis.cancel()
+            clearSpeechState()
         }
 
         const {
@@ -185,6 +231,7 @@ export async function speakText(options: SpeakOptions): Promise<SpeechSynthesisU
         // イベントハンドラーの設定
         utterance.onstart = () => {
             speechState.currentUtterance = utterance
+            startStateMonitoring()
             try {
                 onStart?.()
             } catch (error) {
@@ -193,7 +240,7 @@ export async function speakText(options: SpeakOptions): Promise<SpeechSynthesisU
         }
 
         utterance.onend = () => {
-            speechState.currentUtterance = null
+            clearSpeechState()
             try {
                 onEnd?.()
             } catch (error) {
@@ -218,7 +265,7 @@ export async function speakText(options: SpeakOptions): Promise<SpeechSynthesisU
         }
 
         utterance.onerror = (event) => {
-            speechState.currentUtterance = null
+            clearSpeechState()
             try {
                 onError?.(new Error(`音声合成エラー: ${event.error}`))
             } catch (error) {
@@ -253,24 +300,12 @@ export function cancelSpeech(): void {
     }
 
     try {
-        const currentUtterance = speechState.currentUtterance
-        // cancel()を呼び出す前にutteranceを保存
         window.speechSynthesis.cancel()
-
-        // cancel()は非同期でonendが呼ばれない場合があるため、明示的に状態をクリア
-        if (currentUtterance) {
-            // onendハンドラが呼ばれない場合に備えて、少し遅延させてから状態をクリア
-            setTimeout(() => {
-                if (speechState.currentUtterance === currentUtterance) {
-                    speechState.currentUtterance = null
-                }
-            }, 100)
-        }
-
+        clearSpeechState()
     } catch (error) {
         console.warn('cancel speech synthesisに失敗しました:', error)
         // エラー時は確実に状態をクリア
-        speechState.currentUtterance = null
+        clearSpeechState()
     }
 }
 
@@ -312,7 +347,8 @@ export function getSpeechSynthesisState(): {
     isInitialized: boolean;
     isSpeaking: boolean;
     isPaused: boolean;
-    availableVoices: SpeechSynthesisVoice[]
+    availableVoices: SpeechSynthesisVoice[];
+    isMonitoring: boolean;
 } {
     if (!checkSpeechSynthesisSupport()) {
         return {
@@ -320,7 +356,8 @@ export function getSpeechSynthesisState(): {
             isInitialized: false,
             isSpeaking: false,
             isPaused: false,
-            availableVoices: []
+            availableVoices: [],
+            isMonitoring: false
         }
     }
 
@@ -329,7 +366,8 @@ export function getSpeechSynthesisState(): {
         isInitialized: speechState.isInitialized,
         isSpeaking: window.speechSynthesis.speaking,
         isPaused: window.speechSynthesis.paused,
-        availableVoices: speechState.availableVoices
+        availableVoices: speechState.availableVoices,
+        isMonitoring: speechState.stateMonitorInterval !== null
     }
 }
 
@@ -345,5 +383,14 @@ export async function getJapaneseVoices(): Promise<SpeechSynthesisVoice[]> {
     } catch (error) {
         console.warn('日本語音声一覧の取得に失敗しました:', error)
         return []
+    }
+}
+
+export function cleanupSpeechSynthesis(): void {
+    try {
+        cancelSpeech()
+        clearSpeechState()
+    } catch (error) {
+        console.warn('Speech Synthesisのクリーンアップに失敗しました:', error)
     }
 }

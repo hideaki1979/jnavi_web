@@ -1,6 +1,7 @@
 "use client"
 
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
+import { cleanupSpeechSynthesis } from "@/lib/speech-synthesis";
 import { ArrowForward, PauseCircle, PlayCircle, StopCircle } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/navigation";
@@ -23,7 +24,7 @@ export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultSc
     const router = useRouter()
     const theme = useTheme()
     const { speak, cancel, pause, resume, isSpeaking, isPaused, isSupported } = useSpeechSynthesis({
-        rate: 0.7,
+        rate: 0.8,
         pitch: 1.0,
         volume: 1.0
     })
@@ -51,6 +52,8 @@ export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultSc
     }
 
     function handleNext() {
+        // ページ遷移前に音声合成をクリーンアップ
+        cleanupSpeechSynthesis()
         const url = nextQuery
             ? `${nextHref}?${new URLSearchParams(nextQuery).toString()}`
             : nextHref
