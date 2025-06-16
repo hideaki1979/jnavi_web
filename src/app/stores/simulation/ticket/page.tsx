@@ -2,10 +2,10 @@
 
 import { getStoreAll } from "@/app/api/stores"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
-import { ShopDropDown } from "@/components/simulation/ShopDropdown"
+import { ShopAutocomplete } from "@/components/simulation/ShopAutoComplete"
 import { TicketCardList } from "@/components/simulation/TicketCardList"
 import { SimulationSelectStoresData, Ticket } from "@/types/Store"
-import { Box, SelectChangeEvent, Typography } from "@mui/material"
+import { Box, Typography } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import React, { useState } from "react"
@@ -32,7 +32,7 @@ const tickets: Ticket[] = [
 
 export default function TicketMachinePage() {
     const router = useRouter()
-    const [selectedShop, setSelectedShop] = useState<string>("")
+    const [selectedShop, setSelectedShop] = useState<SimulationSelectStoresData | null>(null)
     const [errorMsg, setErrorMsg] = useState<string>("")
 
     const { data: stores, isLoading, isError, error } = useQuery<SimulationSelectStoresData[]>({
@@ -40,8 +40,11 @@ export default function TicketMachinePage() {
         queryFn: getStoreAll
     })
 
-    const handleShopChange = (event: SelectChangeEvent<string>) => {
-        setSelectedShop(event.target.value)
+    const handleShopChange = (store: SimulationSelectStoresData | null) => {
+        setSelectedShop(store)
+        if (errorMsg) {
+            setErrorMsg('')
+        }
     }
 
     /**
@@ -55,7 +58,7 @@ export default function TicketMachinePage() {
             setErrorMsg("店舗を選択してください")
             return
         }
-        router.push(`/stores/simulation/precall?id=${selectedShop}`)
+        router.push(`/stores/simulation/precall?id=${selectedShop.id}`)
     }
 
     if (isLoading || isError) {
@@ -63,8 +66,8 @@ export default function TicketMachinePage() {
     }
 
     return (
-        <Box p={4} bgcolor="#cac8c8" color="#000">
-            <Typography variant="h6" align="center" fontWeight="bold" mb={4}>
+        <Box px={4} py={6} bgcolor="#cac8c8" color="#000">
+            <Typography variant="h6" align="center" fontWeight="bold" mb={2}>
                 コールシミュレーション
             </Typography>
             {errorMsg && (
@@ -72,7 +75,7 @@ export default function TicketMachinePage() {
                     {errorMsg}
                 </Typography>
             )}
-            <ShopDropDown
+            <ShopAutocomplete
                 stores={stores || []}
                 selectedStore={selectedShop}
                 onChange={handleShopChange}
