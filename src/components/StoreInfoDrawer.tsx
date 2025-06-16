@@ -1,5 +1,5 @@
 import { FormattedToppingOptionNameStoreData, MapStore, ResultDialogType, StoreImageDownloadData } from "@/types/Store";
-import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Divider, Drawer, IconButton, ImageList, ImageListItem, ImageListItemBar, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Divider, Drawer, IconButton, ImageList, ImageListItem, ImageListItemBar, Tooltip, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getStoreById, getStoreImages, storeClose } from "@/app/api/stores";
@@ -15,6 +15,7 @@ import { ResultDialog } from "./modals/ResultDialog";
 import { useAuthStore } from "@/lib/AuthStore";
 import { deleteStoreImage } from "@/app/api/images";
 import { auth } from "@/lib/firebase";
+import { useResponsive } from "@/hooks/useResponsive";
 
 type StoreInfoDrawerProps = {
   open: boolean;
@@ -39,8 +40,7 @@ const MENU_TYPE_LABELS: Record<string, string> = {
 export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) {
 
   // ブラウザ幅を監視してDrawerの表示位置を決定
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const { isMobile } = useResponsive()
 
   const { data: imageData, isLoading: isImageLoading, isError: isImageError, error: imageError } = useQuery<StoreImageDownloadData[], Error>({
     queryKey: ["imageData", store?.id],

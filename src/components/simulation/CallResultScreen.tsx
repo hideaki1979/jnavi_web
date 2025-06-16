@@ -1,11 +1,9 @@
 "use client"
 
-import { cancelSpeech, speakText } from "@/lib/speech-synthesis";
+import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { ArrowForward, PauseCircle, PlayCircle } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-
 interface CallResultScreenProps {
     callText: string;
     nextHref: string;
@@ -22,27 +20,25 @@ interface CallResultScreenProps {
  * - 音声合成機能がサポートされていないブラウザでは、音声合成非対応ブラウザというテキストを表示
  */
 export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultScreenProps) {
-    const [isSpeaking, setIsSpeaking] = useState(false)
-    const [isSpeechSupported, setIsSpeechSupported] = useState(false)
     const router = useRouter()
     const theme = useTheme()
+    const { speak, cancel, isSpeaking, isSupported } = useSpeechSynthesis({
+        rate: 0.7,
+        pitch: 1.0,
+        volume: 1.0
+    })
 
-    useEffect(() => {
-        setIsSpeechSupported(typeof window !== "undefined" && !!window.speechSynthesis)
-    }, [])
-
-    function handleSpeech() {
+    async function handleSpeech() {
         if (isSpeaking) {
-            cancelSpeech()
-            setIsSpeaking(false)
+            cancel()
             return
         }
-        setIsSpeaking(true)
-        speakText({
-            text: callText,
-            onEnd: () => setIsSpeaking(false),
-            onError: () => setIsSpeaking(false)
-        })
+
+        try {
+            await speak(callText)
+        } catch (error) {
+            console.error('音声合成処理エラー：', error)
+        }
     }
 
     function handleNext() {
@@ -72,7 +68,7 @@ export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultSc
                         {isSpeaking ? <PauseCircle fontSize="large" /> : <PlayCircle fontSize="large" />}
                     </IconButton>
                     <Typography variant="body1" ml={4}>
-                        {isSpeechSupported ? "音声読み上げ" : "音声合成非対応ブラウザ"}
+                        {isSupported ? "音声読み上げ" : "音声合成非対応ブラウザ"}
                     </Typography>
                 </Box>
                 <Typography variant="body1" mb={4} textAlign="center" whiteSpace="pre-line" lineHeight={2}>
