@@ -34,7 +34,7 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}): Use
 
     // 初期化とサポート状況の確認
     useEffect(() => {
-        const initializeSpeech = async () => {
+        const loadVoices = async () => {
             try {
                 setIsLoading(true)
                 const state = getSpeechSynthesisState()
@@ -44,11 +44,6 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}): Use
                     // 日本語音声を取得
                     const japaneseVoices = await getJapaneseVoices()
                     setAvailableVoices(japaneseVoices)
-
-                    // デフォルト音声を設定
-                    if (japaneseVoices.length > 0 && !selectedVoice) {
-                        setSelectedVoice(japaneseVoices[0])
-                    }
                 }
             } catch (err) {
                 setError(err instanceof Error ? err.message : '音声合成時にエラーが発生')
@@ -56,22 +51,17 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}): Use
                 setIsLoading(false)
             }
         }
-        initializeSpeech()
-    }, [selectedVoice])
+        loadVoices()
+    }, [])
 
-    // 音声合成状態の監視
     useEffect(() => {
-        if (!isSupported) return
-
-        const checkStatus = () => {
-            const state = getSpeechSynthesisState()
-            setIsSpeaking(state.isSpeaking)
-            setIsPaused(state.isPaused)
+        if (availableVoices.length > 0 && !selectedVoice) {
+            setSelectedVoice(availableVoices[0])
         }
+    }, [availableVoices, selectedVoice])
 
-        const interval = setInterval(checkStatus, 100)
-        return () => clearInterval(interval)
-    }, [isSupported])
+    // 注意: 状態監視はイベント駆動（speak関数内のコールバック）で行います
+    // ポーリング処理は不要です
 
     const speak = useCallback(async (text: string) => {
         if (!isSupported) {

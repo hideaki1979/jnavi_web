@@ -84,16 +84,15 @@ function initializeSpeechSynthesis(): Promise<void> {
                     if (voicesAfterChange.length > 0) {
                         speechState.availableVoices = voicesAfterChange
                         speechState.isInitialized = true
-                        window.speechSynthesis.removeEventListener('voiceschanged', voicesChangedHandler)
                         resolve()
                     }
                 }
 
-                window.speechSynthesis.addEventListener('voiceschanged', voicesChangedHandler)
+                window.speechSynthesis.addEventListener('voiceschanged', voicesChangedHandler, { once: true })
 
                 // タイムアウト設定（5秒後に強制的に初期化完了とする）
                 setTimeout(() => {
-                    window.speechSynthesis.removeEventListener('voiceschanged', voicesChangedHandler)
+                    // { once: true }により自動的にリスナーは削除されるため、手動削除は不要
                     // タイムアウト時にも現在利用可能な音声を取得
                     const currentVoices = window.speechSynthesis.getVoices()
                     speechState.availableVoices = currentVoices
@@ -227,6 +226,9 @@ export async function speakText(options: SpeakOptions): Promise<SpeechSynthesisU
             }
         }
         // 音声合成の実行
+        if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+            window.speechSynthesis.cancel()
+        }
         window.speechSynthesis.speak(utterance)
 
         return utterance
