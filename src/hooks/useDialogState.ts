@@ -21,7 +21,7 @@ export function useDialogState() {
     const [confirmDialog, setConfirmDialog] = useState<DialogState>({
         open: false,
         message: '',
-        targetName: '',
+        targetName: undefined,
         isLoading: false
     })
 
@@ -30,14 +30,14 @@ export function useDialogState() {
         type: 'success',
         title: '',
         message: '',
-        targetName: ''
+        targetName: undefined
     })
 
     const openConfirmDialog = (message: string, targetName?: string) => {
         setConfirmDialog({
             open: true,
             message: message,
-            targetName,
+            targetName: targetName,
             isLoading: false
         })
     }
@@ -61,7 +61,7 @@ export function useDialogState() {
             type,
             title,
             message,
-            targetName: targetName || ''
+            targetName: targetName
         })
     }
 

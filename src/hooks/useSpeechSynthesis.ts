@@ -48,8 +48,10 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}): Use
             try {
                 // 音声合成APIの初期化を実行
                 const japaneseVoices = await getJapaneseVoices()
-                setIsSupported(true)
+                const supported = japaneseVoices.length > 0
+                setIsSupported(supported)
                 setAvailableVoices(japaneseVoices)
+                if (!supported) setError('日本語音声が取得できませんでした')
             } catch (initError) {
                 // 初期化に失敗した場合はサポート外として扱う
                 setIsSupported(false)
