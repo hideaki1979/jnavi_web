@@ -5,14 +5,18 @@ import { useState } from "react";
  * ダイアログ状態管理の共通フック
  * 確認ダイアログと結果ダイアログの状態を一元管理します
  */
-export interface DialogState {
+export interface BaseDialogState {
     open: boolean;
     message: string;
     targetName?: string;
-    isLoading?: boolean;
 }
 
-export interface ResultDialogState extends DialogState {
+// 確認ダイアログ用（ローディング状態が必要）
+export interface DialogState extends BaseDialogState {
+    isLoading: boolean;
+}
+
+export interface ResultDialogState extends BaseDialogState {
     type: ResultDialogType;
     title: string;
 }
