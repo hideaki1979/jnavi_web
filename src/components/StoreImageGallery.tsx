@@ -93,17 +93,17 @@ export default function StoreImageGallery({
         setImageDeleteDialog(prev => ({ ...prev, isLoading: true }))
         // 削除対象の画像情報を保存（ダイアログ表示用）
         const targetImageName = selectedImage
-            ? `【${MENU_TYPE_LABELS[selectedImage.menu_type]}】${selectedImage.menu_name}`
+            ? `【${MENU_TYPE_LABELS[selectedImage.menu_type]}】 ${selectedImage.menu_name}`
             : '不明画像';
 
         try {
             if (!auth.currentUser) throw new Error('ユーザーがログインしていません。再度ログインしてください。')
             const idToken = await auth.currentUser.getIdToken()
             if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
-            await deleteStoreImage(String(store.id), imageDeleteTargetId!, idToken)
+            await deleteStoreImage(String(store.id), imageDeleteTargetId, idToken)
 
             // キャッシュを更新して画像リストを再取得
-            queryClient.invalidateQueries({ queryKey: ['imageData', store?.id] })
+            await queryClient.invalidateQueries({ queryKey: ['imageData', store.id] })
             setModalOpen(false)
             setSelectedImage(null)
             setImageDeleteDialog({ open: false, message: '', isLoading: false })
@@ -160,7 +160,7 @@ export default function StoreImageGallery({
                             }
                         }}
                     >
-                        <IconButton aria-label="更新" onClick={() => router.push(`/stores/${String(store?.id)}/edit`)}>
+                        <IconButton aria-label="更新" onClick={() => router.push(`/stores/${String(store?.id)}/edit`)} disabled={!store?.id}>
                             <EditNote />
                         </IconButton>
                     </Tooltip>
@@ -175,7 +175,7 @@ export default function StoreImageGallery({
                             }
                         }}
                     >
-                        <IconButton aria-label="画像アップロード" onClick={() => router.push(`/stores/images/${String(store?.id)}/upload`)}>
+                        <IconButton aria-label="画像アップロード" onClick={() => router.push(`/stores/images/${String(store?.id)}/upload`)} disabled={!store?.id}>
                             <AddPhotoAlternate />
                         </IconButton>
                     </Tooltip>
