@@ -3,9 +3,8 @@
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { cleanupSpeechSynthesis } from "@/lib/speech-synthesis";
 import { ArrowForward, PauseCircle, PlayCircle, StopCircle } from "@mui/icons-material";
-import { Box, Button, IconButton, Typography, useTheme, CircularProgress } from "@mui/material";
+import { Box, Button, CircularProgress, IconButton, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/navigation";
-
 interface CallResultScreenProps {
     callText: string;
     nextHref: string;
@@ -65,11 +64,8 @@ export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultSc
     if (!isMounted) {
         return (
             <Box
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                justifyContent="center"
-                minHeight="100vh"
+                display="flex" flexDirection="column" alignItems="center"
+                justifyContent="center" minHeight="100vh"
             >
                 <CircularProgress />
             </Box>

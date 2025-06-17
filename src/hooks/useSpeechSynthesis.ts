@@ -43,7 +43,6 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}): Use
     // 初期化とサポート状況の確認
     useEffect(() => {
         if (!isMounted) return
-
         const loadVoices = async () => {
             setIsLoading(true)
             try {
