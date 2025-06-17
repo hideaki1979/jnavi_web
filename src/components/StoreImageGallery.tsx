@@ -114,8 +114,7 @@ export default function StoreImageGallery({
                 open: true,
                 type: 'success',
                 title: '画像削除成功',
-                message: `${targetImageName}を削除しました。`,
-                targetName: targetImageName
+                message: `${targetImageName}を削除しました。`
             })
         } catch (error) {
             console.error('画像削除エラー', error)
