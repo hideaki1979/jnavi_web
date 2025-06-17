@@ -3,7 +3,7 @@
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { cleanupSpeechSynthesis } from "@/lib/speech-synthesis";
 import { ArrowForward, PauseCircle, PlayCircle, StopCircle } from "@mui/icons-material";
-import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, Button, CircularProgress, IconButton, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/navigation";
 interface CallResultScreenProps {
     callText: string;
@@ -23,7 +23,7 @@ interface CallResultScreenProps {
 export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultScreenProps) {
     const router = useRouter()
     const theme = useTheme()
-    const { speak, cancel, pause, resume, isSpeaking, isPaused, isSupported } = useSpeechSynthesis({
+    const { speak, cancel, pause, resume, isSpeaking, isPaused, isSupported, isMounted } = useSpeechSynthesis({
         rate: 0.8,
         pitch: 1.0,
         volume: 1.0
@@ -58,6 +58,18 @@ export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultSc
             ? `${nextHref}?${new URLSearchParams(nextQuery).toString()}`
             : nextHref
         router.push(url)
+    }
+
+    // ハイドレーションエラー対策：マウント前は何も表示しない
+    if (!isMounted) {
+        return (
+            <Box
+                display="flex" flexDirection="column" alignItems="center"
+                justifyContent="center" minHeight="100vh"
+            >
+                <CircularProgress />
+            </Box>
+        )
     }
 
     return (

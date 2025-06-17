@@ -1,4 +1,6 @@
-import { cancelSpeech, getJapaneseVoices, getSpeechSynthesisState, pauseSpeech, resumeSpeech, speakText } from "@/lib/speech-synthesis";
+"use client"
+
+import { cancelSpeech, getJapaneseVoices, pauseSpeech, resumeSpeech, speakText } from "@/lib/speech-synthesis";
 import { useCallback, useEffect, useState } from "react";
 
 interface UseSpeechSynthesisOptions {
@@ -17,6 +19,7 @@ interface UseSpeechSynthesisReturn {
     isPaused: boolean;
     isSupported: boolean;
     isLoading: boolean;
+    isMounted: boolean;
     error: string | null;
     availableVoices: SpeechSynthesisVoice[];
     setVoice: (voice: SpeechSynthesisVoice | null) => void;
@@ -27,31 +30,40 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}): Use
     const [isPaused, setIsPaused] = useState(false)
     const [isSupported, setIsSupported] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
+    const [isMounted, setIsMounted] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([])
     const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null)
 
+    // マウント状態の管理（ハイドレーションエラー対策）
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
+
     // 初期化とサポート状況の確認
     useEffect(() => {
+        if (!isMounted) return
         const loadVoices = async () => {
+            setIsLoading(true)
             try {
-                setIsLoading(true)
-                const state = getSpeechSynthesisState()
-                setIsSupported(state.isSupported)
-
-                if (state.isSupported) {
-                    // 日本語音声を取得
-                    const japaneseVoices = await getJapaneseVoices()
-                    setAvailableVoices(japaneseVoices)
-                }
-            } catch (err) {
-                setError(err instanceof Error ? err.message : '音声合成時にエラーが発生')
+                // 音声合成APIの初期化を実行
+                const japaneseVoices = await getJapaneseVoices()
+                const supported = japaneseVoices.length > 0
+                setIsSupported(supported)
+                setAvailableVoices(japaneseVoices)
+                if (!supported) setError('日本語音声が取得できませんでした')
+            } catch (initError) {
+                // 初期化に失敗した場合はサポート外として扱う
+                setIsSupported(false)
+                setAvailableVoices([])
+                setError(initError instanceof Error ? initError.message : '音声合成の初期化に失敗しました')
+                console.warn('音声合成の初期化に失敗しました:', initError)
             } finally {
                 setIsLoading(false)
             }
         }
         loadVoices()
-    }, [])
+    }, [isMounted])
 
     useEffect(() => {
         if (availableVoices.length > 0 && !selectedVoice) {
@@ -144,6 +156,7 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}): Use
         isPaused,
         isSupported,
         isLoading,
+        isMounted,
         error,
         availableVoices,
         setVoice,
