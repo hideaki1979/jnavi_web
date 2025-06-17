@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useState } from "react";
 import { ConfirmDialog } from "./modals/ConfirmDialog";
 import { ResultDialog } from "./modals/ResultDialog";
+import { getDisplayStoreName } from "@/utils/storeUtils";
 
 interface StoreActionsPanelProps {
     store: MapStore | null;
@@ -35,10 +36,7 @@ export default function StoreActionsPanel({
     const [isClosing, setIsClosing] = useState(false)
 
     const handleCloseStoreClick = () => {
-        const storeName = store?.branch_name
-            ? `${store.store_name} ${store.branch_name}`
-            : store?.store_name || ''
-
+        const storeName = getDisplayStoreName(store)
         setStoreCloseDialog({
             open: true,
             message: '以下の店舗を閉店状態にします',
@@ -52,12 +50,10 @@ export default function StoreActionsPanel({
         setIsClosing(true)
         setStoreCloseDialog(prev => ({ ...prev, isLoading: true }))
         try {
-            const res = await storeClose(String(store?.id), store?.store_name)
+            const res = await storeClose(String(store.id), store.store_name)
             if (res.status === 'success') {
                 setStoreCloseDialog({ open: false, message: '', isLoading: false })
-                const storeName = store?.branch_name
-                    ? `${store.store_name} ${store.branch_name}`
-                    : store?.store_name || ''
+                const storeName = getDisplayStoreName(store)
                 setResultDialog({
                     open: true,
                     type: 'success',
@@ -69,9 +65,7 @@ export default function StoreActionsPanel({
         } catch (error) {
             console.error('閉店処理に失敗しました：', error)
             setStoreCloseDialog({ open: false, message: '', isLoading: false })
-            const storeName = store?.branch_name
-                ? `${store.store_name} ${store.branch_name}`
-                : store?.store_name || ''
+            const storeName = getDisplayStoreName(store)
             setResultDialog({
                 open: true,
                 type: 'error',

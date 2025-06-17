@@ -12,11 +12,8 @@ import { Dispatch, SetStateAction, useState } from "react";
 import StoreImageModal from "./modals/StoreImageModal";
 import { ConfirmDialog } from "./modals/ConfirmDialog";
 import { ResultDialog } from "./modals/ResultDialog";
-
-const MENU_TYPE_LABELS: Record<string, string> = {
-    "1": "通常",
-    "2": "限定"
-}
+import { getDisplayMenuName } from "@/utils/storeUtils";
+import { MENU_TYPE_LABELS } from "@/constants/ui";
 
 interface StoreImageGalleryProps {
     store: MapStore | null;
@@ -67,16 +64,14 @@ export default function StoreImageGallery({
         if (!store?.id) return
 
         // 画像更新画面へ遷移
-        router.push(`/stores/images/${String(store?.id)}/edit/${imageId}`)
+        router.push(`/stores/images/${String(store.id)}/edit/${imageId}`)
     }
 
     // 画像削除メニュー押下イベント
     const handleImageDelete = async (imageId: string | number) => {
         // 削除対象のIDを保存してダイアログを表示
         setImageDeleteTargetId(imageId)
-        const targetImageName = selectedImage
-            ? `【${MENU_TYPE_LABELS[selectedImage.menu_type]}】 ${selectedImage.menu_name}`
-            : '不明画像'
+        const targetImageName = getDisplayMenuName(selectedImage)
 
         setImageDeleteDialog({
             open: true,
@@ -92,9 +87,7 @@ export default function StoreImageGallery({
 
         setImageDeleteDialog(prev => ({ ...prev, isLoading: true }))
         // 削除対象の画像情報を保存（ダイアログ表示用）
-        const targetImageName = selectedImage
-            ? `【${MENU_TYPE_LABELS[selectedImage.menu_type]}】 ${selectedImage.menu_name}`
-            : '不明画像';
+        const targetImageName = getDisplayMenuName(selectedImage)
 
         try {
             if (!auth.currentUser) throw new Error('ユーザーがログインしていません。再度ログインしてください。')
