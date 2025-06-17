@@ -51,13 +51,13 @@ export default function StoreDetailsSection({ storeData }: StoreDetailsSectionPr
             <Typography variant="body2" color="text.secondary" gutterBottom>
                 トッピング補足：
             </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom whiteSpace="pre-line" mb={2}>
+            <Typography variant="body2" color="text.secondary" gutterBottom sx={{ whiteSpace: 'pre-line' }} mb={2}>
                 {storeData?.topping_details}
             </Typography>
             <Typography variant="body2" color="text.secondary" gutterBottom>
                 コール補足：
             </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom whiteSpace="pre-line" mb={2}>
+            <Typography variant="body2" color="text.secondary" gutterBottom sx={{ whiteSpace: 'pre-line' }} mb={2}>
                 {storeData?.call_details}
             </Typography>
             <Typography variant="body2" color="text.secondary" gutterBottom mb={2}>
@@ -71,7 +71,7 @@ export default function StoreDetailsSection({ storeData }: StoreDetailsSectionPr
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                         ロット制補足：
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" gutterBottom whiteSpace="pre-line" mb={2}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom sx={{ whiteSpace: 'pre-line' }} mb={2}>
                         {storeData?.lot_detail}
                     </Typography>
                 </>

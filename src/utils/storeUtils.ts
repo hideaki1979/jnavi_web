@@ -7,7 +7,6 @@ export const getDisplayStoreName = (s: MapStore | null): string => {
 }
 
 export const getDisplayMenuName = (i: StoreImageDownloadData | null): string => {
-    if (!i) return ''
     return i ? `【${MENU_TYPE_LABELS[i.menu_type]}】 ${i.menu_name}`
         : '不明画像';
 }
