@@ -144,20 +144,6 @@ export function useStoreForm({ mode, initialData }: UseStoreFormOptions): UseSto
     // 編集モード時の初期データ設定
     useEffect(() => {
         if (mode === 'edit' && initialData) {
-            reset({
-                store_name: initialData.store_name || "",
-                branch_name: initialData.branch_name || "",
-                address: initialData.address || "",
-                business_hours: initialData.business_hours || "",
-                regular_holidays: initialData.regular_holidays || "",
-                prior_meal_voucher: initialData.prior_meal_voucher || false,
-                is_all_increased: initialData.is_all_increased || false,
-                is_lot: initialData.is_lot || false,
-                topping_details: initialData.topping_details || "",
-                call_details: initialData.call_details || "",
-                lot_detail: initialData.lot_detail || ""
-            })
-
             // トッピングコール選択状態の設定
             if (initialData.preCallFormattedIds) {
                 setSelectedPreCallOptions(initialData.preCallFormattedIds)
@@ -166,7 +152,7 @@ export function useStoreForm({ mode, initialData }: UseStoreFormOptions): UseSto
                 setSelectedPostCallOptions(initialData.postCallFormattedIds)
             }
         }
-    }, [mode, defaultValues, initialData, reset])
+    }, [mode, initialData])
 
     // 送信データ生成関数
     const createSubmitData = useCallback((formData: StoreFormInput) => {

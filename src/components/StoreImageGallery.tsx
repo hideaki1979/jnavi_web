@@ -152,9 +152,11 @@ export default function StoreImageGallery({
                             }
                         }}
                     >
-                        <IconButton aria-label="更新" onClick={() => router.push(`/stores/${String(store?.id)}/edit`)} disabled={!store?.id}>
-                            <EditNote />
-                        </IconButton>
+                        <span>
+                            <IconButton aria-label="更新" onClick={() => router.push(`/stores/${String(store?.id)}/edit`)} disabled={!store?.id}>
+                                <EditNote />
+                            </IconButton>
+                        </span>
                     </Tooltip>
                     <Tooltip
                         title="画像アップロード画面"
@@ -167,9 +169,11 @@ export default function StoreImageGallery({
                             }
                         }}
                     >
-                        <IconButton aria-label="画像アップロード" onClick={() => router.push(`/stores/images/${String(store?.id)}/upload`)} disabled={!store?.id}>
-                            <AddPhotoAlternate />
-                        </IconButton>
+                        <span>
+                            <IconButton aria-label="画像アップロード" onClick={() => router.push(`/stores/images/${String(store?.id)}/upload`)} disabled={!store?.id}>
+                                <AddPhotoAlternate />
+                            </IconButton>
+                        </span>
                     </Tooltip>
                 </Box>
             )}
