@@ -1,25 +1,18 @@
 "use client"
 
 import { getStoreById, updateStore } from "@/app/api/stores"
-import { getToppingCallOptions } from "@/app/api/toppingCalls"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { ValidationErrorList } from "@/components/feedback/validationErrorList"
 import { StoreFormInputText } from "@/components/StoreFormInputText"
 import { StoreRegisterToppingCallsCheck } from "@/components/StoreRegisterToppingCalls"
 import { StoreSubmitButton } from "@/components/StoreSubmitButton"
 import StoreSwitch from "@/components/StoreSwitch"
-import { useApiError } from "@/hooks/useApiError"
-import { formattedToppingCalls } from "@/lib/toppingCallFormatter"
-import { FormattedToppingOptionIds, ResultToppingCall } from "@/types/ToppingCall"
-import { createToppingOptionHandler } from "@/utils/toppingOptionUtils"
-import { StoreFormInput, StoreInputSchema } from "@/validations/store"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useStoreForm } from "@/hooks/useStoreForm"
+import { StoreFormInput } from "@/validations/store"
 import { AccessTime, EventBusy, ExpandMore, Map, Store } from "@mui/icons-material"
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Typography } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
 import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
 
 /**
  * 店舗編集画面
@@ -36,40 +29,7 @@ export default function StoreUpdatePages() {
     const params = useParams()
     const storeId = params.id as string
 
-    // トッピングとコールオプションのデータ管理
-    const [toppingOptionData, setToppingOptionData] = useState<Record<number, ResultToppingCall>>({})
 
-    // 選択したコールオプションを状態管理（事前用・着丼前用
-    const [selectedPreCallOptions, setSelectedPreCallOptions] = useState<FormattedToppingOptionIds>({})
-    const [selectedPostCallOptions, setSelectedPostCallOptions] = useState<FormattedToppingOptionIds>({})
-
-    // ハンドラー関数を生成
-    const handleChangePreCallOptionCheck = createToppingOptionHandler(setSelectedPreCallOptions)
-    const handleChangePostCallOptionCheck = createToppingOptionHandler(setSelectedPostCallOptions)
-
-    // Submit関連
-    const [isSubmitLoading, setIsSubmitLoading] = useState<boolean>(false)
-    const [updateSuccessMsg, setUpdateSuccessMsg] = useState<string | null>(null)
-    // APIエラーハンドリング
-    const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
-
-    // フォームの状態管理
-    const { control, handleSubmit, formState: { errors }, reset } = useForm<StoreFormInput>({
-        resolver: zodResolver(StoreInputSchema),
-        defaultValues: {
-            store_name: "",
-            branch_name: "",
-            address: "",
-            business_hours: "",
-            regular_holidays: "",
-            prior_meal_voucher: false,
-            is_all_increased: false,
-            is_lot: false,
-            topping_details: "",
-            call_details: "",
-            lot_detail: ""
-        }
-    })
 
     // 店舗データを取得
     const { data: storeData, isLoading: getStoreLoading, isError: isGetStoreError, error: storeError } = useQuery({
@@ -77,41 +37,54 @@ export default function StoreUpdatePages() {
         queryFn: () => getStoreById(storeId)
     })
 
-    // トッピングコール情報を取得
-    const { data: toppingCallData, isLoading: getToppingCallLoading, isError: isGetToppingCallLoading, error: toppingCallError } = useQuery({
-        queryKey: ['getToppingCall'],
-        queryFn: getToppingCallOptions
+    const initialDataForForm = storeData
+        ? {
+            ...storeData,
+            branch_name: storeData.branch_name ?? undefined,
+            topping_details: storeData.topping_details ?? undefined,
+            call_details: storeData.call_details ?? undefined,
+            lot_detail: storeData.lot_detail ?? undefined,
+            preCallFormattedIds: storeData.preCallFormattedIds,
+            postCallFormattedIds: storeData.postCallFormattedIds
+        }
+        : undefined
+
+    // 共通化されたフォーム状態管理フック（編集モード）
+    const {
+        // react-hook-form
+        control,
+        handleSubmit,
+        errors,
+        // トッピングコール状態
+        toppingOptionData,
+        selectedPreCallOptions,
+        selectedPostCallOptions,
+        handleChangePreCallOptionCheck,
+        handleChangePostCallOptionCheck,
+
+        // 送信状態
+        isSubmitLoading,
+        setIsSubmitLoading,
+        successMessage,
+        setSuccessMessage,
+
+        // エラーハンドリング
+        errorMessage,
+        validationErrors,
+        setError,
+        clearErrors,
+
+        // ローディング状態
+        isInitialLoading,
+        isInitialError,
+        initErrorMessage,
+
+        // 送信データ生成
+        createSubmitData
+    } = useStoreForm({
+        mode: "edit",
+        initialData: initialDataForForm
     })
-
-    // 店舗データ取得完了後にフォームの初期値を設定する
-    useEffect(() => {
-        if (storeData) {
-            reset({
-                store_name: storeData.store_name || "",
-                branch_name: storeData.branch_name || "",
-                address: storeData.address || "",
-                business_hours: storeData.business_hours || "",
-                regular_holidays: storeData.regular_holidays || "",
-                prior_meal_voucher: storeData.prior_meal_voucher || false,
-                is_all_increased: storeData.is_all_increased || false,
-                is_lot: storeData.is_lot || false,
-                topping_details: storeData.topping_details || "",
-                call_details: storeData.call_details || "",
-                lot_detail: storeData.lot_detail || ""
-            })
-            const preToppingCalls = storeData.preCallFormattedIds || {}
-            const postToppingCalls = storeData.postCallFormattedIds || {}
-            setSelectedPreCallOptions(preToppingCalls)
-            setSelectedPostCallOptions(postToppingCalls)
-        }
-    }, [storeData, reset])
-
-    // トッピングコール情報取得完了後にトッピングコール情報を設定する。
-    useEffect(() => {
-        if (toppingCallData) {
-            setToppingOptionData(toppingCallData)
-        }
-    }, [toppingCallData])
 
     /**
      * 店舗情報を更新する際にフォームデータを送信する非同期関数。
@@ -124,17 +97,11 @@ export default function StoreUpdatePages() {
     const onSubmit = async (formData: StoreFormInput) => {
         try {
             setIsSubmitLoading(true)
-            const preCallData = formattedToppingCalls(selectedPreCallOptions, "pre_call")
-            const postCallData = formattedToppingCalls(selectedPostCallOptions, "post_call")
-            const toppingCallData = [...preCallData, ...postCallData]
-            const submitData = {
-                ...formData,
-                topping_calls: toppingCallData
-            }
+            const submitData = createSubmitData(formData)
 
             const res = await updateStore(storeId, submitData)
             clearErrors()
-            setUpdateSuccessMsg(res)
+            setSuccessMessage(res)
             setIsSubmitLoading(false)
             setTimeout(() => router.replace(`/stores/map`), 1500)
         } catch (error) {
@@ -144,9 +111,9 @@ export default function StoreUpdatePages() {
         }
     }
 
-    const loading = getStoreLoading || getToppingCallLoading
-    const hasError = isGetStoreError || isGetToppingCallLoading
-    const errMessage = isGetStoreError ? (storeError as Error).message : isGetToppingCallLoading ? (toppingCallError as Error).message : null
+    const loading = getStoreLoading || isInitialLoading
+    const hasError = isGetStoreError || isInitialError
+    const errMessage = isGetStoreError ? (storeError as Error).message : isInitialError ? initErrorMessage : null
     // 初期表示時のローディング
     if (loading || hasError) {
         return <LoadingErrorContainer loading={getStoreLoading} error={errMessage} />
@@ -208,9 +175,9 @@ export default function StoreUpdatePages() {
             )}
             {/* バリデーションエラー表示 */}
             <ValidationErrorList errors={validationErrors} />
-            {updateSuccessMsg && (
+            {successMessage && (
                 <Alert severity="success" className="my-4" variant="filled">
-                    {updateSuccessMsg}
+                    {successMessage}
                 </Alert>
             )}
             <StoreSubmitButton label="店舗更新" loading={isSubmitLoading} />

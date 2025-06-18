@@ -25,7 +25,7 @@ export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultSc
     const theme = useTheme()
     const { speak, cancel, pause, resume, isSpeaking, isPaused, isSupported, isMounted } = useSpeechSynthesis({
         rate: 0.8,
-        pitch: 1.0,
+        pitch: 0.8,
         volume: 1.0
     })
 
