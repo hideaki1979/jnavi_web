@@ -1,3 +1,5 @@
+"use client"
+
 import { BaseToppingCall, FormattedToppingOptionIds, ResultToppingCall } from "@/types/ToppingCall";
 import { StoreFormInput, StoreInputSchema } from "@/validations/store";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -26,7 +28,7 @@ interface UseStoreFormReturn {
     reset: UseFormReset<StoreFormInput>;
 
     // トッピングコール
-    toppingOptionData: Record<string, ResultToppingCall>;
+    toppingOptionData: Record<number, ResultToppingCall>;
     selectedPreCallOptions: FormattedToppingOptionIds;
     selectedPostCallOptions: FormattedToppingOptionIds;
     handleChangePreCallOptionCheck: (toppingId: number, optionId: number, checked: boolean) => void;
@@ -55,7 +57,7 @@ interface UseStoreFormReturn {
 
 export function useStoreForm({ mode, initialData }: UseStoreFormOptions): UseStoreFormReturn {
     // トッピングコール関連の状態
-    const [toppingOptionData, setToppingOptionData] = useState<Record<string, ResultToppingCall>>({})
+    const [toppingOptionData, setToppingOptionData] = useState<Record<number, ResultToppingCall>>({})
     const [selectedPreCallOptions, setSelectedPreCallOptions] = useState<FormattedToppingOptionIds>({})
     const [selectedPostCallOptions, setSelectedPostCallOptions] = useState<FormattedToppingOptionIds>({})
 
@@ -67,20 +69,36 @@ export function useStoreForm({ mode, initialData }: UseStoreFormOptions): UseSto
     const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
 
     // フォームデフォルト値設定（useMemoでラップ）
-    const defaultValues = useMemo<StoreFormInput>(() => ({
-        store_name: "",
-        branch_name: "",
-        address: "",
-        business_hours: "",
-        regular_holidays: "",
-        prior_meal_voucher: false,
-        is_all_increased: false,
-        is_lot: false,
-        topping_details: "",
-        call_details: "",
-        lot_detail: "",
-        ...initialData
-    }), [initialData])
+    const defaultValues = useMemo<StoreFormInput>(() => {
+        const {
+            store_name = "",
+            branch_name = "",
+            address = "",
+            business_hours = "",
+            regular_holidays = "",
+            prior_meal_voucher = false,
+            is_all_increased = false,
+            is_lot = false,
+            topping_details = "",
+            call_details = "",
+            lot_detail = ""
+        } = initialData || {}
+
+        return {
+            store_name,
+            branch_name,
+            address,
+            business_hours,
+            regular_holidays,
+            prior_meal_voucher,
+            is_all_increased,
+            is_lot,
+            topping_details,
+            call_details,
+            lot_detail
+        }
+    }, [initialData])
+
 
 
     // react-hook-form設定
@@ -126,7 +144,19 @@ export function useStoreForm({ mode, initialData }: UseStoreFormOptions): UseSto
     // 編集モード時の初期データ設定
     useEffect(() => {
         if (mode === 'edit' && initialData) {
-            reset(defaultValues)
+            reset({
+                store_name: initialData.store_name || "",
+                branch_name: initialData.branch_name || "",
+                address: initialData.address || "",
+                business_hours: initialData.business_hours || "",
+                regular_holidays: initialData.regular_holidays || "",
+                prior_meal_voucher: initialData.prior_meal_voucher || false,
+                is_all_increased: initialData.is_all_increased || false,
+                is_lot: initialData.is_lot || false,
+                topping_details: initialData.topping_details || "",
+                call_details: initialData.call_details || "",
+                lot_detail: initialData.lot_detail || ""
+            })
 
             // トッピングコール選択状態の設定
             if (initialData.preCallFormattedIds) {

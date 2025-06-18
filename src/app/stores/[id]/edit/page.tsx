@@ -13,7 +13,6 @@ import { AccessTime, EventBusy, ExpandMore, Map, Store } from "@mui/icons-materi
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Typography } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
 import { useParams, useRouter } from "next/navigation"
-import { useEffect } from "react"
 
 /**
  * 店舗編集画面
@@ -56,8 +55,6 @@ export default function StoreUpdatePages() {
         control,
         handleSubmit,
         errors,
-        reset,
-
         // トッピングコール状態
         toppingOptionData,
         selectedPreCallOptions,
@@ -88,25 +85,6 @@ export default function StoreUpdatePages() {
         mode: "edit",
         initialData: initialDataForForm
     })
-
-    // 店舗データ取得完了後にフォームの初期値を設定する
-    useEffect(() => {
-        if (storeData) {
-            reset({
-                store_name: storeData.store_name || "",
-                branch_name: storeData.branch_name || "",
-                address: storeData.address || "",
-                business_hours: storeData.business_hours || "",
-                regular_holidays: storeData.regular_holidays || "",
-                prior_meal_voucher: storeData.prior_meal_voucher || false,
-                is_all_increased: storeData.is_all_increased || false,
-                is_lot: storeData.is_lot || false,
-                topping_details: storeData.topping_details || "",
-                call_details: storeData.call_details || "",
-                lot_detail: storeData.lot_detail || ""
-            })
-        }
-    }, [storeData, reset])
 
     /**
      * 店舗情報を更新する際にフォームデータを送信する非同期関数。
