@@ -345,38 +345,6 @@ export function resumeSpeech(): void {
 }
 
 /**
- * 音声合成の状態を取得
- */
-export function getSpeechSynthesisState(): {
-    isSupported: boolean;
-    isInitialized: boolean;
-    isSpeaking: boolean;
-    isPaused: boolean;
-    availableVoices: SpeechSynthesisVoice[];
-    isMonitoring: boolean;
-} {
-    if (!checkSpeechSynthesisSupport()) {
-        return {
-            isSupported: false,
-            isInitialized: false,
-            isSpeaking: false,
-            isPaused: false,
-            availableVoices: [],
-            isMonitoring: false
-        }
-    }
-
-    return {
-        isSupported: speechState.isSupported,
-        isInitialized: speechState.isInitialized,
-        isSpeaking: window.speechSynthesis.speaking,
-        isPaused: window.speechSynthesis.paused,
-        availableVoices: speechState.availableVoices,
-        isMonitoring: speechState.stateMonitorInterval !== null
-    }
-}
-
-/**
  * 利用可能な日本語音声一覧を取得
  */
 export async function getJapaneseVoices(): Promise<SpeechSynthesisVoice[]> {

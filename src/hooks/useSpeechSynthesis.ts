@@ -1,5 +1,3 @@
-"use client"
-
 import { cancelSpeech, getJapaneseVoices, pauseSpeech, resumeSpeech, speakText } from "@/lib/speech-synthesis";
 import { useCallback, useEffect, useState } from "react";
 

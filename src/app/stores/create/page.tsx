@@ -1,24 +1,16 @@
 "use client"
 
 import { createStore } from "@/app/api/stores"
-import { getToppingCallOptions } from "@/app/api/toppingCalls"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { ValidationErrorList } from "@/components/feedback/validationErrorList"
 import { StoreFormInputText } from "@/components/StoreFormInputText"
 import { StoreRegisterToppingCallsCheck } from "@/components/StoreRegisterToppingCalls"
 import StoreSwitch from "@/components/StoreSwitch"
-import { useApiError } from "@/hooks/useApiError"
-import { formattedToppingCalls } from "@/lib/toppingCallFormatter"
-import { FormattedToppingOptionIds, ResultToppingCall } from "@/types/ToppingCall"
-import { createToppingOptionHandler } from "@/utils/toppingOptionUtils"
-import { StoreFormInput, StoreInputSchema } from "@/validations/store"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useStoreForm } from "@/hooks/useStoreForm"
+import { StoreFormInput } from "@/validations/store"
 import { AccessTime, EventBusy, ExpandMore, Map, Store } from "@mui/icons-material"
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Button, CircularProgress, Typography } from "@mui/material"
-import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
 
 
 /**
@@ -35,62 +27,40 @@ const CreateStorePage = () => {
 
     const router = useRouter()
 
-    // DBから取得したトッピング・コール情報（初期表示時取得）
-    const [toppingOptionData, setToppingOptionData] = useState<Record<string, ResultToppingCall>>({})
-    // 選択したトッピング・コール情報（事前）
-    const [selectedPreCallOptions, setSelectedPreCallOptions] = useState<FormattedToppingOptionIds>({})
-    // 選択したトッピング・コール情報（着丼前）
-    const [selectedPostCallOptions, setSelectedPostCallOptions] = useState<FormattedToppingOptionIds>({})
-    // 登録完了メッセージ
-    const [regSuccessMsg, setRegSuccessMsg] = useState<string | null>(null)
-    // 登録処理時のローディング
-    const [isSubmitLoading, setIsSubmitLoading] = useState(false)
-    // API エラーハンドリング
-    const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
+    // 共通化されたフォーム状態管理フック
+    const {
+        // react-hook-form
+        control,
+        handleSubmit,
+        errors,
 
-    // ハンドラー関数を生成
-    const handleChangePreCallOptionCheck = createToppingOptionHandler(setSelectedPreCallOptions)
-    const handleChangePostCallOptionCheck = createToppingOptionHandler(setSelectedPostCallOptions)
+        // トッピングコール状態
+        toppingOptionData,
+        selectedPreCallOptions,
+        selectedPostCallOptions,
+        handleChangePreCallOptionCheck,
+        handleChangePostCallOptionCheck,
 
+        // 送信状態
+        isSubmitLoading,
+        setIsSubmitLoading,
+        successMessage,
+        setSuccessMessage,
 
-    const { control, handleSubmit, formState: { errors } } = useForm<StoreFormInput>({
-        resolver: zodResolver(StoreInputSchema),
-        defaultValues: {
-            store_name: "",
-            branch_name: "",
-            address: "",
-            business_hours: "",
-            regular_holidays: "",
-            prior_meal_voucher: false,
-            is_all_increased: false,
-            is_lot: false,
-            topping_details: "",
-            call_details: "",
-            lot_detail: ""
-        }
-    })
+        // エラーハンドリング
+        errorMessage,
+        validationErrors,
+        setError,
+        clearErrors,
 
-    // トッピングコール情報取得APIを呼び出す
-    const { data, isLoading: isInitDispLoading, isError, error: initDispError } = useQuery({
-        queryKey: ['toppingCallOptions'],
-        queryFn: getToppingCallOptions
-    })
+        // ローディング状態
+        isInitialLoading,
+        isInitialError,
+        initErrorMessage,
 
-    // console.log(data)
-
-    useEffect(() => {
-        if (!data) return // dataがnullまたはundefinedの場合は処理を行わない。
-        // DB管理しているトッピング・コール情報をセット
-        setToppingOptionData(data)
-        // 選択状態の初期化
-        const initSelectedOptions: FormattedToppingOptionIds = {}
-        Object.keys(data).forEach(key => {
-            initSelectedOptions[Number(key)] = []
-        })
-        // console.log(initSelectedOptions)
-        setSelectedPreCallOptions({ ...initSelectedOptions })
-        setSelectedPostCallOptions({ ...initSelectedOptions })
-    }, [data])
+        // 送信データ生成
+        createSubmitData
+    } = useStoreForm({ mode: 'create' })
 
     /**
      * 店舗登録処理を行う関数。
@@ -103,20 +73,11 @@ const CreateStorePage = () => {
     const onSubmit = async (formData: StoreFormInput) => {
         try {
             setIsSubmitLoading(true)
-            // 事前コールと着丼前コールのデータをマージ
-            const preCallsData = formattedToppingCalls(selectedPreCallOptions, "pre_call")
-            const postCallsData = formattedToppingCalls(selectedPostCallOptions, "post_call")
-            const toppingCallsData = [...preCallsData, ...postCallsData]
-
-            // 送信データ（formData+toppingCallsData）を作成
-            const submitData = {
-                ...formData,
-                topping_calls: toppingCallsData
-            }
+            const submitData = createSubmitData(formData)
 
             const res = await createStore(submitData)
             clearErrors() // 成功時はエラーをクリア
-            setRegSuccessMsg(res)
+            setSuccessMessage(res)
             setIsSubmitLoading(false)
             setTimeout(() => router.replace('/stores/map'), 2500)
         } catch (error) {
@@ -126,8 +87,8 @@ const CreateStorePage = () => {
         }
     }
     // 初期表示時のローディング
-    if (isInitDispLoading || isError) {
-        return <LoadingErrorContainer loading={isInitDispLoading} error={isError ? (initDispError as Error).message : null} />
+    if (isInitialLoading || isInitialError) {
+        return <LoadingErrorContainer loading={isInitialLoading} error={isInitialError ? initErrorMessage : null} />
     }
 
     return (
@@ -189,8 +150,8 @@ const CreateStorePage = () => {
             )}
             {/* バリデーションエラー表示 */}
             <ValidationErrorList errors={validationErrors} />
-            {regSuccessMsg && (
-                <Alert severity="success" className="my-4" variant="filled">{regSuccessMsg}</Alert>
+            {successMessage && (
+                <Alert severity="success" className="my-4" variant="filled">{successMessage}</Alert>
             )}
             <Button
                 variant="contained"
