@@ -11,9 +11,9 @@ import { useStoreForm } from "@/hooks/useStoreForm"
 import { StoreFormInput } from "@/validations/store"
 import { AccessTime, EventBusy, ExpandMore, Map, Store } from "@mui/icons-material"
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Typography } from "@mui/material"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useParams, useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useMemo } from "react"
 
 /**
  * 店舗編集画面
@@ -29,6 +29,7 @@ export default function StoreUpdatePages() {
     const router = useRouter()
     const params = useParams()
     const storeId = params.id as string
+    const queryClient = useQueryClient()
 
 
 
@@ -38,8 +39,10 @@ export default function StoreUpdatePages() {
         queryFn: () => getStoreById(storeId)
     })
 
-    const initialDataForForm = storeData
-        ? {
+    // useMemoを使用してinitialDataの不要な再生成を防止
+    const initialDataForForm = useMemo(() => {
+        if (!storeData) return undefined
+        return {
             ...storeData,
             branch_name: storeData.branch_name ?? undefined,
             topping_details: storeData.topping_details ?? undefined,
@@ -48,7 +51,7 @@ export default function StoreUpdatePages() {
             preCallFormattedIds: storeData.preCallFormattedIds,
             postCallFormattedIds: storeData.postCallFormattedIds
         }
-        : undefined
+    }, [storeData])
 
     // 共通化されたフォーム状態管理フック（編集モード）
     const {
@@ -56,7 +59,6 @@ export default function StoreUpdatePages() {
         control,
         handleSubmit,
         errors,
-        reset,
 
         // トッピングコール状態
         toppingOptionData,
@@ -89,25 +91,6 @@ export default function StoreUpdatePages() {
         initialData: initialDataForForm
     })
 
-    // 店舗データ取得完了後にフォームの初期値を設定する
-    useEffect(() => {
-        if (storeData) {
-            reset({
-                store_name: storeData.store_name || "",
-                branch_name: storeData.branch_name || "",
-                address: storeData.address || "",
-                business_hours: storeData.business_hours || "",
-                regular_holidays: storeData.regular_holidays || "",
-                prior_meal_voucher: storeData.prior_meal_voucher || false,
-                is_all_increased: storeData.is_all_increased || false,
-                is_lot: storeData.is_lot || false,
-                topping_details: storeData.topping_details || "",
-                call_details: storeData.call_details || "",
-                lot_detail: storeData.lot_detail || ""
-            })
-        }
-    }, [storeData, reset])
-
     /**
      * 店舗情報を更新する際にフォームデータを送信する非同期関数。
      * - 事前コールと着丼前コールの選択オプションを整形し、送信データに含める。
@@ -122,13 +105,18 @@ export default function StoreUpdatePages() {
             const submitData = createSubmitData(formData)
 
             const res = await updateStore(storeId, submitData)
+
+            // 成功後、キャッシュをサーバーの最新情報で強制的に更新し、完了を待つ
+            await queryClient.refetchQueries({ queryKey: ['getStoreInfo', storeId] })
+            await queryClient.refetchQueries({ queryKey: ['stores'] })
+
             clearErrors()
             setSuccessMessage(res)
-            setIsSubmitLoading(false)
             setTimeout(() => router.replace(`/stores/map`), 1500)
         } catch (error) {
             console.error("店舗登録処理でエラー", error)
             setError(error)
+        } finally {
             setIsSubmitLoading(false)
         }
     }
