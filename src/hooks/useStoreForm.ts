@@ -33,11 +33,6 @@ interface UseStoreFormReturn {
     handleChangePreCallOptionCheck: (toppingId: number, optionId: number, checked: boolean) => void;
     handleChangePostCallOptionCheck: (toppingId: number, optionId: number, checked: boolean) => void;
 
-    // 送信状態
-    isSubmitLoading: boolean;
-    setIsSubmitLoading: (loading: boolean) => void;
-    successMessage: string | null;
-    setSuccessMessage: (message: string | null) => void;
 
     // エラーハンドリング
     errorMessage: string | null;
@@ -60,9 +55,6 @@ export function useStoreForm({ mode, initialData }: UseStoreFormOptions): UseSto
     const [selectedPreCallOptions, setSelectedPreCallOptions] = useState<FormattedToppingOptionIds>({})
     const [selectedPostCallOptions, setSelectedPostCallOptions] = useState<FormattedToppingOptionIds>({})
 
-    // 通信関連の状態
-    const [isSubmitLoading, setIsSubmitLoading] = useState(false)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     // APIエラーハンドリング
     const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
@@ -230,12 +222,6 @@ export function useStoreForm({ mode, initialData }: UseStoreFormOptions): UseSto
         selectedPostCallOptions,
         handleChangePreCallOptionCheck,
         handleChangePostCallOptionCheck,
-
-        // 送信状態
-        isSubmitLoading,
-        setIsSubmitLoading,
-        successMessage,
-        setSuccessMessage,
 
         // エラーハンドリング
         errorMessage,
