@@ -1,17 +1,16 @@
 "use client"
 
-import { getStoreById, updateStore } from "@/app/api/stores"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { ValidationErrorList } from "@/components/feedback/validationErrorList"
 import { StoreFormInputText } from "@/components/StoreFormInputText"
 import { StoreRegisterToppingCallsCheck } from "@/components/StoreRegisterToppingCalls"
 import { StoreSubmitButton } from "@/components/StoreSubmitButton"
 import StoreSwitch from "@/components/StoreSwitch"
+import { useStore, useUpdateStore } from "@/hooks/api/useStores"
 import { useStoreForm } from "@/hooks/useStoreForm"
 import { StoreFormInput } from "@/validations/store"
 import { AccessTime, EventBusy, ExpandMore, Map, Store } from "@mui/icons-material"
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Typography } from "@mui/material"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { Accordion, AccordionDetails, AccordionSummary, Typography } from "@mui/material"
 import { useParams, useRouter } from "next/navigation"
 import { useMemo } from "react"
 
@@ -24,20 +23,17 @@ import { useMemo } from "react"
  *
 * @returns {JSX.Element}
  */
-export default function StoreUpdatePages() {
+export default function StoreUpdatePage() {
 
     const router = useRouter()
     const params = useParams()
     const storeId = params.id as string
-    const queryClient = useQueryClient()
 
+    // データ取得: カスタムフックuseStoreを使用
+    const { data: storeData, isLoading: isStoreLoading, isError: isStoreError, error: storeError } = useStore(storeId)
 
-
-    // 店舗データを取得
-    const { data: storeData, isLoading: getStoreLoading, isError: isGetStoreError, error: storeError } = useQuery({
-        queryKey: ['getStoreInfo', storeId],
-        queryFn: () => getStoreById(storeId)
-    })
+    // データ更新: カスタムフック useUpdateStore を使用 
+    const { mutateAsync: updateStore, isPending: isUpdating } = useUpdateStore()
 
     // useMemoを使用してinitialDataの不要な再生成を防止
     const initialDataForForm = useMemo(() => {
@@ -67,17 +63,9 @@ export default function StoreUpdatePages() {
         handleChangePreCallOptionCheck,
         handleChangePostCallOptionCheck,
 
-        // 送信状態
-        isSubmitLoading,
-        setIsSubmitLoading,
-        successMessage,
-        setSuccessMessage,
-
         // エラーハンドリング
-        errorMessage,
         validationErrors,
         setError,
-        clearErrors,
 
         // ローディング状態
         isInitialLoading,
@@ -101,32 +89,22 @@ export default function StoreUpdatePages() {
 
     const onSubmit = async (formData: StoreFormInput) => {
         try {
-            setIsSubmitLoading(true)
             const submitData = createSubmitData(formData)
 
-            const res = await updateStore(storeId, submitData)
-
-            // 成功後、キャッシュをサーバーの最新情報で強制的に更新し、完了を待つ
-            await queryClient.refetchQueries({ queryKey: ['getStoreInfo', storeId] })
-            await queryClient.refetchQueries({ queryKey: ['stores'] })
-
-            clearErrors()
-            setSuccessMessage(res)
+            await updateStore({ id: storeId, storeData: submitData })
             setTimeout(() => router.replace(`/stores/map`), 1500)
         } catch (error) {
-            console.error("店舗登録処理でエラー", error)
+            console.error("店舗更新処理でエラー発生しました", error)
             setError(error)
-        } finally {
-            setIsSubmitLoading(false)
         }
     }
 
-    const loading = getStoreLoading || isInitialLoading
-    const hasError = isGetStoreError || isInitialError
-    const errMessage = isGetStoreError ? (storeError as Error).message : isInitialError ? initErrorMessage : null
+    const loading = isStoreLoading || isInitialLoading
+    const hasError = isStoreError || isInitialError
+    const errMessage = isStoreError ? (storeError as Error).message : isInitialError ? initErrorMessage : null
     // 初期表示時のローディング
     if (loading || hasError) {
-        return <LoadingErrorContainer loading={getStoreLoading} error={errMessage} />
+        return <LoadingErrorContainer loading={isStoreLoading} error={errMessage} />
     }
 
     return (
@@ -177,20 +155,9 @@ export default function StoreUpdatePages() {
                     />
                 </AccordionDetails>
             </Accordion>
-            {/* エラーメッセージ表示 */}
-            {errorMessage && (
-                <Alert severity="error" className="my-4" variant="filled">
-                    {errorMessage}
-                </Alert>
-            )}
             {/* バリデーションエラー表示 */}
             <ValidationErrorList errors={validationErrors} />
-            {successMessage && (
-                <Alert severity="success" className="my-4" variant="filled">
-                    {successMessage}
-                </Alert>
-            )}
-            <StoreSubmitButton label="店舗更新" loading={isSubmitLoading} />
+            <StoreSubmitButton label="店舗更新" loading={isUpdating} />
         </form>
     )
 }

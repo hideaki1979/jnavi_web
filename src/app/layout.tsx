@@ -6,6 +6,8 @@ import QueryProviders from "./queryClientProvider";
 import { Suspense } from "react";
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { NotificationController } from "@/components/feedback/NotificationController";
+import { Toaster } from "react-hot-toast";
 
 const notoSansJP = Noto_Sans_JP({
   variable: "--font-noto-sans-jp",
@@ -18,7 +20,7 @@ const notoSansJP = Noto_Sans_JP({
 
 export const metadata: Metadata = {
   title: "J-Navi",
-  description: "二郎・二郎系の店舗情報（トッピング情報）を管理するアプリです",
+  description: "ラーメン二郎系店舗のナビゲーションサイト",
 };
 
 /**
@@ -45,6 +47,8 @@ export default function RootLayout({
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <QueryProviders>
             <AuthProvider>
+              <NotificationController />
+              <Toaster position="top-center" reverseOrder={false} />
               <Suspense fallback={<LoadingErrorContainer loading={true} />}>
                 {children}
               </Suspense>

@@ -1,15 +1,15 @@
 "use client"
 
-import { createStore } from "@/app/api/stores"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { ValidationErrorList } from "@/components/feedback/validationErrorList"
 import { StoreFormInputText } from "@/components/StoreFormInputText"
 import { StoreRegisterToppingCallsCheck } from "@/components/StoreRegisterToppingCalls"
 import StoreSwitch from "@/components/StoreSwitch"
+import { useCreateStore } from "@/hooks/api/useStores"
 import { useStoreForm } from "@/hooks/useStoreForm"
 import { StoreFormInput } from "@/validations/store"
 import { AccessTime, EventBusy, ExpandMore, Map, Store } from "@mui/icons-material"
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Button, CircularProgress, Typography } from "@mui/material"
+import { Accordion, AccordionDetails, AccordionSummary, Button, CircularProgress, Typography } from "@mui/material"
 import { useRouter } from "next/navigation"
 
 
@@ -27,6 +27,9 @@ const CreateStorePage = () => {
 
     const router = useRouter()
 
+    // データ更新: カスタムフック useCreateStoreを使用
+    const { mutateAsync: createStore, isPending: isCreating } = useCreateStore()
+
     // 共通化されたフォーム状態管理フック
     const {
         // react-hook-form
@@ -41,17 +44,9 @@ const CreateStorePage = () => {
         handleChangePreCallOptionCheck,
         handleChangePostCallOptionCheck,
 
-        // 送信状態
-        isSubmitLoading,
-        setIsSubmitLoading,
-        successMessage,
-        setSuccessMessage,
-
         // エラーハンドリング
-        errorMessage,
         validationErrors,
         setError,
-        clearErrors,
 
         // ローディング状態
         isInitialLoading,
@@ -72,18 +67,12 @@ const CreateStorePage = () => {
      */
     const onSubmit = async (formData: StoreFormInput) => {
         try {
-            setIsSubmitLoading(true)
             const submitData = createSubmitData(formData)
-
-            const res = await createStore(submitData)
-            clearErrors() // 成功時はエラーをクリア
-            setSuccessMessage(res)
-            setIsSubmitLoading(false)
+            await createStore(submitData)
             setTimeout(() => router.replace('/stores/map'), 2500)
         } catch (error) {
             console.error("店舗登録処理でエラー", error)
             setError(error)
-            setIsSubmitLoading(false)
         }
     }
     // 初期表示時のローディング
@@ -145,21 +134,15 @@ const CreateStorePage = () => {
             <StoreSwitch name="is_all_increased" control={control} label="全マシコール有無" />
             <StoreSwitch name="is_lot" control={control} label="ロット制有無" />
             <StoreFormInputText name="lot_detail" control={control} label="ロット詳細情報" errors={errors} margin="normal" multiline rows={3} />
-            {errorMessage && (
-                <Alert severity="error" className="my-4" variant="filled">{errorMessage}</Alert>
-            )}
             {/* バリデーションエラー表示 */}
             <ValidationErrorList errors={validationErrors} />
-            {successMessage && (
-                <Alert severity="success" className="my-4" variant="filled">{successMessage}</Alert>
-            )}
             <Button
                 variant="contained"
                 type="submit"
                 className="mt-4 w-full font-bold"
-                disabled={isSubmitLoading}
+                disabled={isCreating}
             >
-                {isSubmitLoading ? <CircularProgress size={24} color="inherit" /> : "店舗登録"}
+                {isCreating ? <CircularProgress size={24} color="inherit" /> : "店舗登録"}
             </Button>
         </form>
     )

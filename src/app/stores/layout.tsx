@@ -27,9 +27,6 @@ export default async function StoreLayout({
 }>) {
     return (
         <>
-            {/* <div className="pt-12 px-8 flex justify-center items-center">
-                {children}
-            </div> */}
             <Box display="flex" flexDirection="column" minHeight="100vh">
                 <Header />
                 <Box component="main" sx={{ flexGrow: 1, width: "100%" }}>
