@@ -9,7 +9,7 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { useDialogState } from "@/hooks/useDialogState";
 import StoreImageGallery from "./StoreImageGallery";
 import StoreDetailsSection from "./StoreDetailsSection";
-import StoreActionsPanel from "./StoreAcitonsPanel";
+import StoreActionsPanel from "./StoreActionsPanel";
 
 type StoreInfoDrawerProps = {
   open: boolean;
@@ -55,7 +55,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
   })
 
   const { data: storeData, isLoading: isStoreLoading, isError: isStoreError, error: storeError } = useQuery<FormattedToppingOptionNameStoreData, Error>({
-    queryKey: ["storeDetail", store?.id],
+    queryKey: ["getStoreInfo", store?.id],
     queryFn: () => getStoreById(String(store?.id)),
     enabled: !!store?.id
   })
