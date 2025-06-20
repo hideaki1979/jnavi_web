@@ -3,7 +3,6 @@ import { Button, CircularProgress } from "@mui/material";
 interface StoreSubmitButtonProps {
     label: string;
     loading: boolean;
-
 }
 
 /**

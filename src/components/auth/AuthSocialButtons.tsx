@@ -36,11 +36,6 @@ export function AuthSocialButtons({ onError, onErrors }: AuthSocialButtonsProps)
             const idToken = await auth.currentUser?.getIdToken()
             if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
             const userData = await getUserByUid(user.uid, idToken)
-            // console.log(JSON.stringify(user, null, 2))
-            // console.log(user.uid)
-            // console.log(user.email)
-            // console.log(user.displayName)
-            // console.log(user.authProvider)
 
             if (!userData) {
                 await createUser({

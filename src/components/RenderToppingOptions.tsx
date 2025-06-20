@@ -1,6 +1,5 @@
 import { Box, Chip, Typography } from "@mui/material"
 
-
 /**
  * トッピングの名称と選択されたオプションのリストをプロパティに取り、チップ状に表示するコンポーネント。
  * - options: トッピングの名称と選択されたオプションのハッシュ

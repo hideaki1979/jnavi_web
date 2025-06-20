@@ -1,11 +1,11 @@
 "use client"
 
-import { getMapAll } from "@/app/api/stores";
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer";
 import { StoreInfoDrawer } from "@/components/StoreInfoDrawer";
+import { useStoresForMap } from "@/hooks/api/useStores";
+import { useApiError } from "@/hooks/useApiError";
 import { MapData, MapStore } from "@/types/Store";
 import { Box, Typography } from "@mui/material";
-import { useQuery } from "@tanstack/react-query";
 import { AdvancedMarker, APIProvider, Map, Pin } from '@vis.gl/react-google-maps'
 import { useEffect, useState } from "react";
 
@@ -21,21 +21,22 @@ const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!
  * - ドロワーコンポーネントは閉じるボタンをクリックすることで消える
  */
 export default function MapPage() {
-    const { data: mapData, isLoading, isError, error } = useQuery({
-        queryKey: ['mapData'],
-        queryFn: getMapAll
-    })
+    const { errorMessage, setError } = useApiError()
+    const { data: mapData, isLoading, isError, error } = useStoresForMap()
 
     const [center, setCenter] = useState(defaultCenter)
     const [selectedStore, setSelectedStore] = useState<MapStore | null>(null)
     const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
     const [isLocationLoading, setIsLocationLoading] = useState(true)
 
+    // 位置情報取得の現在地設定
     useEffect(() => {
         if (!navigator.geolocation) {
+            setError(new Error('位置情報サービスがサポートされていません'))
             setIsLocationLoading(false)
             return
         }
+
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 setCenter({
@@ -44,12 +45,18 @@ export default function MapPage() {
                 })
                 setIsLocationLoading(false)
             },
-            (error) => {
-                console.error("現在地情報取得エラー：", error)
+            (positionError) => {
+                console.error("現在地情報取得エラー：", positionError)
+                setError(new Error(`位置情報の取得に失敗しました: ${positionError.message}`))
                 setIsLocationLoading(false)
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 600000  // 10分
             }
         )
-    }, [])
+    }, [setError])
 
     /**
      * マーカークリックハンドラ
@@ -59,15 +66,25 @@ export default function MapPage() {
         setSelectedStore(store)
         setDrawerOpen(true)
     }
-    // console.log(mapData)
+
+    // エラーメッセージの統合
+    const getErrorMessage = (): string | null => {
+        if (!errorMessage && !error) return null
+        if (errorMessage) return `マップデータ初期化失敗： ${errorMessage}`
+        if (error) return `マップデータ取得失敗： ${error.message}`
+        return null
+    }
+
     if (isLoading || isError || isLocationLoading) {
-        return <LoadingErrorContainer loading={isLoading || isLocationLoading} error={isError ? (error as Error).message : null} />
+        return <LoadingErrorContainer loading={isLoading || isLocationLoading} error={getErrorMessage()} />
     }
 
     return (
         <>
             <Box sx={{ paddingTop: 2 }}>
-                <Typography variant="h6" className="w-full text-center mb-4 font-bold">店舗マップ（登録店舗は黄色、赤は閉店です。）</Typography>
+                <Typography variant="h6" className="w-full text-center mb-4 font-bold">
+                    店舗マップ（登録店舗は黄色、赤は閉店です。）
+                </Typography>
                 <APIProvider apiKey={apiKey}>
                     <Box
                         width="100vw"

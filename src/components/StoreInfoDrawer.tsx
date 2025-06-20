@@ -1,8 +1,8 @@
-import { FormattedToppingOptionNameStoreData, MapStore, StoreImageDownloadData } from "@/types/Store";
+import { MapStore, StoreImageDownloadData } from "@/types/Store";
 import { Box, Drawer, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useQuery } from "@tanstack/react-query";
-import { getStoreById, getStoreImages, } from "@/app/api/stores";
+import { getStoreImages } from "@/app/api/stores";
 import LoadingErrorContainer from "./feedback/LoadingErrorContainer";
 import { useState } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -10,6 +10,7 @@ import { useDialogState } from "@/hooks/useDialogState";
 import StoreImageGallery from "./StoreImageGallery";
 import StoreDetailsSection from "./StoreDetailsSection";
 import StoreActionsPanel from "./StoreActionsPanel";
+import { useStore } from "@/hooks/api/useStores";
 
 type StoreInfoDrawerProps = {
   open: boolean;
@@ -54,11 +55,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
     enabled: !!store?.id
   })
 
-  const { data: storeData, isLoading: isStoreLoading, isError: isStoreError, error: storeError } = useQuery<FormattedToppingOptionNameStoreData, Error>({
-    queryKey: ["getStoreInfo", store?.id],
-    queryFn: () => getStoreById(String(store?.id)),
-    enabled: !!store?.id
-  })
+  const { data: storeData, isLoading: isStoreLoading, isError: isStoreError, error: storeError } = useStore(String(store?.id || ''))
 
   const isLoading = isImageLoading || isStoreLoading
   const hasError = isImageError || isStoreError
