@@ -46,11 +46,13 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
   // 画像モーダル用の状態
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedImage, setSelectedImage] = useState<StoreImageDownloadData | null>(null)
+  const storeId = store?.id ? String(store.id) : "" // storeがnullなら、確実に空文字列""にする
+  const isQueryEnabled = open && !!storeId   // storeIdが""なら、ここはfalseになる
 
   // APIクエリ
-  const { data: imageData, isLoading: isImageLoading, isError: isImageError, error: imageError } = useStoreImages(String(store?.id))
+  const { data: imageData, isLoading: isImageLoading, isError: isImageError, error: imageError } = useStoreImages(storeId, isQueryEnabled)
 
-  const { data: storeData, isLoading: isStoreLoading, isError: isStoreError, error: storeError } = useStore(String(store?.id || ''))
+  const { data: storeData, isLoading: isStoreLoading, isError: isStoreError, error: storeError } = useStore(storeId, isQueryEnabled)
 
   const isLoading = isImageLoading || isStoreLoading
   const hasError = isImageError || isStoreError

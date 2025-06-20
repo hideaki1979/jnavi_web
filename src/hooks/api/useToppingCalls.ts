@@ -1,3 +1,4 @@
+import { getStoreToppingCalls } from "@/app/api/stores"
 import { getToppingCallOptions } from "@/app/api/toppingCalls"
 import { useQuery } from "@tanstack/react-query"
 
@@ -24,3 +25,10 @@ export const useToppingCallOptions = () => {
  * @param storeId 店舗ID
  * @param mode "all" | "pre_call" | "post_call"
  */
+export const useStoreToppingCalls = (storeId: string, mode: "all" | "pre_call" | "post_call" = "all") => {
+    return useQuery({
+        queryKey: toppingCallKeys.storeWithMode(storeId, mode),
+        queryFn: () => getStoreToppingCalls(storeId, mode),
+        enabled: !!storeId
+    })
+}

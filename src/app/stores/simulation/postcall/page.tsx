@@ -25,7 +25,7 @@ export default function PostcallPage() {
     const [error, setError] = useState<string | null>(null)
 
     // 店舗別コールトッピング情報取得
-    const { data, isLoading, isError, error: queryError } = useStoreToppingCalls(id)
+    const { data, isLoading, isError, error: queryError } = useStoreToppingCalls(id, "post_call")
 
     const preCallOptions = useMemo(
         () => data?.formattedToppingOptions?.map(([, toppingOption]) => toppingOption) ?? []

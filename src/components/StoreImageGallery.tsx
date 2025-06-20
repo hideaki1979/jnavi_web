@@ -4,7 +4,6 @@ import { auth } from "@/lib/firebase";
 import { MapStore, StoreImageDownloadData } from "@/types/Store"
 import { AddPhotoAlternate, EditNote } from "@mui/icons-material";
 import { Box, IconButton, ImageList, ImageListItem, ImageListItemBar, Tooltip, Typography } from "@mui/material";
-import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useState } from "react";
@@ -45,7 +44,6 @@ export default function StoreImageGallery({
     setImageDeleteResult
 }: StoreImageGalleryProps) {
     const router = useRouter()
-    const queryClient = useQueryClient()
     const { isAuthenticated, user } = useAuthStore()
     const [imageDeleteTargetId, setImageDeleteTargetId] = useState<string | number | null>(null)
     const deleteImageMutation = useDeleteStoreImage()
@@ -94,14 +92,14 @@ export default function StoreImageGallery({
             if (!auth.currentUser) throw new Error('ユーザーがログインしていません。再度ログインしてください。')
             const idToken = await auth.currentUser.getIdToken()
             if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
+
+            // 画像削除処理実行
             await deleteImageMutation.mutateAsync({
                 storeId: String(store.id),
                 imageId: String(imageDeleteTargetId),
                 idToken
             })
 
-            // キャッシュを更新して画像リストを再取得
-            await queryClient.invalidateQueries({ queryKey: ['imageData', store.id] })
             setModalOpen(false)
             setSelectedImage(null)
             setImageDeleteDialog({ open: false, message: '', isLoading: false })

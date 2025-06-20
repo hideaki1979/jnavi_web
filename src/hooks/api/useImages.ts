@@ -17,11 +17,11 @@ const imageKeys = {
  * 店舗の画像一覧を取得する
  * @param storeId 店舗ID
  */
-export const useStoreImages = (storeId: string) => {
+export const useStoreImages = (storeId: string, enabled: boolean = true) => {
     return useQuery({
         queryKey: imageKeys.store(storeId),
         queryFn: () => getStoreImages(storeId),
-        enabled: !!storeId
+        enabled: !!storeId && enabled
     })
 }
 
@@ -46,7 +46,7 @@ export const useStoreImage = (storeId: string, imageId: string) => {
 export const useStoreToppingCallsForImage = (storeId: string, mode: "all" | "pre_call" | "post_call" = "all") => {
     return useQuery({
         queryKey: [...imageKeys.storeToppingCalls(storeId), mode],
-        queryFn: () => getStoreToppingCalls(storeId, "all"),
+        queryFn: () => getStoreToppingCalls(storeId, mode),
         enabled: !!storeId
     })
 }
@@ -61,9 +61,9 @@ export const useUploadStoreImage = () => {
     return useMutation({
         mutationFn: ({ storeId, imageData }: { storeId: string, imageData: StoreImageUploadData }) =>
             uploadStoreImage(storeId, imageData),
-        onSuccess: (data, { storeId }) => {
+        onSuccess: async (data, { storeId }) => {
             // 該当店舗の画像一覧キャッシュを無効化
-            queryClient.invalidateQueries({ queryKey: imageKeys.store(storeId) })
+            await queryClient.invalidateQueries({ queryKey: imageKeys.store(storeId) })
             showNotification("画像のアップロードが完了しました。", "success")
         },
         onError: (error) => {
@@ -87,10 +87,11 @@ export const useUpdateStoreImage = () => {
             imageId: string,
             imageData: StoreImageUploadData
         }) => updateStoreImage(storeId, imageId, imageData),
-        onSuccess: (data, { storeId, imageId }) => {
+        onSuccess: async (data, { storeId, imageId }) => {
             // 画像詳細と一覧のキャッシュを無効化
-            queryClient.invalidateQueries({ queryKey: imageKeys.detail(storeId, imageId) })
-            queryClient.invalidateQueries({ queryKey: imageKeys.store(storeId) })
+            await queryClient.invalidateQueries({ queryKey: imageKeys.detail(storeId, imageId) })
+            await queryClient.invalidateQueries({ queryKey: imageKeys.store(storeId) })
+            showNotification('画像情報更新処理が成功しました', "success")
         },
         onError: (error) => {
             console.error("画像更新処理失敗：", error)

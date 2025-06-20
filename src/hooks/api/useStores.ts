@@ -37,11 +37,11 @@ export const useStoresForMap = () => {
  * 指定されたIDの店舗情報を取得する
  * @param id 店舗ID
  */
-export const useStore = (id: string) => {
+export const useStore = (id: string, enabled: boolean = true) => {
     return useQuery({
         queryKey: storeKeys.detail(id),
         queryFn: () => getStoreById(id),
-        enabled: !!id   // IDがない場合はクエリを実行しない
+        enabled: !!id && enabled  // IDがない場合はクエリを実行しない
     })
 }
 
@@ -54,10 +54,10 @@ export const useCreateStore = () => {
 
     return useMutation({
         mutationFn: (storeData: StoreInput) => createStore(storeData),
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
             // 店舗一覧とマップ情報のキャッシュを無効化
-            queryClient.invalidateQueries({ queryKey: storeKeys.all })
-            queryClient.invalidateQueries({ queryKey: storeKeys.maps })
+            await queryClient.invalidateQueries({ queryKey: storeKeys.all })
+            await queryClient.invalidateQueries({ queryKey: storeKeys.maps })
             showNotification(data, "success")
         },
         onError: (error) => {
@@ -77,11 +77,11 @@ export const useUpdateStore = () => {
     return useMutation({
         mutationFn: ({ id, storeData }: { id: string; storeData: StoreInput }) =>
             updateStore(id, storeData),
-        onSuccess: (data, { id }) => {
+        onSuccess: async (data, { id }) => {
             // 更新された店舗の詳細情報、店舗一覧、マップ情報のキャッシュを無効化
-            queryClient.invalidateQueries({ queryKey: storeKeys.detail(id) })
-            queryClient.invalidateQueries({ queryKey: storeKeys.all })
-            queryClient.invalidateQueries({ queryKey: storeKeys.maps })
+            await queryClient.invalidateQueries({ queryKey: storeKeys.detail(id) })
+            await queryClient.invalidateQueries({ queryKey: storeKeys.all })
+            await queryClient.invalidateQueries({ queryKey: storeKeys.maps })
             showNotification(data, "success")
         },
         onError: (error) => {
@@ -99,18 +99,19 @@ export const useCloseStore = () => {
     const { showNotification } = useNotification()
 
     return useMutation({
-        mutationFn: ({ id, storeName }: { id: string; storeName: string }) =>
-            storeClose(id, storeName),
-        onSuccess: (data, { id }) => {
-            // 閉店した店舗の詳細情報、店舗一覧、マップ情報のキャッシュを無効化
-            queryClient.invalidateQueries({ queryKey: storeKeys.detail(id) })
-            queryClient.invalidateQueries({ queryKey: storeKeys.all })
-            queryClient.invalidateQueries({ queryKey: storeKeys.maps })
+        mutationFn: ({ id, storeName }: { id: string, storeName: string }) => storeClose(id, storeName),
+        onSuccess: async (data, { id }) => {
+            // 店舗関連のキャッシュをすべて無効化
+            await queryClient.invalidateQueries({ queryKey: storeKeys.detail(id) })
+            await queryClient.invalidateQueries({ queryKey: storeKeys.all })
+            await queryClient.invalidateQueries({ queryKey: storeKeys.maps })
+
             showNotification(data.message, "success")
         },
         onError: (error) => {
+            console.error("店舗閉店エラー:", error)
             const apiError = error as ApiClientError
-            showNotification(apiError.message || "店舗の閉店処理に失敗しました", "error")
+            showNotification(apiError.message || "店舗の閉店に失敗しました", "error")
         }
     })
 }

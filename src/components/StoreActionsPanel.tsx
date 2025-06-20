@@ -1,4 +1,3 @@
-import { storeClose } from "@/app/api/stores";
 import { DialogState, ResultDialogState } from "@/hooks/useDialogState";
 import { MapStore } from "@/types/Store";
 import { Close } from "@mui/icons-material";
@@ -9,6 +8,7 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { ConfirmDialog } from "./modals/ConfirmDialog";
 import { ResultDialog } from "./modals/ResultDialog";
 import { getDisplayStoreName } from "@/utils/storeUtils";
+import { useCloseStore } from "@/hooks/api/useStores";
 
 interface StoreActionsPanelProps {
     store: MapStore | null;
@@ -34,6 +34,7 @@ export default function StoreActionsPanel({
     const router = useRouter()
     const queryClient = useQueryClient()
     const [isClosing, setIsClosing] = useState(false)
+    const closeStoreMutation = useCloseStore()
 
     const handleCloseStoreClick = () => {
         const storeName = getDisplayStoreName(store)
@@ -50,18 +51,19 @@ export default function StoreActionsPanel({
         setIsClosing(true)
         setStoreCloseDialog(prev => ({ ...prev, isLoading: true }))
         try {
-            const res = await storeClose(String(store.id), store.store_name)
-            if (res.status === 'success') {
-                setStoreCloseDialog({ open: false, message: '', isLoading: false })
-                const storeName = getDisplayStoreName(store)
-                setResultDialog({
-                    open: true,
-                    type: 'success',
-                    title: '閉店処理完了',
-                    message: '以下の店舗を閉店しました',
-                    targetName: storeName
-                })
-            }
+            await closeStoreMutation.mutateAsync({
+                id: String(store.id),
+                storeName: store.store_name
+            })
+            setStoreCloseDialog({ open: false, message: '', isLoading: false })
+            const storeName = getDisplayStoreName(store)
+            setResultDialog({
+                open: true,
+                type: 'success',
+                title: '閉店処理完了',
+                message: '以下の店舗を閉店しました',
+                targetName: storeName
+            })
         } catch (error) {
             console.error('閉店処理に失敗しました：', error)
             setStoreCloseDialog({ open: false, message: '', isLoading: false })
