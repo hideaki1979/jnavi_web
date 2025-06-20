@@ -19,6 +19,7 @@ import { handleFirebaseError } from "@/utils/firebaseErrorMessages"
 import { AuthSocialButtons } from "./AuthSocialButtons"
 import { auth } from "@/lib/firebase"
 import { ValidationErrorList } from "../feedback/validationErrorList"
+import { useApiError } from "@/hooks/useApiError"
 
 interface AuthFormProps {
     mode: 'login' | 'signup'
@@ -33,8 +34,8 @@ interface AuthFormProps {
  * @returns {JSX.Element}
  */
 export function AuthForm({ mode }: AuthFormProps) {
-    const [error, setError] = useState<string | null>(null)
-    const [validationErrors, setValidationErrors] = useState<{ msg: string, param?: string }[]>([])
+    // API エラーハンドリング（統一化）
+    const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
     const [loading, setLoading] = useState(false)
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
     const router = useRouter()
@@ -61,7 +62,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     const onSubmit = async (data: LoginFormInput | SignupFormInput) => {
         setLoading(true)
         setError(null)
-        setValidationErrors([])
+        clearErrors()   // 送信前にエラークリア
 
         try {
             if (isSignup) {
@@ -86,16 +87,40 @@ export function AuthForm({ mode }: AuthFormProps) {
 
             }
         } catch (err) {
-            const errMsg = handleFirebaseError(err)
-            setError(errMsg)
-            // errors配列があればセット
+            // Firebaseエラーの場合は専用ハンドラを使用
+            const firebaseErrorMsg = handleFirebaseError(err)
+
+            // express-validationのエラー配列があれば追加
             if (typeof err === "object" && err !== null && "errors" in err && Array.isArray(err.errors)) {
-                setValidationErrors(err.errors)
+                // ApiClientError形式に変換してsetError関数に渡す
+                const apiError = {
+                    name: 'ApiClientError',
+                    message: firebaseErrorMsg,
+                    errors: err.errors
+                }
+                setError(apiError)
+            } else {
+                setError(new Error(firebaseErrorMsg))
             }
         } finally {
             setLoading(false)
         }
     }
+
+    // エラーハンドリング関数をAuthSocialButtonsに渡すためのラッパー
+    const handleSocialError = (errorMsg: string) => {
+        setError(new Error(errorMsg))
+    }
+
+    const handleSocialValidationErrors = (errors: { msg: string, param?: string }[]) => {
+        const apiError = {
+            name: 'ApiClientError',
+            message: '認証エラーが発生しました',
+            errors: errors
+        }
+        setError(apiError)
+    }
+
 
     return (
         <Box
@@ -116,11 +141,15 @@ export function AuthForm({ mode }: AuthFormProps) {
             <Typography variant="h5" fontWeight="bold" textAlign="center">
                 {isSignup ? "アカウント作成" : "ログイン"}
             </Typography>
-            {error && (
+
+            {/* エラーメッセージ表示（統一化） */}
+            {errorMessage && (
                 <Alert severity="error" sx={{ mt: 4, fontSize: 12 }}>
-                    {error}
+                    {errorMessage}
                 </Alert>
             )}
+
+            {/* バリデーションエラー表示（統一化） */}
             <ValidationErrorList errors={validationErrors} />
 
             {isSignup && (
@@ -190,7 +219,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 </Typography>)
             }
             <Divider sx={{ my: 2 }} textAlign="center" >または</Divider>
-            <AuthSocialButtons onError={setError} onErrors={setValidationErrors} />
+            <AuthSocialButtons onError={handleSocialError} onErrors={handleSocialValidationErrors} />
         </Box>
     )
 }

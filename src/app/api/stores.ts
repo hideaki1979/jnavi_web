@@ -182,6 +182,5 @@ export const storeClose = async (id: string, storeName: string): Promise<StoreCl
             error,
             "店舗閉店処理時に予期せぬエラーが発生しました"
         )
-
     }
 }        

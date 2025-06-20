@@ -13,9 +13,6 @@ export const updateToppingOption = (
     isChecked: boolean
 ): FormattedToppingOptionIds => {
     const currentOptions = [...(prevState[toppingId] || [])]
-    // console.log(currentOptions)
-    // console.log("toppingId：", toppingId)
-    // console.log("optionId：", optionId)
 
     if (isChecked) {
         // オプション追加
