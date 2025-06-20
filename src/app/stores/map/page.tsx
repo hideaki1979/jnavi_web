@@ -3,7 +3,6 @@
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer";
 import { StoreInfoDrawer } from "@/components/StoreInfoDrawer";
 import { useStoresForMap } from "@/hooks/api/useStores";
-import { useApiError } from "@/hooks/useApiError";
 import { MapData, MapStore } from "@/types/Store";
 import { Box, Typography } from "@mui/material";
 import { AdvancedMarker, APIProvider, Map, Pin } from '@vis.gl/react-google-maps'
@@ -21,7 +20,6 @@ const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!
  * - ドロワーコンポーネントは閉じるボタンをクリックすることで消える
  */
 export default function MapPage() {
-    const { errorMessage, setError } = useApiError()
     const { data: mapData, isLoading, isError, error } = useStoresForMap()
 
     const [center, setCenter] = useState(defaultCenter)
@@ -32,7 +30,6 @@ export default function MapPage() {
     // 位置情報取得の現在地設定
     useEffect(() => {
         if (!navigator.geolocation) {
-            setError(new Error('位置情報サービスがサポートされていません'))
             setIsLocationLoading(false)
             return
         }
@@ -47,7 +44,6 @@ export default function MapPage() {
             },
             (positionError) => {
                 console.error("現在地情報取得エラー：", positionError)
-                setError(new Error(`位置情報の取得に失敗しました: ${positionError.message}`))
                 setIsLocationLoading(false)
             },
             {
@@ -56,7 +52,7 @@ export default function MapPage() {
                 maximumAge: 600000  // 10分
             }
         )
-    }, [setError])
+    }, [])
 
     /**
      * マーカークリックハンドラ
@@ -67,12 +63,13 @@ export default function MapPage() {
         setDrawerOpen(true)
     }
 
-    // エラーメッセージの統合
+    // エラーメッセージ設定
     const getErrorMessage = (): string | null => {
-        if (!errorMessage && !error) return null
-        if (errorMessage) return `マップデータ初期化失敗： ${errorMessage}`
-        if (error) return `マップデータ取得失敗： ${error.message}`
-        return null
+        if (!error) {
+            return null
+        } else {
+            return `マップデータ取得失敗： ${error.message}`
+        }
     }
 
     if (isLoading || isError || isLocationLoading) {
