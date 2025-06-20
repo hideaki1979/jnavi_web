@@ -96,7 +96,6 @@ export const useUpdateStore = () => {
  */
 export const useCloseStore = () => {
     const queryClient = useQueryClient()
-    const { showNotification } = useNotification()
 
     return useMutation({
         mutationFn: ({ id, storeName }: { id: string, storeName: string }) => storeClose(id, storeName),
@@ -105,13 +104,9 @@ export const useCloseStore = () => {
             await queryClient.invalidateQueries({ queryKey: storeKeys.detail(id) })
             await queryClient.invalidateQueries({ queryKey: storeKeys.all })
             await queryClient.invalidateQueries({ queryKey: storeKeys.maps })
-
-            showNotification(data.message, "success")
         },
         onError: (error) => {
             console.error("店舗閉店エラー:", error)
-            const apiError = error as ApiClientError
-            showNotification(apiError.message || "店舗の閉店に失敗しました", "error")
         }
     })
 }
