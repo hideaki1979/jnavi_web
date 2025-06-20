@@ -1,8 +1,6 @@
 import { MapStore, StoreImageDownloadData } from "@/types/Store";
 import { Box, Drawer, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { useQuery } from "@tanstack/react-query";
-import { getStoreImages } from "@/app/api/stores";
 import LoadingErrorContainer from "./feedback/LoadingErrorContainer";
 import { useState } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -11,6 +9,7 @@ import StoreImageGallery from "./StoreImageGallery";
 import StoreDetailsSection from "./StoreDetailsSection";
 import StoreActionsPanel from "./StoreActionsPanel";
 import { useStore } from "@/hooks/api/useStores";
+import { useStoreImages } from "@/hooks/api/useImages";
 
 type StoreInfoDrawerProps = {
   open: boolean;
@@ -49,11 +48,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
   const [selectedImage, setSelectedImage] = useState<StoreImageDownloadData | null>(null)
 
   // APIクエリ
-  const { data: imageData, isLoading: isImageLoading, isError: isImageError, error: imageError } = useQuery<StoreImageDownloadData[], Error>({
-    queryKey: ["imageData", store?.id],
-    queryFn: () => getStoreImages(String(store?.id)),
-    enabled: !!store?.id
-  })
+  const { data: imageData, isLoading: isImageLoading, isError: isImageError, error: imageError } = useStoreImages(String(store?.id))
 
   const { data: storeData, isLoading: isStoreLoading, isError: isStoreError, error: storeError } = useStore(String(store?.id || ''))
 

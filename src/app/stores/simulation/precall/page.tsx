@@ -1,12 +1,11 @@
 "use client"
 
-import { getStoreToppingCalls } from "@/app/api/stores"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { ToppingOptionSelector } from "@/components/simulation/ToppingOptionSelector"
+import { useStoreToppingCalls } from "@/hooks/api/useToppingCalls"
 import { generateCallText } from "@/utils/toppingFormatter"
 import { ArrowForward, Block } from "@mui/icons-material"
 import { Alert, Box, Button, Card, CardMedia, Typography, useTheme } from "@mui/material"
-import { useQuery } from "@tanstack/react-query"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useMemo, useState } from "react"
 
@@ -26,11 +25,7 @@ export default function PrecallPage() {
     const [error, setError] = useState<string | null>(null)
 
     // 店舗別コールトッピング情報取得
-    const { data, isLoading, isError, error: queryError } = useQuery({
-        queryKey: ["storeToppingCalls", id],
-        queryFn: () => getStoreToppingCalls(id, "pre_call"),
-        enabled: !!id
-    })
+    const { data, isLoading, isError, error: queryError } = useStoreToppingCalls(id, "pre_call")
 
     const preCallOptions = useMemo(
         () => data?.formattedToppingOptions?.map(([, toppingOption]) => toppingOption) ?? []

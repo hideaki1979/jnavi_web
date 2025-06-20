@@ -1,6 +1,6 @@
 "use client"
 
-import { useNotificationStore } from "@/lib/notificationStore"
+import { useNotification } from "@/lib/notification"
 import { useEffect } from "react"
 import toast from "react-hot-toast"
 
@@ -9,7 +9,7 @@ import toast from "react-hot-toast"
  * アプリケーションのルートレベルに配置して使用する。
  */
 export const NotificationController = () => {
-    const { isOpen, message, type, hideNotification } = useNotificationStore()
+    const { isOpen, message, type, hideNotification } = useNotification()
 
     useEffect(() => {
         if (isOpen) {

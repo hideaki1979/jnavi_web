@@ -3,13 +3,10 @@
 import { useParams, useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import { Alert, Box, Button, CircularProgress, Divider, MenuItem, TextField, Typography } from '@mui/material'
-import { useQuery } from '@tanstack/react-query'
-import { getImageById, updateStoreImage } from '@/app/api/images'
 import { useAuthStore } from '@/lib/AuthStore'
 import { Controller, useForm } from 'react-hook-form'
 import { imageEditFormSchema, ImageEditFormValues, validateFileSizeBeforeCompression } from '@/validations/image'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { getStoreToppingCalls } from '@/app/api/stores'
 import imageCompression from "browser-image-compression"
 import { SelectedToppingInfo } from '@/types/Image'
 import Image from 'next/image'
@@ -19,6 +16,7 @@ import { ToppingOptionRadioSelector } from '@/components/toppingCallOptions/Topp
 import { UI_CONSTANTS } from '@/constants/ui'
 import { ValidationErrorList } from '@/components/feedback/validationErrorList'
 import { useApiError } from '@/hooks/useApiError'
+import { useStoreImage, useStoreToppingCallsForImage, useUpdateStoreImage } from '@/hooks/api/useImages'
 
 const MENU_TYPE = [
     { label: '通常メニュー', value: '1' },
@@ -32,6 +30,8 @@ const MENU_TYPE = [
 export default function ImageUpdatePage() {
     // Auth情報からユーザー情報を取得
     const user = useAuthStore((state) => state.user)
+    // 画像更新用のmutation
+    const updateImageMutation = useUpdateStoreImage()
     const [imageUrl, setImageUrl] = useState('')
     const [selectedToppingInfo, setSelectedToppingInfo] = useState<Record<string, SelectedToppingInfo>>({})
     const [updating, setUpdating] = useState<boolean>(false)
@@ -58,19 +58,15 @@ export default function ImageUpdatePage() {
     const imageId = params.imageId as string
 
     // 画像情報取得
-    const { data: imageData, isLoading: isImageLoading, isError: isImageError, error: imageError } = useQuery({
-        queryKey: ['getImageInfo', imageId],
-        queryFn: () => getImageById(storeId, imageId)
-    })
+    const { data: imageData, isLoading: isImageLoading, isError: isImageError, error: imageError }
+        = useStoreImage(storeId, imageId)
 
     // トッピングコール情報取得
-    const { data: toppingCallData, isLoading: isToppingCallLoading, isError: isToppingCallError, error: toppingCallError } = useQuery({
-        queryKey: ['storeToppingCalls', storeId],
-        queryFn: () => getStoreToppingCalls(storeId, 'all'),
-        enabled: !!storeId
-    })
+    const { data: toppingCallData, isLoading: isToppingCallLoading, isError: isToppingCallError, error: toppingCallError }
+        = useStoreToppingCallsForImage(storeId)
 
-    const toppingOptions: SimulationToppingOption[] = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
+    const toppingOptions: SimulationToppingOption[]
+        = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
 
     useEffect(() => {
         if (imageData) {
@@ -175,7 +171,7 @@ export default function ImageUpdatePage() {
                 ...(values.imageFile ? { image_base64: base64 } : {}),
                 ...(toppingSelections.length > 0 ? { topping_selections: toppingSelections } : {})
             }
-            await updateStoreImage(storeId, imageId, editImageData)
+            await updateImageMutation.mutateAsync({ storeId, imageId, imageData: editImageData })
             clearErrors() // 成功時はエラーをクリア
             setSuccessMsg('画像情報更新が完了しました')
             setTimeout(() => router.replace(`/stores/map`), 1500)
