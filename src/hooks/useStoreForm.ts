@@ -6,10 +6,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Control, FieldErrors, useForm, UseFormHandleSubmit, UseFormReset } from "react-hook-form";
 import { useApiError } from "./useApiError";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
-import { getToppingCallOptions } from "@/app/api/toppingCalls";
 import { formattedToppingCalls } from "@/lib/toppingCallFormatter";
 import { ExpressValidationError } from "@/types/validation";
+import { useToppingCallOptions } from "./api/useToppingCalls";
 
 interface UseStoreFormOptions {
     mode: 'create' | 'edit';
@@ -173,10 +172,7 @@ export function useStoreForm({ mode, initialData }: UseStoreFormOptions): UseSto
         isLoading: isInitialLoading,
         isError: isInitialError,
         error: initError
-    } = useQuery({
-        queryKey: ['toppingCallOptions'],
-        queryFn: getToppingCallOptions
-    })
+    } = useToppingCallOptions()
 
     const initErrorMessage = isInitialError ? (initError as Error).message : null
 

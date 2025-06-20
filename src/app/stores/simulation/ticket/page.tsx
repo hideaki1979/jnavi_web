@@ -1,12 +1,11 @@
 "use client"
 
-import { getStoreAll } from "@/app/api/stores"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { ShopAutocomplete } from "@/components/simulation/ShopAutoComplete"
 import { TicketCardList } from "@/components/simulation/TicketCardList"
+import { useAllStores } from "@/hooks/api/useStores"
 import { SimulationSelectStoresData, Ticket } from "@/types/Store"
 import { Box, Typography } from "@mui/material"
-import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import React, { useState } from "react"
 
@@ -35,10 +34,7 @@ export default function TicketMachinePage() {
     const [selectedShop, setSelectedShop] = useState<SimulationSelectStoresData | null>(null)
     const [errorMsg, setErrorMsg] = useState<string>("")
 
-    const { data: stores, isLoading, isError, error } = useQuery<SimulationSelectStoresData[]>({
-        queryKey: ["get_stores"],
-        queryFn: getStoreAll
-    })
+    const { data: stores, isLoading, isError, error } = useAllStores()
 
     const handleShopChange = (store: SimulationSelectStoresData | null) => {
         setSelectedShop(store)

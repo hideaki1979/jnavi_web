@@ -10,7 +10,7 @@ interface NotificationState {
     hideNotification: () => void;
 }
 
-export const useNotificationStore = create<NotificationState>((set) => ({
+export const useNotification = create<NotificationState>((set) => ({
     message: "",
     type: "success",
     isOpen: false,

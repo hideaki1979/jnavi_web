@@ -1,16 +1,13 @@
 "use client"
 
-import { getStoreToppingCalls } from "@/app/api/stores"
 import { SelectedToppingInfo } from "@/types/Image"
 import { SimulationToppingOption } from "@/types/ToppingCall"
 import { imageUploadFormSchema, ImageUploadFormValues, validateFileSizeBeforeCompression } from "@/validations/image"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useQuery } from "@tanstack/react-query"
 import { useParams, useRouter } from "next/navigation"
 import React, { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import imageCompression from "browser-image-compression"
-import { uploadStoreImage } from "@/app/api/images"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { Alert, Box, Button, CircularProgress, Divider, MenuItem, TextField, Typography } from "@mui/material"
 import Image from "next/image"
@@ -18,6 +15,7 @@ import { ToppingOptionRadioSelector } from "@/components/toppingCallOptions/Topp
 import { useAuthStore } from "@/lib/AuthStore"
 import { ValidationErrorList } from "@/components/feedback/validationErrorList"
 import { useApiError } from "@/hooks/useApiError"
+import { useStoreToppingCallsForImage, useUploadStoreImage } from "@/hooks/api/useImages"
 
 const MENU_TYPE = [
     { label: "通常メニュー", value: "1" },
@@ -43,6 +41,9 @@ export default function StoreImageUploadPage() {
     // AuthStoreからユーザー情報を取得
     const user = useAuthStore((state) => state.user)
 
+    // 画像アップロード用Mutation
+    const imageUploadMutation = useUploadStoreImage()
+
     // react-hook-form
     const { control, handleSubmit, setValue, formState: { errors } } = useForm<ImageUploadFormValues>({
         resolver: zodResolver(imageUploadFormSchema),
@@ -54,13 +55,8 @@ export default function StoreImageUploadPage() {
     })
 
     // トッピング情報取得
-    const { data: toppingCallData, isLoading: toppingIsLoading, isError: toppingIsError, error: toppingError } = useQuery({
-        queryKey: ['storeToppingCalls', id],
-        queryFn: () => getStoreToppingCalls(id, "all"),
-        enabled: !!id
-    })
+    const { data: toppingCallData, isLoading: toppingIsLoading, isError: toppingIsError, error: toppingError } = useStoreToppingCallsForImage(id)
 
-    // console.log(toppingCallData)
     const toppingOptions: SimulationToppingOption[] = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
 
 
@@ -131,7 +127,7 @@ export default function StoreImageUploadPage() {
                 ...(info.storeToppingCallId ? { store_topping_call_id: info.storeToppingCallId } : {})
             }))
 
-            const uploadImageData = {
+            const imageData = {
                 store_id: id,
                 user_id: user?.uid,
                 menu_type: Number(values.menuType),
@@ -140,7 +136,7 @@ export default function StoreImageUploadPage() {
                 ...(toppingSelections.length > 0 ? { topping_selections: toppingSelections } : {})
             }
 
-            await uploadStoreImage(id, uploadImageData)
+            await imageUploadMutation.mutateAsync({ storeId: id, imageData })
             clearErrors()
             setSuccessMsg("画像ファイルアップロードが成功しました。")
             setTimeout(() => router.push('/stores/map'), 2500)
