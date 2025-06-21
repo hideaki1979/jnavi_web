@@ -1,27 +1,18 @@
 "use client"
 
 import { useParams, useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
-import { Alert, Box, Button, CircularProgress, Divider, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from '@mui/material'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useAuthStore } from '@/lib/AuthStore'
-import { Controller, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { imageEditFormSchema, ImageEditFormValues, validateFileSizeBeforeCompression } from '@/validations/image'
 import { zodResolver } from '@hookform/resolvers/zod'
 import imageCompression from "browser-image-compression"
 import { SelectedToppingInfo } from '@/types/Image'
-import Image from 'next/image'
 import LoadingErrorContainer from '@/components/feedback/LoadingErrorContainer'
 import { SimulationToppingOption } from '@/types/ToppingCall'
-import { ToppingOptionRadioSelector } from '@/components/toppingCallOptions/ToppingOptionRadioSelector'
-import { UI_CONSTANTS } from '@/constants/ui'
-import { ValidationErrorList } from '@/components/feedback/validationErrorList'
 import { useApiError } from '@/hooks/useApiError'
 import { useStoreImage, useStoreToppingCallsForImage, useUpdateStoreImage } from '@/hooks/api/useImages'
-
-const MENU_TYPE = [
-    { label: '通常メニュー', value: '1' },
-    { label: '限定メニュー', value: '2' }
-]
+import { StoreImageForm } from '@/components/StoreImageForm'
 
 /**
  * 画像編集画面
@@ -93,7 +84,7 @@ export default function ImageUpdatePage() {
     }, [imageData, reset])
 
     // 画像選択・リサイズ
-    async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const handleImageChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
         try {
@@ -118,18 +109,24 @@ export default function ImageUpdatePage() {
         } catch (err) {
             setError(err instanceof Error ? err : new Error('画像の最適化に失敗しました'))
         }
-    }
+    }, [setValue, setError])
+
+    // 画像削除
+    const handleImageRemove = useCallback(() => {
+        setImageUrl("")
+        setValue("imageFile", undefined as unknown as File, { shouldValidate: true })
+    }, [setValue])
 
     // トッピング選択
-    function handleOptionChange(toppingId: string, optionId: string, storeToppingCallId: string) {
+    const handleOptionChange = useCallback((toppingId: string, optionId: string, storeToppingCallId: string) => {
         setSelectedToppingInfo(prev => ({
             ...prev,
             [toppingId]: { optionId, storeToppingCallId }
         }))
-    }
+    }, [])
 
     // 画像ファイルアップロード
-    async function onSubmit(values: ImageEditFormValues) {
+    const onSubmit = async (values: ImageEditFormValues) => {
         setUpdating(true)
         try {
             // 画像ファイル必須チェック
@@ -204,147 +201,23 @@ export default function ImageUpdatePage() {
     }
 
     return (
-        <form
+        <StoreImageForm
+            mode='edit'
+            formTitle='画像情報編集'
+            imageUrl={imageUrl}
+            onImageChange={handleImageChange}
+            onImageRemove={handleImageRemove}
+            control={control}
+            errors={errors}
+            toppingOptions={toppingOptions}
+            selectedToppingInfo={selectedToppingInfo}
+            onToppingChange={handleOptionChange}
+            errorMessage={errorMessage}
+            validationErrors={validationErrors}
+            successMessage={successMsg}
+            submitButtonLabel='画像変更'
+            isSubmitting={updating}
             onSubmit={handleSubmit(onSubmit)}
-            className='border border-gray-300 shadow-md mx-auto rounded-md p-4 max-w-xl w-full bg-gray-200 text-slate-800'
-        >
-            <Typography
-                variant='h5' fontWeight="bold" className='my-8 text-center'
-            >
-                画像情報更新
-            </Typography>
-            {/* 画像選択 */}
-            <Box display="flex" flexDirection="column" alignItems="center">
-                {imageUrl ? (
-                    <Box width="100%" display="flex" flexDirection="column" alignItems="center" mb={2}>
-                        <Box position="relative" width="100%" height={UI_CONSTANTS.IMAGE_MODAL.CONTAINER_HEIGHT} className="rounded-md mb-4 overflow-hidden">
-                            <Image
-                                src={imageUrl}
-                                alt='選択したラーメン画像'
-                                fill
-                                style={{ objectFit: 'contain' }}
-                                sizes='(max-width: 768px) 100vw, 50vw'
-                                priority
-                            />
-                        </Box>
-                        <Button
-                            variant='outlined' color='secondary' onClick={() => {
-                                setValue("imageFile", undefined, { shouldValidate: true })
-                                setImageUrl("")
-                            }}
-                        >
-                            画像を削除
-                        </Button>
-                    </Box>
-                ) : (
-                    <label htmlFor="image-edit-input">
-                        <Button
-                            variant='outlined'
-                            color='primary'
-                            component="span"
-                            className='mb-2 w-full'
-                        >
-                            画像を変更
-                            <input
-                                id="image-edit-input"
-                                type="file"
-                                hidden
-                                accept="image/jpeg,image/png,image/gif,image/webp"
-                                onChange={handleImageChange}
-                            />
-                        </Button>
-                    </label>
-                )}
-                {errors.imageFile && (
-                    <Typography color='error' variant='body2' className='mt-2'>
-                        {errors.imageFile.message}
-                    </Typography>
-                )}
-            </Box>
-            <Divider className="my-4" />
-            {/* メニュー情報 */}
-            <Typography variant="subtitle1" fontWeight="bold" mb={4}>
-                メニュー情報
-            </Typography>
-            <Box mb={2}>
-                <Controller
-                    name='menuType' control={control}
-                    render={({ field }) => (
-                        <FormControl fullWidth size="small" required>
-                            <InputLabel
-                                id="menu-type-label"
-                            >メニュータイプ
-                            </InputLabel>
-                            <Select
-                                {...field}
-                                labelId="menu-type-label"
-                                id="menu-type"
-                                label="メニュータイプ"
-                                fullWidth
-                                className="mb-4"
-                            >
-                                {MENU_TYPE.map(menu => (
-                                    <MenuItem key={menu.value} value={menu.value}>
-                                        {menu.label}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    )}
-                />
-                <Controller
-                    name='menuName' control={control}
-                    render={({ field }) => (
-                        <TextField
-                            label="メニュー名" {...field} placeholder='例：小ラーメン'
-                            fullWidth className='mb-6' error={!!errors.menuName}
-                            helperText={errors.menuName?.message} size='small'
-                        />
-                    )}
-                />
-            </Box>
-            {/* トッピングオプション */}
-            {toppingOptions.length > 0 && (
-                <>
-                    <Typography variant="subtitle1" fontWeight="bold" className="mb-4">
-                        トッピングコールオプション
-                    </Typography>
-                    <ToppingOptionRadioSelector
-                        options={toppingOptions}
-                        selectedOptions={selectedToppingInfo}
-                        onOptionChange={handleOptionChange}
-                    />
-                </>
-            )}
-            {/* エラーメッセージ表示 */}
-            {errorMessage && (
-                <Alert severity="error" sx={{ width: "100%", mb: 4 }}>
-                    {errorMessage}
-                </Alert>
-            )}
-
-            {/* 成功メッセージ表示 */}
-            {successMsg && (
-                <Alert severity="success" sx={{ width: "100%", mb: 4 }}>
-                    {successMsg}
-                </Alert>
-            )}
-
-            {/* バリデーションエラー表示 */}
-            <ValidationErrorList errors={validationErrors} />
-
-            {/* 更新ボタン */}
-            <Box display="flex" justifyContent="center" mt={4}>
-                <Button
-                    variant='contained'
-                    color='primary'
-                    type='submit'
-                    disabled={updating}
-                    className='w-2/3 font-bold py-2'
-                >
-                    {updating ? <CircularProgress size={24} color='inherit' /> : '画像更新'}
-                </Button>
-            </Box>
-        </form>
+        />
     )
 }

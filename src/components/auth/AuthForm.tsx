@@ -20,6 +20,7 @@ import { AuthSocialButtons } from "./AuthSocialButtons"
 import { auth } from "@/lib/firebase"
 import { ValidationErrorList } from "../feedback/validationErrorList"
 import { useApiError } from "@/hooks/useApiError"
+import { useAsyncOperation } from "@/hooks/useAsyncOperation"
 
 interface AuthFormProps {
     mode: 'login' | 'signup'
@@ -36,7 +37,7 @@ interface AuthFormProps {
 export function AuthForm({ mode }: AuthFormProps) {
     // API エラーハンドリング（統一化）
     const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
-    const [loading, setLoading] = useState(false)
+    const { isLoading: loading, execute: executeAuth } = useAsyncOperation<void>()
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
     const router = useRouter()
 
@@ -60,32 +61,32 @@ export function AuthForm({ mode }: AuthFormProps) {
      * @returns {Promise<void>}
      */
     const onSubmit = async (data: LoginFormInput | SignupFormInput) => {
-        setLoading(true)
-        setError(null)
         clearErrors()   // 送信前にエラークリア
 
         try {
-            if (isSignup) {
-                const signUpData = data as SignupFormInput
-                const user = await signUpWithEmail(signUpData.name, signUpData.email, signUpData.password)
-                const idToken = await auth.currentUser?.getIdToken()
-                if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
+            await executeAuth(async () => {
+                if (isSignup) {
+                    const signUpData = data as SignupFormInput
+                    const user = await signUpWithEmail(signUpData.name, signUpData.email, signUpData.password)
+                    const idToken = await auth.currentUser?.getIdToken()
+                    if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
 
-                await createUser({
-                    uid: user.uid,
-                    email: signUpData.email,
-                    displayName: signUpData.name,
-                    authProvider: 'email'
-                }, idToken)
-                setSuccessMsg("アカウント作成が成功しました。")
-                setTimeout(() => router.replace(`/auth/login`), 1500)
+                    await createUser({
+                        uid: user.uid,
+                        email: signUpData.email,
+                        displayName: signUpData.name,
+                        authProvider: 'email'
+                    }, idToken)
+                    setSuccessMsg("アカウント作成が成功しました。")
+                    setTimeout(() => router.replace(`/auth/login`), 1500)
 
-            } else {
-                const loginData = data as LoginFormInput
-                await signInWithEmail(loginData.email, loginData.password)
-                router.replace(`/stores/map`)
+                } else {
+                    const loginData = data as LoginFormInput
+                    await signInWithEmail(loginData.email, loginData.password)
+                    router.replace(`/stores/map`)
 
-            }
+                }
+            })
         } catch (err) {
             // Firebaseエラーの場合は専用ハンドラを使用
             const firebaseErrorMsg = handleFirebaseError(err)
@@ -102,8 +103,6 @@ export function AuthForm({ mode }: AuthFormProps) {
             } else {
                 setError(new Error(firebaseErrorMsg))
             }
-        } finally {
-            setLoading(false)
         }
     }
 

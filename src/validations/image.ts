@@ -21,6 +21,11 @@ export const imageUploadFormSchema = z.object({
     menuName: z.string().min(1, "メニュー名は必須です"),
     imageFile: z
         .instanceof(File, { message: "画像ファイルは必須です" })
+        .refine(
+            (file) => file?.type.startsWith('image/'),
+            { message: "画像ファイルを選択してください" }
+        )
+        .optional()
 })
 
 /**
