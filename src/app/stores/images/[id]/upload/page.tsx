@@ -9,7 +9,7 @@ import React, { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import imageCompression from "browser-image-compression"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
-import { Alert, Box, Button, CircularProgress, Divider, MenuItem, TextField, Typography } from "@mui/material"
+import { Alert, Box, Button, CircularProgress, Divider, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material"
 import Image from "next/image"
 import { ToppingOptionRadioSelector } from "@/components/toppingCallOptions/ToppingOptionRadioSelector"
 import { useAuthStore } from "@/lib/AuthStore"
@@ -180,16 +180,22 @@ export default function StoreImageUploadPage() {
                         </Button>
                     </Box>
                 ) : (
-                    <Button variant="contained" component="label"
-                        className="w-full mb-2">
-                        画像を選択
-                        <input
-                            type="file"
-                            accept="image/jpeg,image/png,image/gif,image/webp"
-                            hidden
-                            onChange={handleImageChange}
-                        />
-                    </Button>
+                    <label htmlFor="image-upload-input">
+                        <Button
+                            variant="contained"
+                            component="span"
+                            className="w-full mb-2"
+                        >
+                            画像を選択
+                            <input
+                                id="image-upload-input"
+                                type="file"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                hidden
+                                onChange={handleImageChange}
+                            />
+                        </Button>
+                    </label>
                 )}
                 {errors.imageFile && (
                     <Typography color="error" variant='body2' className='mt-2'>
@@ -206,17 +212,26 @@ export default function StoreImageUploadPage() {
                 <Controller
                     name="menuType" control={control}
                     render={({ field }) => (
-                        <TextField
-                            select label="メニュータイプ" {...field}
-                            fullWidth className="mb-4"
-                            size="small" required
-                        >
-                            {MENU_TYPE.map(menu => (
-                                <MenuItem key={menu.value} value={menu.value}>
-                                    {menu.label}
-                                </MenuItem>
-                            ))}
-                        </TextField>
+                        <FormControl fullWidth size="small" required>
+                            <InputLabel
+                                id="menu-type-label"
+                            >メニュータイプ
+                            </InputLabel>
+                            <Select
+                                {...field}
+                                labelId="menu-type-label"
+                                id="menu-type"
+                                label="メニュータイプ"
+                                fullWidth
+                                className="mb-4"
+                            >
+                                {MENU_TYPE.map(menu => (
+                                    <MenuItem key={menu.value} value={menu.value}>
+                                        {menu.label}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     )}
                 />
                 <Controller

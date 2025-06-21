@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
-import { Alert, Box, Button, CircularProgress, Divider, MenuItem, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Divider, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from '@mui/material'
 import { useAuthStore } from '@/lib/AuthStore'
 import { Controller, useForm } from 'react-hook-form'
 import { imageEditFormSchema, ImageEditFormValues, validateFileSizeBeforeCompression } from '@/validations/image'
@@ -237,17 +237,23 @@ export default function ImageUpdatePage() {
                         </Button>
                     </Box>
                 ) : (
-                    <Button variant='outlined' color='primary' component="label"
-                        className='mb-2 w-full'
-                    >
-                        画像を変更
-                        <input
-                            type="file"
-                            hidden
-                            accept="image/jpeg,image/png,image/gif,image/webp"
-                            onChange={handleImageChange}
-                        />
-                    </Button>
+                    <label htmlFor="image-edit-input">
+                        <Button
+                            variant='outlined'
+                            color='primary'
+                            component="span"
+                            className='mb-2 w-full'
+                        >
+                            画像を変更
+                            <input
+                                id="image-edit-input"
+                                type="file"
+                                hidden
+                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                onChange={handleImageChange}
+                            />
+                        </Button>
+                    </label>
                 )}
                 {errors.imageFile && (
                     <Typography color='error' variant='body2' className='mt-2'>
@@ -264,16 +270,26 @@ export default function ImageUpdatePage() {
                 <Controller
                     name='menuType' control={control}
                     render={({ field }) => (
-                        <TextField
-                            select label="メニュータイプ" {...field}
-                            fullWidth className='mb-6' size='small' required
-                        >
-                            {MENU_TYPE.map(menu => (
-                                <MenuItem key={menu.value} value={menu.value}>
-                                    {menu.label}
-                                </MenuItem>
-                            ))}
-                        </TextField>
+                        <FormControl fullWidth size="small" required>
+                            <InputLabel
+                                id="menu-type-label"
+                            >メニュータイプ
+                            </InputLabel>
+                            <Select
+                                {...field}
+                                labelId="menu-type-label"
+                                id="menu-type"
+                                label="メニュータイプ"
+                                fullWidth
+                                className="mb-4"
+                            >
+                                {MENU_TYPE.map(menu => (
+                                    <MenuItem key={menu.value} value={menu.value}>
+                                        {menu.label}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     )}
                 />
                 <Controller
