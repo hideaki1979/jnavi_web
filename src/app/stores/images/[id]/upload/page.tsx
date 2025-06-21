@@ -84,7 +84,7 @@ export default function StoreImageUploadPage() {
 
     // 画像削除
     const handleImageRemove = useCallback(() => {
-        setValue("imageFile", undefined as unknown as File, { shouldValidate: true })
+        setValue("imageFile", undefined, { shouldValidate: true })
         setImageUrl("")
     }, [setValue])
 
@@ -104,7 +104,6 @@ export default function StoreImageUploadPage() {
                 // 画像ファイル必須チェック
                 if (!values.imageFile && !imageUrl) {
                     throw new Error("画像ファイルは必須です")
-                    return
                 }
                 // ユーザー認証チェックを追加
                 if (!user?.uid) {

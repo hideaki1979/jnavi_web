@@ -114,7 +114,7 @@ export default function ImageUpdatePage() {
     // 画像削除
     const handleImageRemove = useCallback(() => {
         setImageUrl("")
-        setValue("imageFile", undefined as unknown as File, { shouldValidate: true })
+        setValue("imageFile", undefined, { shouldValidate: true })
     }, [setValue])
 
     // トッピング選択
@@ -131,9 +131,7 @@ export default function ImageUpdatePage() {
         try {
             // 画像ファイル必須チェック
             if (!values.imageFile && !imageUrl) {
-                setError(new Error("画像ファイルは必須です"))
-                setUpdating(false)
-                return
+                throw new Error("画像ファイルは必須です")
             }
             // ユーザー認証チェック
             if (!user?.uid) {

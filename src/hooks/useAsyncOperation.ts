@@ -3,7 +3,9 @@ import { useCallback, useState } from "react"
 /**
  * 非同期処理の状態（ローディング、エラー、データ）を管理するカスタムフック
  * @template T - 非同期処理が解決するデータの型
- * @returns {object} - isLoading, error, data, execute, reset
+ * @returns {{isLoading: boolean, error: string | null, data: T | null, 
+ * execute: (operation: () => Promise<T>) => Promise<T>, reset: () => void}}
+ *  - 非同期処理の状態とそれを制御する関数を含むオブジェクト
  */
 export function useAsyncOperation<T = void>() {
     const [isLoading, setIsLoading] = useState(false)
