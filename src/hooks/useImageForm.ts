@@ -113,7 +113,7 @@ export function useImageForm({ mode, storeId, initialData }: UseImageFormOptions
 
     // react-hook-form+zod定義
     const { control, handleSubmit, setValue, formState: { errors }, reset }
-        = useForm<ImageEditFormValues>({
+        = useForm<ImageFormValues>({
             resolver: zodResolver(schema),
             defaultValues
         })
@@ -145,7 +145,8 @@ export function useImageForm({ mode, storeId, initialData }: UseImageFormOptions
                 setSelectedToppingInfo(initialToppingInfo)
             }
         }
-    }, [mode, initialData, reset])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mode, initialData])
 
     // 画像選択・リサイズ
     const handleImageChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,18 +169,36 @@ export function useImageForm({ mode, storeId, initialData }: UseImageFormOptions
                     type: file.type,
                     lastModified: Date.now()
                 })
+            // 古いURLを解放
+            if (imageUrl && imageUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(imageUrl)
+            }
             setImageUrl(URL.createObjectURL(compressedFile))
             setValue("imageFile", compressedFile, { shouldValidate: true })
         } catch (err) {
             setError(err instanceof Error ? err : new Error('画像の最適化に失敗しました'))
         }
-    }, [setValue, setError])
+    }, [setValue, setError, imageUrl])
 
     // 画像削除
     const handleImageRemove = useCallback(() => {
+        // 古いURLを解放
+        if (imageUrl && imageUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(imageUrl)
+        }
         setImageUrl("")
         setValue("imageFile", undefined, { shouldValidate: true })
-    }, [setValue])
+    }, [setValue, imageUrl])
+
+    // クリーンアップ処理
+    useEffect(() => {
+        return () => {
+            // コンポーネントアンマウント時にblob URLを解放
+            if (imageUrl && imageUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(imageUrl)
+            }
+        }
+    }, [imageUrl])
 
     // トッピング選択
     const handleOptionChange = useCallback((toppingId: string, optionId: string, storeToppingCallId: string) => {

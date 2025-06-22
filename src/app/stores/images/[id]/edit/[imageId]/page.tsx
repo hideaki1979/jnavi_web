@@ -106,7 +106,7 @@ export default function ImageUpdatePage() {
         if (isImageError && imageError) {
             errors.push(`画像データ取得失敗：${(imageError as Error).message}`)
         }
-        if (isToppingError && isToppingError) {
+        if (isToppingError && toppingErrorMessage) {
             errors.push(`トッピングコール情報取得失敗：${toppingErrorMessage}`)
         }
         return errors.join('\n')
