@@ -7,7 +7,7 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { useDialogState } from "@/hooks/useDialogState";
 import StoreImageGallery from "./StoreImageGallery";
 import StoreDetailsSection from "./StoreDetailsSection";
-import StoreActionsPanel from "./StoreActionsPanel";
+import StoreCloseActionsPanel from "./StoreCloseActionsPanel";
 import { useStore } from "@/hooks/api/useStores";
 import { useStoreImages } from "@/hooks/api/useImages";
 
@@ -109,7 +109,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
               storeData={storeData}
             />
 
-            <StoreActionsPanel
+            <StoreCloseActionsPanel
               store={store}
               storeCloseDialog={storeCloseDialog}
               setStoreCloseDialog={setStoreCloseDialog}
