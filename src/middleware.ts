@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySession } from "./lib/server/auth";
+import { verifySession } from "./lib/server/firebaseAdmin";
 
 export const runtime = 'nodejs'
 
