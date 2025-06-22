@@ -1,19 +1,14 @@
 "use client"
 
-import { SelectedToppingInfo } from "@/types/Image"
-import { SimulationToppingOption } from "@/types/ToppingCall"
-import { imageUploadFormSchema, ImageUploadFormValues, validateFileSizeBeforeCompression } from "@/validations/image"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { ImageUploadFormValues } from "@/validations/image"
 import { useParams, useRouter } from "next/navigation"
-import React, { useCallback, useState } from "react"
-import { useForm } from "react-hook-form"
-import imageCompression from "browser-image-compression"
+import React, { useState } from "react"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { useAuthStore } from "@/lib/AuthStore"
-import { useApiError } from "@/hooks/useApiError"
-import { useStoreToppingCallsForImage, useUploadStoreImage } from "@/hooks/api/useImages"
+import { useUploadStoreImage } from "@/hooks/api/useImages"
 import { useAsyncOperation } from "@/hooks/useAsyncOperation"
 import { StoreImageForm } from "@/components/StoreImageForm"
+import { useImageForm } from "@/hooks/useImageForm"
 
 /**
  * 画像アップロード画面
@@ -23,13 +18,9 @@ import { StoreImageForm } from "@/components/StoreImageForm"
 export default function StoreImageUploadPage() {
     const router = useRouter()
     const params = useParams()
-    const id = params.id as string
+    const storeId = params.id as string
 
-    const [imageUrl, setImageUrl] = useState<string>("")
-    const [selectedToppingInfo, setSelectedToppingInfo] = useState<Record<string, SelectedToppingInfo>>({})
     const { isLoading: uploading, execute: executeUpload } = useAsyncOperation<void>()
-    // API エラーハンドリング
-    const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
     const [successMsg, setSuccessMsg] = useState<string>("")
     // AuthStoreからユーザー情報を取得
     const user = useAuthStore((state) => state.user)
@@ -37,64 +28,29 @@ export default function StoreImageUploadPage() {
     // 画像アップロード用Mutation
     const imageUploadMutation = useUploadStoreImage()
 
-    // react-hook-form
-    const { control, handleSubmit, setValue, formState: { errors } } = useForm<ImageUploadFormValues>({
-        resolver: zodResolver(imageUploadFormSchema),
-        defaultValues: {
-            menuType: "1",
-            menuName: "",
-            imageFile: undefined
-        }
+    // 共通フック利用
+    const {
+        control,
+        handleSubmit,
+        errors,
+        imageUrl,
+        handleImageChange,
+        handleImageRemove,
+        toppingOptions,
+        selectedToppingInfo,
+        handleOptionChange,
+        errorMessage,
+        validationErrors,
+        clearErrors,
+        setError,
+        isToppingLoading,
+        isToppingError,
+        toppingErrorMessage,
+        createSubmitData
+    } = useImageForm({
+        mode: 'create',
+        storeId
     })
-
-    // トッピング情報取得
-    const { data: toppingCallData, isLoading: toppingIsLoading, isError: toppingIsError, error: toppingError } = useStoreToppingCallsForImage(id)
-
-    const toppingOptions: SimulationToppingOption[] = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
-
-
-    // 画像選択・リサイズ
-    const handleImageChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-        try {
-            // ファイル圧縮前のサイズチェック
-            validateFileSizeBeforeCompression(file)
-
-            // ファイル画像圧縮処理
-            const compressed = await imageCompression(file, {
-                maxWidthOrHeight: 1080,
-                maxSizeMB: 5,
-                useWebWorker: true,
-            })
-            // Blob→File型に変換
-            const compressedFile = compressed instanceof File
-                ? compressed
-                : new File([compressed], file.name, {
-                    type: file.type,
-                    lastModified: Date.now()
-                })
-
-            setImageUrl(URL.createObjectURL(compressedFile))
-            setValue("imageFile", compressedFile, { shouldValidate: true })
-        } catch (error) {
-            setError(error instanceof Error ? error.message : new Error("画像の最適化に失敗しました"))
-        }
-    }, [setValue, setError])
-
-    // 画像削除
-    const handleImageRemove = useCallback(() => {
-        setValue("imageFile", undefined, { shouldValidate: true })
-        setImageUrl("")
-    }, [setValue])
-
-    // トッピング選択
-    const handleOptionChange = useCallback((toppingId: string, optionId: string, storeToppingCallId: string) => {
-        setSelectedToppingInfo(prev => ({
-            ...prev,
-            [toppingId]: { optionId, storeToppingCallId }
-        }))
-    }, [])
 
     // 画像ファイルアップロード
     const onSubmit = async (values: ImageUploadFormValues) => {
@@ -111,28 +67,9 @@ export default function StoreImageUploadPage() {
                     throw new Error("未認証なので、ログインしてください")
                 }
 
-                const base64 = await new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader()
-                    reader.onload = () => resolve(reader.result as string)
-                    reader.onerror = reject
-                    reader.readAsDataURL(values.imageFile!)
-                })
-                const toppingSelections = Object.entries(selectedToppingInfo).map(([toppingId, info]) => ({
-                    topping_id: Number(toppingId),
-                    call_option_id: Number(info.optionId),
-                    ...(info.storeToppingCallId ? { store_topping_call_id: info.storeToppingCallId } : {})
-                }))
+                const imageData = await createSubmitData(values, user.uid)
 
-                const imageData = {
-                    store_id: id,
-                    user_id: user?.uid,
-                    menu_type: Number(values.menuType),
-                    menu_name: values.menuName,
-                    image_base64: base64,
-                    ...(toppingSelections.length > 0 ? { topping_selections: toppingSelections } : {})
-                }
-
-                await imageUploadMutation.mutateAsync({ storeId: id, imageData })
+                await imageUploadMutation.mutateAsync({ storeId, imageData })
                 clearErrors()
                 setSuccessMsg("画像ファイルアップロードが成功しました。")
                 setTimeout(() => router.push('/stores/map'), 2500)
@@ -142,8 +79,8 @@ export default function StoreImageUploadPage() {
         }
     }
 
-    if (toppingIsLoading || toppingIsError) {
-        return <LoadingErrorContainer loading={toppingIsLoading} error={toppingIsError ? (toppingError as Error).message : null} />
+    if (isToppingLoading || isToppingError) {
+        return <LoadingErrorContainer loading={isToppingLoading} error={toppingErrorMessage} />
     }
 
     return (

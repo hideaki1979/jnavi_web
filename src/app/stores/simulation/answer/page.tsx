@@ -65,7 +65,6 @@ export default function AnswerPage() {
             >
                 Map画面へ
             </Button>
-
         </Box>
     )
 }
