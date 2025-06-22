@@ -9,6 +9,7 @@ import { ConfirmDialog } from "./modals/ConfirmDialog";
 import { ResultDialog } from "./modals/ResultDialog";
 import { getDisplayStoreName } from "@/utils/storeUtils";
 import { useCloseStore } from "@/hooks/api/useStores";
+import { useAuthStore } from "@/lib/AuthStore";
 
 interface StoreActionsPanelProps {
     store: MapStore | null;
@@ -23,7 +24,7 @@ interface StoreActionsPanelProps {
  * 店舗アクションパネルコンポーネント
  * 閉店ボタンと関連するダイアログを管理します
  */
-export default function StoreActionsPanel({
+export default function StoreCloseActionsPanel({
     store,
     storeCloseDialog,
     setStoreCloseDialog,
@@ -35,6 +36,7 @@ export default function StoreActionsPanel({
     const queryClient = useQueryClient()
     const [isClosing, setIsClosing] = useState(false)
     const closeStoreMutation = useCloseStore()
+    const { isAuthenticated } = useAuthStore()
 
     const handleCloseStoreClick = () => {
         const storeName = getDisplayStoreName(store)
@@ -94,21 +96,23 @@ export default function StoreActionsPanel({
         }
     }
 
+    {/* 閉店ボタン */ }
     return (
         <>
-            {/* 閉店ボタン */}
-            <Box sx={{ mt: 4, pt: 2, borderTop: 2, borderColor: 'divider' }}>
-                <Button
-                    variant="contained"
-                    color="error"
-                    fullWidth
-                    startIcon={<Close />}
-                    onClick={handleCloseStoreClick}
-                    sx={{ py: 2, fontWeight: "bold" }}
-                >
-                    店舗を閉店する
-                </Button>
-            </Box>
+            {isAuthenticated && (
+                <Box sx={{ mt: 4, pt: 2, borderTop: 2, borderColor: 'divider' }}>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        fullWidth
+                        startIcon={<Close />}
+                        onClick={handleCloseStoreClick}
+                        sx={{ py: 2, fontWeight: "bold" }}
+                    >
+                        店舗を閉店する
+                    </Button>
+                </Box>
+            )}
             {/* 閉店確認ダイアログ */}
             <ConfirmDialog
                 open={storeCloseDialog.open}
