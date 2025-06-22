@@ -15,6 +15,13 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "6mb"
     }
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // 'firebase-admin' をクライアントバンドルから除外する
+      config.externals.push('firebase-admin')
+    }
+    return config
   }
 };
 

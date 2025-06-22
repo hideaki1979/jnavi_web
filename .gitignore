@@ -48,3 +48,6 @@ next-env.d.ts
 
 # cursor
 /.cursor/
+
+#firebase-admin
+jnaviproject-firebase-adminsdk-fbsvc-f96e2396e1.json
