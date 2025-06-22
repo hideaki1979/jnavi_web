@@ -76,7 +76,9 @@ export function StoreImageForm({
                                 src={imageUrl}
                                 alt="選択したラーメン画像"
                                 fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 style={{ objectFit: "contain" }}
+                                priority
                             />
                         </Box>
                         <Button variant="outlined" color="secondary" onClick={onImageRemove}>
