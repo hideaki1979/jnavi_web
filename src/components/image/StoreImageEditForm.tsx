@@ -19,8 +19,9 @@ interface StoreImageEditFormProps {
 }
 
 /**
- * 画像編集画面
- * - 店舗IDと画像IDを取得して画像の編集を行う
+ * 店舗画像の編集フォームを表示し、画像情報の更新を行うコンポーネントです。
+ *
+ * 店舗ID・画像ID・初期画像データ・トッピング選択肢を受け取り、認証ユーザーによる画像情報の編集・送信・バリデーション・エラー処理・リダイレクトを管理します。
  */
 export default function StoreImageEditForm({
     storeId,
