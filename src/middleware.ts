@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = 'experimental-edge'
-
 // この関数は、リクエストがmatchesに指定されたパスと一致する場合に呼び出されます。
 export async function middleware(request: NextRequest) {
     const session = request.cookies.get('session')?.value
