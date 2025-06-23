@@ -18,6 +18,7 @@ interface StoreImageUploadFormProps {
 /**
  * 画像アップロード画面
  * @param id 店舗ID
+ * @param toppingOptions トッピングオプション
  * @returns 画像アップロード画面
  */
 export default function StoreImageUploadForm({ storeId, toppingOptions }: StoreImageUploadFormProps) {

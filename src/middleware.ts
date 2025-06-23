@@ -12,22 +12,37 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(loginUrl)
     }
 
-    // 認証APIを呼び出してセッションを検証
-    const responseAPI = await fetch(new URL('/api/auth/verify', request.url), {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${session}`,
-        },
-    });
+    try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)    // 5秒タイムアウト
+        // 認証APIを呼び出してセッションを検証
+        const responseAPI = await fetch(new URL('/api/auth/verify', request.url), {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${session}`,
+            },
+            signal: controller.signal
+        });
 
-    // 認証されていない場合はログインページへリダイレクト
-    if (responseAPI.status !== 200) {
-        const loginUrl = new URL('/auth/login', request.url);
+        clearTimeout(timeoutId)
+
+        // 認証されていない場合はログインページへリダイレクト
+        if (responseAPI.status !== 200) {
+            const loginUrl = new URL('/auth/login', request.url);
+            loginUrl.searchParams.set('redirect_to', request.nextUrl.pathname)
+            return NextResponse.redirect(loginUrl);
+        }
+
+        return NextResponse.next()
+
+    } catch (error) {
+        console.error('認証APIエラー：', error)
+        const loginUrl = new URL('/auth/login', request.url)
         loginUrl.searchParams.set('redirect_to', request.nextUrl.pathname)
-        return NextResponse.redirect(loginUrl);
+        loginUrl.searchParams.set('error', 'auth_failed')
+        return NextResponse.redirect(loginUrl)
     }
 
-    return NextResponse.next()
 }
 
 // 認証が必要なルートを指定

@@ -17,10 +17,18 @@ export default async function StoreImageUploadPage({ params }: StoreImageUploadP
     const { id } = await params
 
     // トッピング情報を取得
-    const toppingCallData = await getStoreToppingCalls(id, "all")
+    let toppingOptions: SimulationToppingOption[] = []
+    try {
 
-    const toppingOptions: SimulationToppingOption[]
-        = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
+        const toppingCallData = await getStoreToppingCalls(id, "all")
 
-    return <StoreImageUploadForm storeId={id} toppingOptions={toppingOptions} />
+        toppingOptions
+            = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
+        return <StoreImageUploadForm storeId={id} toppingOptions={toppingOptions} />
+    } catch (error) {
+        console.error('トッピング情報の取得失敗：', error)
+        // エラーページへリダイレクトまたはエラーUIを表示
+        throw new Error('トッピング情報の取得に失敗しました')
+    }
+
 }

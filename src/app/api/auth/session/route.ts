@@ -9,7 +9,12 @@ import '@/lib/server/firebaseAdmin'
  */
 export async function POST(request: NextRequest) {
     try {
-        const idToken = request.headers.get('Authorization')?.split('Bearer ')[1]
+        const authHeader = request.headers.get('Authorization')
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return NextResponse.json({ error: 'Authorization headerが必要です' }, { status: 401 })
+        }
+
+        const idToken = authHeader.substring(7) // 'Bearer '.length = 7
         if (!idToken) {
             return NextResponse.json({ error: 'IDトークンは必須です' }, { status: 401 })
         }

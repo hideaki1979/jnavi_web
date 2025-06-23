@@ -9,7 +9,7 @@ import StoreSwitch from "@/components/Store/StoreSwitch"
 import { useUpdateStore } from "@/hooks/api/useStores"
 import { useStoreForm } from "@/hooks/useStoreForm"
 import { StoreFormInput } from "@/validations/store"
-import { AccessTime, EventBusy, ExpandMore, Map, Store } from "@mui/icons-material"
+import { AccessTime, EventBusy, ExpandMore, Map as MapIcon, Store } from "@mui/icons-material"
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from "@mui/material"
 import { useMemo } from "react"
 import { FormattedToppingOptionNameStoreData } from "@/types/Store"
@@ -113,7 +113,7 @@ export default function StoreForm({ storeData }: StoreFormProps) {
             </Typography>
             <StoreFormInputText name="store_name" control={control} label="店舗名" errors={errors} startAdornment={<Store />} required margin="normal" />
             <StoreFormInputText name="branch_name" control={control} label="支店名" errors={errors} startAdornment={<Store />} margin="normal" />
-            <StoreFormInputText name="address" control={control} label="住所" errors={errors} startAdornment={<Map />} required margin="normal" />
+            <StoreFormInputText name="address" control={control} label="住所" errors={errors} startAdornment={<MapIcon />} required margin="normal" />
             <StoreFormInputText name="business_hours" control={control} label="営業時間" errors={errors} startAdornment={<AccessTime />} required margin="normal" />
             <StoreFormInputText name="regular_holidays" control={control} label="定休日" errors={errors} startAdornment={<EventBusy />} required margin="normal" />
             <StoreSwitch name="prior_meal_voucher" control={control} label="事前食券購入有無" />

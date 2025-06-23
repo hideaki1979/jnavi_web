@@ -21,7 +21,13 @@ export default async function StoreUpdatePage({ params }: StoreUpdatePageProps) 
     const { id } = await params
 
     // データ取得: カスタムフックuseStoreを使用
-    const storeData = await getStoreById(id)
+    try {
 
-    return <StoreForm storeData={storeData} />
+        const storeData = await getStoreById(id)
+        return <StoreForm storeData={storeData} />
+    } catch (error) {
+        console.error('店舗データの取得失敗:', error)
+        // notFound()を呼び出すか、エラーページを表示
+        throw new Error('店舗データの取得に失敗しました')
+    }
 }
