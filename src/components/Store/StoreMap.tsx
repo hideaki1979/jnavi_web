@@ -28,9 +28,16 @@ export default function StoreMap({ mapData }: StoreMapProps) {
     const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
     const [isLocationLoading, setIsLocationLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [isMounted, setIsMounted] = useState(false)
+
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
 
     // 位置情報取得の現在地設定
     useEffect(() => {
+        if (!isMounted) return
+
         if (!navigator.geolocation) {
             setIsLocationLoading(false)
             setErrorMessage("位置情報取得の権限がありません。")
@@ -56,7 +63,7 @@ export default function StoreMap({ mapData }: StoreMapProps) {
                 maximumAge: 600000  // 10分
             }
         )
-    }, [])
+    }, [isMounted])
 
     /**
      * マーカークリックハンドラ
