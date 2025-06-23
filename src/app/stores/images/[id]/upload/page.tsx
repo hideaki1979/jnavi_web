@@ -3,9 +3,9 @@ import { SimulationToppingOption } from "@/types/ToppingCall"
 import StoreImageUploadForm from "@/components/image/StoreImageUploadForm"
 
 interface StoreImageUploadPageProps {
-    params: Promise<{
+    params: {
         id: string;
-    }>
+    }
 }
 
 /**
@@ -14,7 +14,7 @@ interface StoreImageUploadPageProps {
  * @returns 画像アップロード画面
  */
 export default async function StoreImageUploadPage({ params }: StoreImageUploadPageProps) {
-    const { id } = await params
+    const { id } = params
 
     // トッピング情報を取得
     let toppingOptions: SimulationToppingOption[] = []

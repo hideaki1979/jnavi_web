@@ -5,10 +5,10 @@ import StoreImageEditForm from '@/components/image/StoreImageEditForm'
 import { Alert } from '@mui/material'
 
 interface ImageUploadPageProps {
-    params: Promise<{
+    params: {
         id: string;
         imageId: string;
-    }>
+    }
 }
 
 /**
@@ -16,7 +16,7 @@ interface ImageUploadPageProps {
  * - 店舗IDと画像IDを取得して画像の編集を行う
  */
 export default async function ImageUpdatePage({ params }: ImageUploadPageProps) {
-    const { id: storeId, imageId } = await params
+    const { id: storeId, imageId } = params
 
     try {
         const [imageData, toppingCallData] = await Promise.all([

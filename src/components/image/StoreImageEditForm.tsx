@@ -66,7 +66,8 @@ export default function StoreImageEditForm({
     } = useImageForm({
         mode: 'edit',
         storeId,
-        initialData: initialDataForForm
+        initialData: initialDataForForm,
+        initialToppingOptions: toppingOptions
     })
 
     // 画像ファイルアップロード
