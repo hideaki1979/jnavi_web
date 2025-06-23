@@ -6,7 +6,7 @@ import { useAuthStore } from '@/lib/AuthStore'
 import { ImageEditFormValues } from '@/validations/image'
 import LoadingErrorContainer from '@/components/feedback/LoadingErrorContainer'
 import { useStoreImage, useUpdateStoreImage } from '@/hooks/api/useImages'
-import { StoreImageForm } from '@/components/StoreImageForm'
+import { StoreImageForm } from '@/components/image/StoreImageForm'
 import { useImageForm } from '@/hooks/useImageForm'
 
 /**
@@ -19,7 +19,6 @@ export default function ImageUpdatePage() {
     // 画像更新用のmutation
     const updateImageMutation = useUpdateStoreImage()
     const [updating, setUpdating] = useState<boolean>(false)
-    const [successMsg, setSuccessMsg] = useState<string>("")
 
 
     const router = useRouter()
@@ -86,7 +85,6 @@ export default function ImageUpdatePage() {
             const editImageData = await createSubmitData(values, user.uid)
             await updateImageMutation.mutateAsync({ storeId, imageId, imageData: editImageData })
             clearErrors() // 成功時はエラーをクリア
-            setSuccessMsg('画像情報更新が完了しました')
             setTimeout(() => router.replace(`/stores/map`), 1500)
         } catch (error) {
             setError(error)
@@ -130,7 +128,6 @@ export default function ImageUpdatePage() {
             onToppingChange={handleOptionChange}
             errorMessage={errorMessage}
             validationErrors={validationErrors}
-            successMessage={successMsg}
             submitButtonLabel='画像変更'
             isSubmitting={updating}
             onSubmit={handleSubmit(onSubmit)}

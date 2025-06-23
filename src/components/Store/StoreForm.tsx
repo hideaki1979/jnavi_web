@@ -4,33 +4,51 @@ import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { ValidationErrorList } from "@/components/feedback/validationErrorList"
 import { StoreFormInputText } from "@/components/Store/StoreFormInputText"
 import { StoreRegisterToppingCallsCheck } from "@/components/toppingCallOptions/StoreRegisterToppingCalls"
+import { StoreSubmitButton } from "@/components/Store/StoreSubmitButton"
 import StoreSwitch from "@/components/Store/StoreSwitch"
-import { useCreateStore } from "@/hooks/api/useStores"
+import { useUpdateStore } from "@/hooks/api/useStores"
 import { useStoreForm } from "@/hooks/useStoreForm"
 import { StoreFormInput } from "@/validations/store"
 import { AccessTime, EventBusy, ExpandMore, Map, Store } from "@mui/icons-material"
-import { Accordion, AccordionDetails, AccordionSummary, Button, CircularProgress, Typography } from "@mui/material"
-import { useRouter } from "next/navigation"
+import { Accordion, AccordionDetails, AccordionSummary, Typography } from "@mui/material"
+import { useMemo } from "react"
+import { FormattedToppingOptionNameStoreData } from "@/types/Store"
 
+interface StoreFormProps {
+    storeData: FormattedToppingOptionNameStoreData
+}
 
 /**
- * 店舗登録画面コンポーネント
+ * 店舗編集画面
  *
- * - トッピングコール情報を取得し、店舗情報を登録するフォームを提供
- * - 事前トッピングコールと着丼前トッピングコールの選択を管理
- * - フォーム送信で店舗情報を登録し、成功メッセージまたはエラーメッセージを表示
+ * - 店舗情報を取得
+ * - トッピングコール情報を取得
+ * - 店舗情報を編集して、トッピングコール情報を更新
  *
- * @returns JSX.Element
+* @returns {JSX.Element}
  */
+export default function StoreForm({ storeData }: StoreFormProps) {
 
-const CreateStorePage = () => {
+    const storeId = storeData.id
 
-    const router = useRouter()
+    // データ更新: カスタムフック useUpdateStore を使用 
+    const { mutateAsync: updateStore, isPending: isUpdating } = useUpdateStore()
 
-    // データ更新: カスタムフック useCreateStoreを使用
-    const { mutateAsync: createStore, isPending: isCreating } = useCreateStore()
+    // useMemoを使用してinitialDataの不要な再生成を防止
+    const initialDataForForm = useMemo(() => {
+        if (!storeData) return undefined
+        return {
+            ...storeData,
+            branch_name: storeData.branch_name ?? undefined,
+            topping_details: storeData.topping_details ?? undefined,
+            call_details: storeData.call_details ?? undefined,
+            lot_detail: storeData.lot_detail ?? undefined,
+            preCallFormattedIds: storeData.preCallFormattedIds,
+            postCallFormattedIds: storeData.postCallFormattedIds
+        }
+    }, [storeData])
 
-    // 共通化されたフォーム状態管理フック
+    // 共通化されたフォーム状態管理フック（編集モード）
     const {
         // react-hook-form
         control,
@@ -55,29 +73,33 @@ const CreateStorePage = () => {
 
         // 送信データ生成
         createSubmitData
-    } = useStoreForm({ mode: 'create' })
+    } = useStoreForm({
+        mode: "edit",
+        initialData: initialDataForForm
+    })
 
     /**
-     * 店舗登録処理を行う関数。
-     * - トッピングコール情報をマージして、formData+toppingCallsDataを生成
-     * - 生成したデータを送信し、店舗登録を実行
-     * - 成功時には、画面に成功メッセージを表示
-     * - エラー時には、画面にエラーメッセージを表示
-     * @param formData 店舗情報
+     * 店舗情報を更新する際にフォームデータを送信する非同期関数。
+     * - 事前コールと着丼前コールの選択オプションを整形し、送信データに含める。
+     * - 店舗情報更新APIに送信データを送信し、成功時には成功メッセージを表示。
+     * - エラー発生時にはエラーメッセージを表示し、コンソールにエラーを出力。
+     * @param formData フォーム入力データ
      */
-    const onSubmit = async (formData: StoreFormInput) => {
+
+    const onSubmit = async (formData: StoreFormInput): Promise<void> => {
         try {
             const submitData = createSubmitData(formData)
-            await createStore(submitData)
-            setTimeout(() => router.replace('/stores/map'), 2500)
+
+            await updateStore({ id: String(storeId), storeData: submitData })
         } catch (error) {
-            console.error("店舗登録処理でエラー", error)
+            console.error("店舗更新処理でエラー発生しました", error)
             setError(error)
         }
     }
+
     // 初期表示時のローディング
     if (isInitialLoading || isInitialError) {
-        return <LoadingErrorContainer loading={isInitialLoading} error={isInitialError ? initErrorMessage : null} />
+        return <LoadingErrorContainer loading={isInitialLoading} error={initErrorMessage} />
     }
 
     return (
@@ -86,8 +108,8 @@ const CreateStorePage = () => {
             className="border dark:border-gray-300 shadow-md rounded-md p-8 bg-gray-200 text-slate-800"
             noValidate
         >
-            <Typography variant="h5" mb={6} textAlign={"center"} fontWeight="bold">
-                店舗情報登録
+            <Typography variant="h5" fontWeight="bold" textAlign="center" mb={6}>
+                店舗編集画面
             </Typography>
             <StoreFormInputText name="store_name" control={control} label="店舗名" errors={errors} startAdornment={<Store />} required margin="normal" />
             <StoreFormInputText name="branch_name" control={control} label="支店名" errors={errors} startAdornment={<Store />} margin="normal" />
@@ -112,8 +134,7 @@ const CreateStorePage = () => {
                     />
                 </AccordionDetails>
             </Accordion>
-
-            {/* 着丼前トッピングコール情報 */}
+            {/* 事前トッピングコール情報 */}
             <Accordion defaultExpanded sx={{ mb: 2 }}>
                 <AccordionSummary expandIcon={<ExpandMore />}>
                     <Typography variant="subtitle1" fontWeight="bold">
@@ -129,23 +150,9 @@ const CreateStorePage = () => {
                     />
                 </AccordionDetails>
             </Accordion>
-            <StoreFormInputText name="topping_details" control={control} label="トッピング補足情報" errors={errors} margin="normal" multiline rows={3} />
-            <StoreFormInputText name="call_details" control={control} label="コール補足情報" errors={errors} margin="normal" multiline rows={3} />
-            <StoreSwitch name="is_all_increased" control={control} label="全マシコール有無" />
-            <StoreSwitch name="is_lot" control={control} label="ロット制有無" />
-            <StoreFormInputText name="lot_detail" control={control} label="ロット詳細情報" errors={errors} margin="normal" multiline rows={3} />
             {/* バリデーションエラー表示 */}
             <ValidationErrorList errors={validationErrors} />
-            <Button
-                variant="contained"
-                type="submit"
-                className="mt-4 w-full font-bold"
-                disabled={isCreating}
-            >
-                {isCreating ? <CircularProgress size={24} color="inherit" /> : "店舗登録"}
-            </Button>
+            <StoreSubmitButton label="店舗更新" loading={isUpdating} />
         </form>
     )
 }
-
-export default CreateStorePage

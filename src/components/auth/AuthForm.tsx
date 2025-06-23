@@ -77,14 +77,38 @@ export function AuthForm({ mode }: AuthFormProps) {
                         displayName: signUpData.name,
                         authProvider: 'email'
                     }, idToken)
+
+                    // サーバーにIDトークンを送信してセッションクッキーを設定
+                    const res = await fetch('/api/auth/session', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${idToken}`
+                        }
+                    })
+                    if (!res.ok) {
+                        throw new Error('セッションの作成に失敗しました。')
+                    }
                     setSuccessMsg("アカウント作成が成功しました。")
-                    setTimeout(() => router.replace(`/auth/login`), 1500)
+                    setTimeout(() => router.replace(`/stores/map`), 1500)
 
                 } else {
                     const loginData = data as LoginFormInput
                     await signInWithEmail(loginData.email, loginData.password)
+                    const idToken = await auth.currentUser?.getIdToken()
+                    if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
+                    // サーバーにIDトークンを送信してセッションクッキーを設定
+                    const res = await fetch('/api/auth/session', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${idToken}`
+                        }
+                    })
+                    if (!res.ok) {
+                        throw new Error('セッションの作成に失敗しました。')
+                    }
                     router.replace(`/stores/map`)
-
                 }
             })
         } catch (err) {

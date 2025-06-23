@@ -1,7 +1,7 @@
 import { FormattedToppingOptionNameStoreData } from "@/types/Store";
 import { ExpandMore } from "@mui/icons-material";
 import { Accordion, AccordionDetails, AccordionSummary, Box, Divider, Typography } from "@mui/material";
-import { RenderToppingOptions } from "./RenderToppingOptions";
+import { RenderToppingOptions } from "../toppingCallOptions/RenderToppingOptions";
 
 interface StoreDetailsSectionProps {
     storeData?: FormattedToppingOptionNameStoreData;

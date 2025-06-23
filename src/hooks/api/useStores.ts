@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { StoreInput } from "@/types/Store"
 import { useNotification } from "@/lib/notification"
 import { ApiClientError } from "@/types/validation"
+import { useRouter } from "next/navigation"
 
 // クエリキーを一元管理
 const storeKeys = {
@@ -73,6 +74,7 @@ export const useCreateStore = () => {
 export const useUpdateStore = () => {
     const queryClient = useQueryClient()
     const { showNotification } = useNotification()
+    const router = useRouter()
 
     return useMutation({
         mutationFn: ({ id, storeData }: { id: string; storeData: StoreInput }) =>
@@ -83,8 +85,10 @@ export const useUpdateStore = () => {
             await queryClient.invalidateQueries({ queryKey: storeKeys.all })
             await queryClient.invalidateQueries({ queryKey: storeKeys.maps })
             showNotification(data, "success")
+            setTimeout(() => router.replace(`/stores/map`), 1500)
         },
         onError: (error) => {
+            console.error("店舗更新エラー：", error)
             const apiError = error as ApiClientError
             showNotification(apiError.message || "店舗の更新に失敗しました", "error")
         }

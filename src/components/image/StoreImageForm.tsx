@@ -3,12 +3,12 @@
 import { SimulationToppingOption } from "@/types/ToppingCall";
 import { ExpressValidationError } from "@/types/validation";
 import { ImageEditFormValues, ImageUploadFormValues } from "@/validations/image";
-import { Alert, Box, Button, CircularProgress, Divider, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Divider, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
 import Image from "next/image";
 import { Control, Controller, FieldErrors } from "react-hook-form";
-import { ToppingOptionRadioSelector } from "./toppingCallOptions/ToppingOptionRadioSelector";
+import { ToppingOptionRadioSelector } from "../toppingCallOptions/ToppingOptionRadioSelector";
 import { SelectedToppingInfo } from "@/types/Image";
-import { ValidationErrorList } from "./feedback/validationErrorList";
+import { ValidationErrorList } from "../feedback/validationErrorList";
 
 const MENU_TYPE = [
     { label: "通常メニュー", value: "1" },
@@ -30,7 +30,6 @@ interface StoreImageFormProps {
     onToppingChange: (toppingId: string, optionId: string, storeToppingCallId: string) => void;
     errorMessage: string | null;
     validationErrors: ExpressValidationError[];
-    successMessage?: string;
     submitButtonLabel: string;
     isSubmitting: boolean;
     onSubmit: () => void;
@@ -51,9 +50,7 @@ export function StoreImageForm({
     toppingOptions,
     selectedToppingInfo,
     onToppingChange,
-    errorMessage,
     validationErrors,
-    successMessage,
     submitButtonLabel,
     isSubmitting,
     onSubmit,
@@ -167,22 +164,9 @@ export function StoreImageForm({
                     />
                 </>
             )}
-            {/* エラーメッセージ表示 */}
-            {errorMessage && (
-                <Alert severity="error" sx={{ width: "100%", mb: 4 }}>
-                    {errorMessage}
-                </Alert>
-            )}
 
             {/* バリデーションエラー表示 */}
             <ValidationErrorList errors={validationErrors} />
-
-            {/* 成功メッセージ表示 */}
-            {successMessage && (
-                <Alert severity="success" sx={{ width: "100%", mb: 4 }}>
-                    {successMessage}
-                </Alert>
-            )}
 
             {/* アップロードボタン */}
             <Box display="flex" justifyContent="center" mt={6}>
