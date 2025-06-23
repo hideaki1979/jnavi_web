@@ -2,9 +2,9 @@ import StoreForm from "@/components/Store/StoreForm"
 import { getStoreById } from "@/app/api/stores";
 
 interface StoreUpdatePageProps {
-    params: {
+    params: Promise<{
         id: string;
-    }
+    }>
 }
 
 /**
@@ -18,7 +18,7 @@ interface StoreUpdatePageProps {
  */
 export default async function StoreUpdatePage({ params }: StoreUpdatePageProps) {
 
-    const { id } = params
+    const { id } = await params
 
     let storeData
     // データ取得: カスタムフックuseStoreを使用
