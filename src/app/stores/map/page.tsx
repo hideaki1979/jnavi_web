@@ -10,7 +10,12 @@ import StoreMap from "@/components/Store/StoreMap";
  * - ドロワーコンポーネントは閉じるボタンをクリックすることで消える
  */
 export default async function MapPage() {
-    const mapData = await getMapAll()
-
-    return <StoreMap mapData={mapData} />
+    try {
+        const mapData = await getMapAll()
+        return <StoreMap mapData={mapData} />
+    } catch (error) {
+        console.error('MAPデータ取得失敗：', error)
+        // エラーページを表示するか、空のマップを表示
+        return <div>MAPデータ取得失敗しました</div>
+    }
 }

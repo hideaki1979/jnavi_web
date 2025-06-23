@@ -24,11 +24,11 @@ export default async function StoreImageUploadPage({ params }: StoreImageUploadP
 
         toppingOptions
             = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
-        return <StoreImageUploadForm storeId={id} toppingOptions={toppingOptions} />
     } catch (error) {
         console.error('トッピング情報の取得失敗：', error)
         // エラーページへリダイレクトまたはエラーUIを表示
         throw new Error('トッピング情報の取得に失敗しました')
     }
+    return <StoreImageUploadForm storeId={id} toppingOptions={toppingOptions} />
 
 }
