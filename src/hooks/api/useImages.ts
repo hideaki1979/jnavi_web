@@ -42,12 +42,21 @@ export const useStoreImage = (storeId: string, imageId: string) => {
  * 店舗のトッピングコール情報を取得する（画像アップロード・編集画面で使用）
  * @param storeId 店舗ID
  * @param mode "all" | "pre_call" | "post_call"
+ * @param enabled クエリを有効にするかどうか
  */
-export const useStoreToppingCallsForImage = (storeId: string, mode: "all" | "pre_call" | "post_call" = "all") => {
+export const useStoreToppingCallsForImage = (
+    storeId: string,
+    options: {
+        mode?: "all" | "pre_call" | "post_call",
+        enabled?: boolean
+    } = {}
+
+) => {
+    const { mode = "all", enabled = true } = options
     return useQuery({
         queryKey: [...imageKeys.storeToppingCalls(storeId), mode],
         queryFn: () => getStoreToppingCalls(storeId, mode),
-        enabled: !!storeId
+        enabled: !!storeId && enabled
     })
 }
 

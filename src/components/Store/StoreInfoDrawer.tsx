@@ -1,11 +1,11 @@
 import { MapStore, StoreImageDownloadData } from "@/types/Store";
 import { Box, Drawer, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import LoadingErrorContainer from "./feedback/LoadingErrorContainer";
+import LoadingErrorContainer from "../feedback/LoadingErrorContainer";
 import { useState } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useDialogState } from "@/hooks/useDialogState";
-import StoreImageGallery from "./StoreImageGallery";
+import StoreImageGallery from "../image/StoreImageGallery";
 import StoreDetailsSection from "./StoreDetailsSection";
 import StoreCloseActionsPanel from "./StoreCloseActionsPanel";
 import { useStore } from "@/hooks/api/useStores";

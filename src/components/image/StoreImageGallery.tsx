@@ -7,9 +7,9 @@ import { Box, IconButton, ImageList, ImageListItem, ImageListItemBar, Tooltip, T
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useState } from "react";
-import StoreImageModal from "./modals/StoreImageModal";
-import { ConfirmDialog } from "./modals/ConfirmDialog";
-import { ResultDialog } from "./modals/ResultDialog";
+import StoreImageModal from "../modals/StoreImageModal";
+import { ConfirmDialog } from "../modals/ConfirmDialog";
+import { ResultDialog } from "../modals/ResultDialog";
 import { getDisplayMenuName } from "@/utils/storeUtils";
 import { MENU_TYPE_LABELS } from "@/constants/ui";
 import { useDeleteStoreImage } from "@/hooks/api/useImages";

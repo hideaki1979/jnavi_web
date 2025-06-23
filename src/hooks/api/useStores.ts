@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { StoreInput } from "@/types/Store"
 import { useNotification } from "@/lib/notification"
 import { ApiClientError } from "@/types/validation"
+import { useRouter } from "next/navigation"
+import { useEffect, useRef } from "react"
 
 // クエリキーを一元管理
 const storeKeys = {
@@ -73,6 +75,17 @@ export const useCreateStore = () => {
 export const useUpdateStore = () => {
     const queryClient = useQueryClient()
     const { showNotification } = useNotification()
+    const router = useRouter()
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+    // フックがアンマウントされる時にタイムアウトをクリア
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+        }
+    }, [])
 
     return useMutation({
         mutationFn: ({ id, storeData }: { id: string; storeData: StoreInput }) =>
@@ -83,8 +96,18 @@ export const useUpdateStore = () => {
             await queryClient.invalidateQueries({ queryKey: storeKeys.all })
             await queryClient.invalidateQueries({ queryKey: storeKeys.maps })
             showNotification(data, "success")
+            // 前のタイムアウトがあればクリア
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+            timeoutRef.current = setTimeout(() => {
+                router.replace(`/stores/map`)
+                timeoutRef.current = null
+            }, 1500)
+
         },
         onError: (error) => {
+            console.error("店舗更新エラー：", error)
             const apiError = error as ApiClientError
             showNotification(apiError.message || "店舗の更新に失敗しました", "error")
         }

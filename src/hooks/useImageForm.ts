@@ -14,7 +14,7 @@ type ImageFormValues = ImageUploadFormValues | ImageEditFormValues
 
 interface UseImageFormOptions {
     mode: 'create' | 'edit';
-    storeId: string
+    storeId: string;
     initialData?: {
         menuName?: string;
         menuType?: string;
@@ -25,6 +25,7 @@ interface UseImageFormOptions {
             store_topping_call_id: number | string;
         }>
     }
+    initialToppingOptions?: SimulationToppingOption[]
 }
 
 interface UseImageFormReturn {
@@ -71,7 +72,7 @@ interface UseImageFormReturn {
     }>
 }
 
-export function useImageForm({ mode, storeId, initialData }: UseImageFormOptions): UseImageFormReturn {
+export function useImageForm({ mode, storeId, initialData, initialToppingOptions }: UseImageFormOptions): UseImageFormReturn {
     // 画像URL状態
     const [imageUrl, setImageUrl] = useState('')
     // トッピング選択状態
@@ -88,10 +89,12 @@ export function useImageForm({ mode, storeId, initialData }: UseImageFormOptions
         isError: isToppingError,
         error: toppingError
     }
-        = useStoreToppingCallsForImage(storeId)
+        = useStoreToppingCallsForImage(storeId, {
+            enabled: !initialToppingOptions
+        })
 
     const toppingOptions: SimulationToppingOption[]
-        = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
+        = initialToppingOptions ?? toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []
 
     const toppingErrorMessage = isToppingError ? (toppingError as Error).message : null
 
