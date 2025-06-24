@@ -10,8 +10,8 @@ import StoreForm from "@/components/Store/StoreForm"
  */
 
 export default async function CreateStorePage() {
-    const toppingOptions = await getToppingCallOptions()
     try {
+        const toppingOptions = await getToppingCallOptions()
         return <StoreForm mode="create" toppingOptions={toppingOptions} />
     } catch (error) {
         console.error('トッピングデータの取得失敗:', error)
