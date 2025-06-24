@@ -97,6 +97,7 @@ export default function StoreMap({ mapData }: StoreMapProps) {
                             style={{ width: "100%", height: "100%" }}
                             gestureHandling={"greedy"}
                             disableDefaultUI={true}
+                            onCameraChanged={(ev) => setCenter(ev.detail.center)}
                         >
                             {mapData?.map((store: MapData) => (
                                 <AdvancedMarker
