@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// この関数は、リクエストがmatchesに指定されたパスと一致する場合に呼び出されます。
+/**
+ * 認証が必要なルートへのリクエスト時に、セッションの有無と有効性を検証し、不正な場合はログインページへリダイレクトします。
+ *
+ * セッションが存在しない、または認証APIによる検証に失敗した場合、元のリクエストパスを`redirect_to`クエリパラメータとして付与し、ログインページへリダイレクトします。API通信エラー時は追加で`error=auth_failed`も付与されます。
+ */
 export async function middleware(request: NextRequest) {
     const session = request.cookies.get('session')?.value
 

@@ -12,8 +12,9 @@ interface ImageUploadPageProps {
 }
 
 /**
- * 画像編集画面
- * - 店舗IDと画像IDを取得して画像の編集を行う
+ * 店舗IDおよび画像IDに基づいて画像編集ページを表示する非同期サーバーコンポーネントです。
+ *
+ * 画像データおよびトッピングオプションを取得し、編集フォームをレンダリングします。データ取得に失敗した場合はエラーメッセージを表示します。
  */
 export default async function ImageUpdatePage({ params }: ImageUploadPageProps) {
     const { id: storeId, imageId } = await params
