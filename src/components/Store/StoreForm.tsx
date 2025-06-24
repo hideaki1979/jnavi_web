@@ -1,54 +1,55 @@
 "use client"
 
-import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { ValidationErrorList } from "@/components/feedback/validationErrorList"
 import { StoreFormInputText } from "@/components/Store/StoreFormInputText"
 import { StoreRegisterToppingCallsCheck } from "@/components/toppingCallOptions/StoreRegisterToppingCalls"
 import { StoreSubmitButton } from "@/components/Store/StoreSubmitButton"
 import StoreSwitch from "@/components/Store/StoreSwitch"
-import { useUpdateStore } from "@/hooks/api/useStores"
+import { useCreateStore, useUpdateStore } from "@/hooks/api/useStores"
 import { useStoreForm } from "@/hooks/useStoreForm"
 import { StoreFormInput } from "@/validations/store"
 import { AccessTime, EventBusy, ExpandMore, Map as MapIcon, Store } from "@mui/icons-material"
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from "@mui/material"
 import { useMemo } from "react"
 import { FormattedToppingOptionNameStoreData } from "@/types/Store"
+import { ResultToppingCall } from "@/types/ToppingCall"
 
 interface StoreFormProps {
-    storeData: FormattedToppingOptionNameStoreData
+    mode: 'create' | 'edit';
+    initialData?: FormattedToppingOptionNameStoreData;
+    toppingOptions: Record<number, ResultToppingCall>
 }
 
 /**
- * 店舗編集画面
+ * 店舗登録・編集画面フォーム
  *
- * - 店舗情報を取得
- * - トッピングコール情報を取得
- * - 店舗情報を編集して、トッピングコール情報を更新
+ * - modeに応じて登録または編集処理を実行
+ * - useStoreFormフックからフォーム状態とロジックを取得
+ * - フォームの送信、バリデーション、UIの表示を管理
  *
 * @returns {JSX.Element}
  */
-export default function StoreForm({ storeData }: StoreFormProps) {
+export default function StoreForm({ mode, initialData, toppingOptions }: StoreFormProps) {
 
-    const storeId = storeData.id
-
-    // データ更新: カスタムフック useUpdateStore を使用 
+    // データ更新: カスタムフックを使用
+    const { mutateAsync: createStore, isPending: isCreating } = useCreateStore()
     const { mutateAsync: updateStore, isPending: isUpdating } = useUpdateStore()
 
     // useMemoを使用してinitialDataの不要な再生成を防止
     const initialDataForForm = useMemo(() => {
-        if (!storeData) return undefined
+        if (mode === 'create' || !initialData) return undefined
         return {
-            ...storeData,
-            branch_name: storeData.branch_name ?? undefined,
-            topping_details: storeData.topping_details ?? undefined,
-            call_details: storeData.call_details ?? undefined,
-            lot_detail: storeData.lot_detail ?? undefined,
-            preCallFormattedIds: storeData.preCallFormattedIds,
-            postCallFormattedIds: storeData.postCallFormattedIds
+            ...initialData,
+            branch_name: initialData.branch_name ?? undefined,
+            topping_details: initialData.topping_details ?? undefined,
+            call_details: initialData.call_details ?? undefined,
+            lot_detail: initialData.lot_detail ?? undefined,
+            preCallFormattedIds: initialData.preCallFormattedIds,
+            postCallFormattedIds: initialData.postCallFormattedIds
         }
-    }, [storeData])
+    }, [initialData, mode])
 
-    // 共通化されたフォーム状態管理フック（編集モード）
+    // 共通化されたフォーム状態管理フック
     const {
         // react-hook-form
         control,
@@ -66,22 +67,18 @@ export default function StoreForm({ storeData }: StoreFormProps) {
         validationErrors,
         setError,
 
-        // ローディング状態
-        isInitialLoading,
-        isInitialError,
-        initErrorMessage,
-
         // 送信データ生成
         createSubmitData
     } = useStoreForm({
-        mode: "edit",
-        initialData: initialDataForForm
+        mode,
+        initialData: initialDataForForm,
+        toppingOptions
     })
 
     /**
-     * 店舗情報を更新する際にフォームデータを送信する非同期関数。
-     * - 事前コールと着丼前コールの選択オプションを整形し、送信データに含める。
-     * - 店舗情報更新APIに送信データを送信し、成功時には成功メッセージを表示。
+     * 店舗情報を登録または更新するためにフォームデータを送信する非同期関数。
+     * - modeに応じて、作成APIまたは更新APIを呼び出す。
+     * - 成功時には適切なページにリダイレクトする。
      * - エラー発生時にはエラーメッセージを表示し、コンソールにエラーを出力。
      * @param formData フォーム入力データ
      */
@@ -89,18 +86,19 @@ export default function StoreForm({ storeData }: StoreFormProps) {
     const onSubmit = async (formData: StoreFormInput): Promise<void> => {
         try {
             const submitData = createSubmitData(formData)
+            if (mode === 'create') {
+                await createStore(submitData)
+            } else if (initialData) {
+                await updateStore({ id: String(initialData.id), storeData: submitData })
+            }
 
-            await updateStore({ id: String(storeId), storeData: submitData })
         } catch (error) {
-            console.error("店舗更新処理でエラー発生しました", error)
+            console.error(`店舗${mode === 'create' ? '登録' : '更新'}処理でエラー発生しました`, error)
             setError(error)
         }
     }
 
-    // 初期表示時のローディング
-    if (isInitialLoading || isInitialError) {
-        return <LoadingErrorContainer loading={isInitialLoading} error={initErrorMessage} />
-    }
+    const isLoading = isCreating || isUpdating
 
     return (
         <form
@@ -109,7 +107,7 @@ export default function StoreForm({ storeData }: StoreFormProps) {
             noValidate
         >
             <Typography variant="h5" fontWeight="bold" textAlign="center" mb={6}>
-                店舗編集画面
+                {mode === 'create' ? '店舗登録画面' : '店舗編集画面'}
             </Typography>
             <StoreFormInputText name="store_name" control={control} label="店舗名" errors={errors} startAdornment={<Store />} required margin="normal" />
             <StoreFormInputText name="branch_name" control={control} label="支店名" errors={errors} startAdornment={<Store />} margin="normal" />
@@ -134,7 +132,7 @@ export default function StoreForm({ storeData }: StoreFormProps) {
                     />
                 </AccordionDetails>
             </Accordion>
-            {/* 事前トッピングコール情報 */}
+            {/* 着丼前トッピングコール情報 */}
             <Accordion defaultExpanded sx={{ mb: 2 }}>
                 <AccordionSummary expandIcon={<ExpandMore />}>
                     <Typography variant="subtitle1" fontWeight="bold">
@@ -150,9 +148,17 @@ export default function StoreForm({ storeData }: StoreFormProps) {
                     />
                 </AccordionDetails>
             </Accordion>
+            <StoreFormInputText name="topping_details" control={control} label="トッピング補足情報" errors={errors} margin="normal" multiline rows={3} />
+            <StoreFormInputText name="call_details" control={control} label="コール補足情報" errors={errors} margin="normal" multiline rows={3} />
+            <StoreSwitch name="is_all_increased" control={control} label="全マシコール有無" />
+            <StoreSwitch name="is_lot" control={control} label="ロット制有無" />
+            <StoreFormInputText name="lot_detail" control={control} label="ロット補足情報" errors={errors} margin="normal" multiline rows={3} />
+
             {/* バリデーションエラー表示 */}
             <ValidationErrorList errors={validationErrors} />
-            <StoreSubmitButton label="店舗更新" loading={isUpdating} />
+            <StoreSubmitButton
+                label={mode === 'create' ? "店舗登録" : "店舗更新"}
+                loading={isLoading} />
         </form>
     )
 }

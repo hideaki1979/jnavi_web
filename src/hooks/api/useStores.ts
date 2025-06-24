@@ -53,6 +53,17 @@ export const useStore = (id: string, enabled: boolean = true) => {
 export const useCreateStore = () => {
     const queryClient = useQueryClient()
     const { showNotification } = useNotification()
+    const router = useRouter()
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+    // フックがアンマウントされる時にタイムアウトをクリア
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+        }
+    }, [])
 
     return useMutation({
         mutationFn: (storeData: StoreInput) => createStore(storeData),
@@ -61,6 +72,16 @@ export const useCreateStore = () => {
             await queryClient.invalidateQueries({ queryKey: storeKeys.all })
             await queryClient.invalidateQueries({ queryKey: storeKeys.maps })
             showNotification(data, "success")
+
+            // 前のタイムアウトがあればクリア
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+
+            timeoutRef.current = setTimeout(() => {
+                router.replace('/stores/map')
+                timeoutRef.current = null
+            }, 1500)
         },
         onError: (error) => {
             const apiError = error as ApiClientError

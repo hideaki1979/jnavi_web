@@ -1,5 +1,6 @@
 import StoreForm from "@/components/Store/StoreForm"
 import { getStoreById } from "@/app/api/stores";
+import { getToppingCallOptions } from "@/app/api/toppingCalls";
 
 interface StoreUpdatePageProps {
     params: Promise<{
@@ -19,15 +20,14 @@ interface StoreUpdatePageProps {
 export default async function StoreUpdatePage({ params }: StoreUpdatePageProps) {
 
     const { id } = await params
-
-    let storeData
     // データ取得: カスタムフックuseStoreを使用
     try {
-        storeData = await getStoreById(id)
+        const storeData = await getStoreById(id)
+        const toppingOptions = await getToppingCallOptions()
+        return <StoreForm mode="edit" initialData={storeData} toppingOptions={toppingOptions} />
     } catch (error) {
-        console.error('店舗データの取得失敗:', error)
+        console.error('店舗データ・トッピングデータの取得失敗:', error)
         // notFound()を呼び出すか、エラーページを表示
-        throw new Error('店舗データの取得に失敗しました')
+        throw new Error('店舗データの取得・トッピングデータ取得に失敗しました')
     }
-    return <StoreForm storeData={storeData} />
 }

@@ -26,7 +26,7 @@ export default function StoreMap({ mapData }: StoreMapProps) {
     const [center, setCenter] = useState(defaultCenter)
     const [selectedStore, setSelectedStore] = useState<MapStore | null>(null)
     const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
-    const [isLocationLoading, setIsLocationLoading] = useState(true)
+    const [isLocationLoading, setIsLocationLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [isMounted, setIsMounted] = useState(false)
 
@@ -38,6 +38,7 @@ export default function StoreMap({ mapData }: StoreMapProps) {
     useEffect(() => {
         if (!isMounted) return
 
+        setIsLocationLoading(true)
         if (!navigator.geolocation) {
             setIsLocationLoading(false)
             setErrorMessage("位置情報取得の権限がありません。")
@@ -89,9 +90,19 @@ export default function StoreMap({ mapData }: StoreMapProps) {
                         width="100vw"
                         height="70vh"
                     >
+                        {isLocationLoading && (
+                            <Box sx={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 1, backgroundColor: 'white', padding: 1, borderRadius: 1 }}>
+                                <Typography>現在地を取得中...</Typography>
+                            </Box>
+                        )}
+                        {errorMessage && (
+                            <Box sx={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 1, backgroundColor: 'red', color: 'white', padding: 1, borderRadius: 1 }}>
+                                <Typography>{errorMessage}</Typography>
+                            </Box>
+                        )}
                         <Map
                             mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID}
-                            defaultCenter={center}
+                            center={center}
                             defaultZoom={14}
                             style={{ width: "100%", height: "100%" }}
                             gestureHandling={"greedy"}
