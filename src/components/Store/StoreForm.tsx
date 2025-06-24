@@ -88,10 +88,14 @@ export default function StoreForm({ mode, initialData, toppingOptions }: StoreFo
             const submitData = createSubmitData(formData)
             if (mode === 'create') {
                 await createStore(submitData)
-            } else if (initialData) {
+            } else {
+                if (!initialData) {
+                    console.error('編集モードでは店舗データが必要ですが、取得されていません。')
+                    setError('編集モードでは店舗データが必要ですが、取得されていません。')
+                    return
+                }
                 await updateStore({ id: String(initialData.id), storeData: submitData })
             }
-
         } catch (error) {
             console.error(`店舗${mode === 'create' ? '登録' : '更新'}処理でエラー発生しました`, error)
             setError(error)

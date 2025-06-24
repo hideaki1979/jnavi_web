@@ -19,11 +19,13 @@ interface StoreUpdatePageProps {
  */
 export default async function StoreUpdatePage({ params }: StoreUpdatePageProps) {
 
-    const { id } = await params
+    const { id: storeId } = await params
     // データ取得: カスタムフックuseStoreを使用
     try {
-        const storeData = await getStoreById(id)
-        const toppingOptions = await getToppingCallOptions()
+        const [storeData, toppingOptions] = await Promise.all([
+            getStoreById(storeId),
+            getToppingCallOptions()
+        ])
         return <StoreForm mode="edit" initialData={storeData} toppingOptions={toppingOptions} />
     } catch (error) {
         console.error('店舗データ・トッピングデータの取得失敗:', error)

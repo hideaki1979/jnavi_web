@@ -90,16 +90,6 @@ export default function StoreMap({ mapData }: StoreMapProps) {
                         width="100vw"
                         height="70vh"
                     >
-                        {isLocationLoading && (
-                            <Box sx={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 1, backgroundColor: 'white', padding: 1, borderRadius: 1 }}>
-                                <Typography>現在地を取得中...</Typography>
-                            </Box>
-                        )}
-                        {errorMessage && (
-                            <Box sx={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 1, backgroundColor: 'red', color: 'white', padding: 1, borderRadius: 1 }}>
-                                <Typography>{errorMessage}</Typography>
-                            </Box>
-                        )}
                         <Map
                             mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID}
                             center={center}
