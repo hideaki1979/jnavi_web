@@ -8,14 +8,14 @@ import { useApiError } from "./useApiError";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formattedToppingCalls } from "@/lib/toppingCallFormatter";
 import { ExpressValidationError } from "@/types/validation";
-import { useToppingCallOptions } from "./api/useToppingCalls";
 
 interface UseStoreFormOptions {
     mode: 'create' | 'edit';
     initialData?: Partial<StoreFormInput> & {
         preCallFormattedIds?: FormattedToppingOptionIds;
         postCallFormattedIds?: FormattedToppingOptionIds;
-    }
+    },
+    toppingOptions: Record<number, ResultToppingCall>;
 }
 
 interface UseStoreFormReturn {
@@ -32,28 +32,23 @@ interface UseStoreFormReturn {
     handleChangePreCallOptionCheck: (toppingId: number, optionId: number, checked: boolean) => void;
     handleChangePostCallOptionCheck: (toppingId: number, optionId: number, checked: boolean) => void;
 
-
     // エラーハンドリング
     errorMessage: string | null;
     validationErrors: ExpressValidationError[]
     setError: (error: unknown) => void;
     clearErrors: () => void;
 
-    // ローディング状態
-    isInitialLoading: boolean;
-    isInitialError: boolean;
-    initErrorMessage: string | null;
-
     // 送信データ生成
     createSubmitData: (formData: StoreFormInput) => StoreFormInput & { topping_calls: BaseToppingCall[] }
 }
 
-export function useStoreForm({ mode, initialData }: UseStoreFormOptions): UseStoreFormReturn {
+export function useStoreForm(
+    { mode, initialData, toppingOptions }: UseStoreFormOptions
+): UseStoreFormReturn {
     // トッピングコール関連の状態
     const [toppingOptionData, setToppingOptionData] = useState<Record<number, ResultToppingCall>>({})
     const [selectedPreCallOptions, setSelectedPreCallOptions] = useState<FormattedToppingOptionIds>({})
     const [selectedPostCallOptions, setSelectedPostCallOptions] = useState<FormattedToppingOptionIds>({})
-
 
     // APIエラーハンドリング
     const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
@@ -166,32 +161,22 @@ export function useStoreForm({ mode, initialData }: UseStoreFormOptions): UseSto
         []
     )
 
-    // トッピングコール情報取得
-    const {
-        data: toppingCallData,
-        isLoading: isInitialLoading,
-        isError: isInitialError,
-        error: initError
-    } = useToppingCallOptions()
-
-    const initErrorMessage = isInitialError ? (initError as Error).message : null
-
     // トッピングコール情報の初期化
     useEffect(() => {
-        if (!toppingCallData) return
+        if (!toppingOptions) return
 
-        setToppingOptionData(toppingCallData)
+        setToppingOptionData(toppingOptions)
 
         // 作成モードの場合、トッピングを空で初期化
         if (mode === 'create') {
             const initSelectedOptions: FormattedToppingOptionIds = {}
-            Object.keys(toppingCallData).forEach(key => {
+            Object.keys(toppingOptions).forEach(key => {
                 initSelectedOptions[Number(key)] = []
             })
             setSelectedPreCallOptions({ ...initSelectedOptions })
             setSelectedPostCallOptions({ ...initSelectedOptions })
         }
-    }, [toppingCallData, mode])
+    }, [toppingOptions, mode])
 
     // 送信データ生成関数
     const createSubmitData = useCallback((formData: StoreFormInput) => {
@@ -224,11 +209,6 @@ export function useStoreForm({ mode, initialData }: UseStoreFormOptions): UseSto
         validationErrors,
         setError,
         clearErrors,
-
-        // ローディング状態
-        isInitialLoading,
-        isInitialError,
-        initErrorMessage,
 
         // 送信データ生成
         createSubmitData
