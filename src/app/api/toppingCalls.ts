@@ -11,7 +11,7 @@ const api = ApiClient.getInstance()
 
 export const getToppingCallOptions = async () => {
     try {
-        const res = await api.get('/toppings/calloptions')
+        const res = await api.get('/toppings/calloptions/formatted')
         return res.data.data
     } catch (error) {
         throw ApiClient.handlerError(error, "トッピング・コールオプション時にエラーが発生しました。")
