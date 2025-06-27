@@ -41,12 +41,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" className={roboto.variable}>
-      <body className={roboto.className}>
-        <AppRouterCacheProvider>
+      <body className={`${roboto.className} antialiased`}>
+        <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <ThemeProvider theme={theme}>
+            <CssBaseline />
             <QueryClientProviders>
               <AuthProvider>
-                <CssBaseline />
                 <NotificationController />
                 <Toaster position="top-center" reverseOrder={false} />
                 <Suspense fallback={<LoadingErrorContainer loading={true} />}>

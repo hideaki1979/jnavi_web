@@ -1,21 +1,12 @@
 'use client'
 
 import { createTheme } from '@mui/material/styles'
+import { amber, brown } from '@mui/material/colors'
 
 const jiroTheme = createTheme({
     palette: {
-        primary: {
-            main: '#FFC107',
-            light: '#FFD54F',
-            dark: '#FFA000',
-            contrastText: '#212121',
-        },
-        secondary: {
-            main: '#795548',
-            light: '#A1887F',
-            dark: '#5D4037',
-            contrastText: '#FFFFFF',
-        },
+        primary: amber,
+        secondary: brown,
         error: {
             main: '#D32F2F',
         },
@@ -93,4 +84,4 @@ const jiroTheme = createTheme({
     },
 })
 
-export default jiroTheme 
+export default jiroTheme
