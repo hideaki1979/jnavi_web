@@ -73,10 +73,8 @@ const jiroTheme = createTheme({
             },
         },
         MuiCard: {
-            styleOverrides: {
-                root: {
-                    elevation: 1,
-                },
+            defaultProps: {
+                elevation: 1,
             },
         },
     },
