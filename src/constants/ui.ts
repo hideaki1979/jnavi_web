@@ -1,3 +1,7 @@
+export const UI = {
+    HEADER_HEIGHT: 64,
+} as const
+
 export const UI_CONSTANTS = {
     IMAGE_MODAL: {
         CONTAINER_HEIGHT: 240
