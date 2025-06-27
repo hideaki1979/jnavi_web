@@ -125,6 +125,11 @@ function getJapaneseVoice(): SpeechSynthesisVoice | null {
     return japaneseVoices.length > 0 ? japaneseVoices[0] : null
 }
 
+/**
+ * 音声合成状態の監視を開始
+ * - SpeechSynthesisの状態変化を監視し、音声合成状態の不整合を検出して修正する
+ * - 監視が不要になったら停止する
+ */
 function startStateMonitoring(): void {
     if (speechState.stateMonitorInterval) {
         return  // 既に監視中

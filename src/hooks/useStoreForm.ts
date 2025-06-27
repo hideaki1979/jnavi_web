@@ -42,6 +42,19 @@ interface UseStoreFormReturn {
     createSubmitData: (formData: StoreFormInput) => StoreFormInput & { topping_calls: BaseToppingCall[] }
 }
 
+/**
+ * 店舗登録・編集画面フォームの状態管理Hook。
+ *
+ * - modeに応じて、店舗登録・編集のどちらかを実行
+ * - initialDataに基づいて、フォームの初期値を設定
+ * - トッピングコールの選択状態を管理
+ * - react-hook-formを使用して、フォームのバリデーションを実行
+ * - 送信データ生成関数を提供
+ *
+ * @param {{ mode: 'create' | 'edit', initialData?: Partial<StoreFormInput>, toppingOptions: Record<number, ResultToppingCall> }} options
+ * @returns {UseStoreFormReturn} 共通化されたフォーム状態管理インターフェース
+ */
+
 export function useStoreForm(
     { mode, initialData, toppingOptions }: UseStoreFormOptions
 ): UseStoreFormReturn {

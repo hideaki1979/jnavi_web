@@ -6,6 +6,14 @@ import { FormattedToppingOptionIds } from "@/types/ToppingCall"
  * - createToppingOptionHandler: ハンドラー関数を生成するヘルパー
  */
 
+/**
+ * トッピングオプションの状態を更新する。
+ * - prevState: 現在のトッピングオプションの状態
+ * - toppingId: トッピングID
+ * - optionId: オプションID
+ * - isChecked: チェック状態
+ * - 返却値: 更新後のトッピングオプションの状態
+ */
 export const updateToppingOption = (
     prevState: FormattedToppingOptionIds,
     toppingId: number,
