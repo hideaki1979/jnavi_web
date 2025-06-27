@@ -12,7 +12,7 @@ import { ReactNode, useState } from "react";
  * @param {ReactNode} props.children
  * @returns {JSX.Element}
  */
-export default function QueryProviders({ children }:
+export default function QueryClientProviders({ children }:
     { children: ReactNode }) {
     const [queryClient] = useState(() => new QueryClient())
 
