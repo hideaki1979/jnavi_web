@@ -43,16 +43,29 @@ interface UseStoreFormReturn {
 }
 
 /**
- * 店舗登録・編集画面フォームの状態管理Hook。
+ * 店舗の登録・編集フォームの状態とロジックを管理する共通フック。
  *
- * - modeに応じて、店舗登録・編集のどちらかを実行
- * - initialDataに基づいて、フォームの初期値を設定
- * - トッピングコールの選択状態を管理
- * - react-hook-formを使用して、フォームのバリデーションを実行
- * - 送信データ生成関数を提供
+ * `react-hook-form`と連携し、以下の機能を提供します:
+ * - `create` / `edit` モードに応じたフォームの初期化
+ * - フォーム値のバリデーション
+ * - トッピングコールの選択状態管理
+ * - フォーム送信用のデータ生成
  *
- * @param {{ mode: 'create' | 'edit', initialData?: Partial<StoreFormInput>, toppingOptions: Record<number, ResultToppingCall> }} options
- * @returns {UseStoreFormReturn} 共通化されたフォーム状態管理インターフェース
+ * @param {UseStoreFormOptions} options - フックの初期化オプション。詳細は`UseStoreFormOptions`型定義を参照してください。
+ * @property {{menuName?: string, menuType?: string, imageUrl?: string, toppingSelections?: Array<{topping_id:number|string,call_option_id:number|string,store_topping_call_id:number|string}>}} [initialData] - 初期データ（編集モード用）
+ * @property {(values: ImageFormValues, userId: string) => Promise<{ 
+ *     store_id: string,
+ *     user_id: string,
+ *     menu_type: number,
+ *     menu_name: string,
+ *     image_base64?: string,
+ *     topping_selections?: Array<{
+ *         topping_id: number,
+ *         call_option_id: number,
+ *         store_topping_call_id?: string
+ *     }>
+ * }>} createSubmitData - 送信データ生成関数
+ * @returns {UseStoreFormReturn} フォームの状態と操作関数を含むオブジェクト。詳細は`UseStoreFormReturn`型定義を参照してください。
  */
 
 export function useStoreForm(

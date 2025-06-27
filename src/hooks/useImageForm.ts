@@ -73,39 +73,14 @@ interface UseImageFormReturn {
 }
 
 /**
- * 画像フォーム用の共通hook
+ * 画像のアップロード・編集フォームの状態とロジックを管理する共通フック。
  *
- * @param {UseImageFormOptions} options
- * @returns {UseImageFormReturn}
- */
-/**
- * @typedef {Object} UseImageFormOptions
- * @property {'create' | 'edit'} mode - 'create' or 'edit' mode
- * @property {string} storeId - store ID
- * @property {ImageFormValues} initialData - initial data for edit mode
- * @property {SimulationToppingOption[]} initialToppingOptions - initial topping options
- */
-/**
- * @typedef {Object} UseImageFormReturn
- * @property {Control<ImageFormValues>} control - React Hook Form control
- * @property {UseFormHandleSubmit<ImageFormValues>} handleSubmit - React Hook Form handleSubmit
- * @property {FieldErrors<ImageFormValues>} errors - React Hook Form errors
- * @property {UseFormReset<ImageFormValues>} reset - React Hook Form reset
- * @property {UseFormSetValue<ImageFormValues>} setValue - React Hook Form setValue
- * @property {string} imageUrl - current image URL
- * @property {(e: React.ChangeEvent<HTMLInputElement>) => Promise<void>} handleImageChange - image change handler
- * @property {() => void} handleImageRemove - image remove handler
- * @property {SimulationToppingOption[]} toppingOptions - topping options
- * @property {Record<string, SelectedToppingInfo>} selectedToppingInfo - selected topping info
- * @property {(toppingId: string, optionId: string, storeToppingCallId: string) => void} handleOptionChange - topping option change handler
- * @property {string | null} errorMessage - API error message
- * @property {ExpressValidationError[]} validationErrors - validation errors
- * @property {(error: unknown) => void} setError - set error
- * @property {() => void} clearErrors - clear errors
- * @property {boolean} isToppingLoading - topping loading state
- * @property {boolean} isToppingError - topping error state
- * @property {string | null} toppingErrorMessage - topping error message
- * @property {(values: ImageFormValues, userId: string) => Promise<{[key: string]: string | number | undefined}>} createSubmitData - create submit data
+ * `react-hook-form`と連携し、以下の機能を提供します:
+ * - フォームの状態管理 (値、エラー)
+ * - 画像の選択、圧縮、プレビュー、削除
+ * - トッピング情報の取得と選択状態の管理
+ * - `create`モードと`edit`モードのサポート
+ * - 送信データの生成
  */
 export function useImageForm({ mode, storeId, initialData, initialToppingOptions }: UseImageFormOptions): UseImageFormReturn {
     // 画像URL状態

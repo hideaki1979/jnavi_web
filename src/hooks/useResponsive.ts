@@ -2,12 +2,14 @@ import { useMediaQuery, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
 
 /**
- * MUIのBreakpointを使用して、画面サイズが小さい端末(スマートフォン)かどうかを判定するフック。
- * useEffectを使用してマウント完了後にisMobileをtrue/falseに設定する。
- * 画面サイズが小さい端末の場合はtrueを、そうでない場合はfalseを返す。
- * @returns {isMobile: boolean, mounted: boolean}
- *   - isMobile: trueの場合は、画面サイズが小さい端末(falseの場合はそうでない)
- *   - mounted: trueの場合は、コンポーネントがマウント完了(falseの場合はそうでない)
+ * MUIのBreakpointを利用して、現在の画面がモバイルサイズ（`sm`ブレークポイント以下）かどうかを判定するカスタムフック。
+ *
+ * サーバーサイドレンダリング(SSR)との水和(hydration)のミスマッチを避けるため、
+ * コンポーネントがマウントされた後(`mounted: true`)にのみ`isMobile`が有効な値になります。
+ *
+ * @returns {{isMobile: boolean, mounted: boolean}} レスポンシブ状態を含むオブジェクト。
+ * - `isMobile`: モバイルサイズの場合 `true`。
+ * - `mounted`: コンポーネントがクライアントでマウントされた後 `true`。
  */
 export function useResponsive() {
     const [mounted, setMounted] = useState(false)

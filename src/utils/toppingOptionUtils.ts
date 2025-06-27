@@ -7,12 +7,16 @@ import { FormattedToppingOptionIds } from "@/types/ToppingCall"
  */
 
 /**
- * トッピングオプションの状態を更新する。
- * - prevState: 現在のトッピングオプションの状態
- * - toppingId: トッピングID
- * - optionId: オプションID
- * - isChecked: チェック状態
- * - 返却値: 更新後のトッピングオプションの状態
+ * トッピングオプションの選択状態をイミュータブルに更新します。
+ *
+ * 指定されたトッピングIDとオプションIDに基づき、チェック状態に応じて
+ * 新しい状態オブジェクトを生成して返します。
+ *
+ * @param {FormattedToppingOptionIds} prevState - 更新前の状態オブジェクト。
+ * @param {number} toppingId - 更新対象のトッピングID。
+ * @param {number} optionId - 更新対象のオプションID。
+ * @param {boolean} isChecked - `true`の場合オプションを追加、`false`の場合削除します。
+ * @returns {FormattedToppingOptionIds} 更新後の新しい状態オブジェクト。
  */
 export const updateToppingOption = (
     prevState: FormattedToppingOptionIds,

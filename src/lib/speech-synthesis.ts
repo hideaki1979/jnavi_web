@@ -126,9 +126,11 @@ function getJapaneseVoice(): SpeechSynthesisVoice | null {
 }
 
 /**
- * 音声合成状態の監視を開始
- * - SpeechSynthesisの状態変化を監視し、音声合成状態の不整合を検出して修正する
- * - 監視が不要になったら停止する
+ * 音声合成状態の監視を開始します。
+ *
+ * `SpeechSynthesis`の`speaking`プロパティを定期的にチェックし、
+ * 内部状態との不整合を検出して修正します。
+ * これは、ブラウザが`end`イベントを正しく発行しない場合などのエッジケースに対応するためのものです。
  */
 function startStateMonitoring(): void {
     if (speechState.stateMonitorInterval) {
