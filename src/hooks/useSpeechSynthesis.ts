@@ -23,6 +23,19 @@ interface UseSpeechSynthesisReturn {
     setVoice: (voice: SpeechSynthesisVoice | null) => void;
 }
 
+/**
+ * Web Speech APIを使用して、指定されたテキストを音声で読み上げるためのReact Hookを提供します。
+ *
+ * 主な機能:
+ * - 音声合成APIの初期化とサポート状況の確認
+ * - 読み上げの進行状況（再生中, 一時停止中など）の監視
+ * - 読み上げの開始、停止、一時停止、再開の制御
+ * - 利用可能なボイス一覧の取得と設定
+ * - APIがサポートされていない場合のエラーハンドリング
+ *
+ * @param {UseSpeechSynthesisOptions} options - 音声合成のオプション（rate, pitch, volume, voice）。詳細は`UseSpeechSynthesisOptions`型定義を参照してください。
+ * @returns {UseSpeechSynthesisReturn} 音声合成を制御するための状態と関数。詳細は`UseSpeechSynthesisReturn`型定義を参照してください。
+ */
 export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}): UseSpeechSynthesisReturn {
     const [isSpeaking, setIsSpeaking] = useState(false)
     const [isPaused, setIsPaused] = useState(false)

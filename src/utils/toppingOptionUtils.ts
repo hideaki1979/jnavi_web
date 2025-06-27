@@ -6,6 +6,18 @@ import { FormattedToppingOptionIds } from "@/types/ToppingCall"
  * - createToppingOptionHandler: ハンドラー関数を生成するヘルパー
  */
 
+/**
+ * トッピングオプションの選択状態をイミュータブルに更新します。
+ *
+ * 指定されたトッピングIDとオプションIDに基づき、チェック状態に応じて
+ * 新しい状態オブジェクトを生成して返します。
+ *
+ * @param {FormattedToppingOptionIds} prevState - 更新前の状態オブジェクト。
+ * @param {number} toppingId - 更新対象のトッピングID。
+ * @param {number} optionId - 更新対象のオプションID。
+ * @param {boolean} isChecked - `true`の場合オプションを追加、`false`の場合削除します。
+ * @returns {FormattedToppingOptionIds} 更新後の新しい状態オブジェクト。
+ */
 export const updateToppingOption = (
     prevState: FormattedToppingOptionIds,
     toppingId: number,

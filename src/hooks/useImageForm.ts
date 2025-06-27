@@ -72,6 +72,16 @@ interface UseImageFormReturn {
     }>
 }
 
+/**
+ * 画像のアップロード・編集フォームの状態とロジックを管理する共通フック。
+ *
+ * `react-hook-form`と連携し、以下の機能を提供します:
+ * - フォームの状態管理 (値、エラー)
+ * - 画像の選択、圧縮、プレビュー、削除
+ * - トッピング情報の取得と選択状態の管理
+ * - `create`モードと`edit`モードのサポート
+ * - 送信データの生成
+ */
 export function useImageForm({ mode, storeId, initialData, initialToppingOptions }: UseImageFormOptions): UseImageFormReturn {
     // 画像URL状態
     const [imageUrl, setImageUrl] = useState('')
