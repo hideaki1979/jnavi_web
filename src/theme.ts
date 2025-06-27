@@ -58,10 +58,8 @@ const jiroTheme = createTheme({
     },
     components: {
         MuiAppBar: {
-            styleOverrides: {
-                root: {
-                    elevation: 0,
-                },
+            defaultProps: {
+                elevation: 0,
             },
         },
         MuiButton: {
