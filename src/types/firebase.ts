@@ -1,24 +1,26 @@
-export interface FirebaseErrorMessageMap {
+export type KnownFirebaseAuthErrors =
     // 認証関連エラー
-    'auth/invalid-credential': string;
-    'auth/user-not-found': string;
-    'auth/wrong-password': string;
-    'auth/invalid-email': string;
-    'auth/user-disabled': string;
-    'auth/email-already-in-use': string;
-    'auth/weak-password': string;
-    'auth/operation-not-allowed': string;
-    'auth/account-exists-with-different-credential': string;
-    'auth/requires-recent-login': string;
-    'auth/credential-already-in-use': string;
-    'auth/timeout': string;
-    'auth/network-request-failed': string;
-    'auth/too-many-requests': string;
-    'auth/popup-closed-by-user': string;
-    'auth/cancelled-popup-request': string;
-    'auth/popup-blocked': string;
-    'auth/internal-error': string;
-    'permission-denied': string;
-    'unavailable': string;
-    [key: string]: string; // その他のエラー
-}
+    | 'auth/invalid-credential'
+    | 'auth/user-not-found'
+    | 'auth/wrong-password'
+    | 'auth/invalid-email'
+    | 'auth/user-disabled'
+    | 'auth/email-already-in-use'
+    | 'auth/weak-password'
+    | 'auth/operation-not-allowed'
+    | 'auth/account-exists-with-different-credential'
+    | 'auth/requires-recent-login'
+    | 'auth/credential-already-in-use'
+    | 'auth/timeout'
+    | 'auth/network-request-failed'
+    | 'auth/too-many-requests'
+    | 'auth/popup-closed-by-user'
+    | 'auth/cancelled-popup-request'
+    | 'auth/popup-blocked'
+    | 'auth/internal-error'
+    | 'permission-denied'
+    | 'unavailable'
+
+// インターセクション型で既知コードを必須、その他を任意に
+export type FirebaseErrorMessageMap =
+    Record<KnownFirebaseAuthErrors, string> & { [key: string]: string }
