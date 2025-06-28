@@ -81,7 +81,7 @@ export default function PrecallPage() {
                     borderRadius: 4,
                     boxShadow: 6,
                     overflow: "hidden",
-                    bgcolor: theme.palette.mode === "dark" ? "gray.900" : "white"
+                    bgcolor: theme.palette.mode === "dark" ? "grey.900" : "background.paper"
 
                 })}
             >
@@ -126,10 +126,10 @@ export default function PrecallPage() {
                     sx={(theme) => ({
                         borderWidth: 2,
                         fontWeight: "bold",
-                        bgcolor: theme.palette.mode === "dark" ? "grey.800" : "white",
+                        bgcolor: theme.palette.mode === "dark" ? "grey.800" : "background.paper",
                         color: theme.palette.mode === "dark" ? theme.palette.primary.light : theme.palette.secondary.main,
                         "&:hover": {
-                            bgcolor: theme.palette.mode === "dark" ? "gray.700" : "gray.100"
+                            bgcolor: theme.palette.mode === "dark" ? "grey.700" : "grey.100"
                         }
                     })}
                 >

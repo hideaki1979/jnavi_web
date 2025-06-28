@@ -82,7 +82,7 @@ export default function PostcallPage() {
                     borderRadius: 4,
                     boxShadow: 6,
                     overflow: "hidden",
-                    bgcolor: theme.palette.mode === "dark" ? "gray.800" : "white"
+                    bgcolor: theme.palette.mode === "dark" ? "grey.800" : "background.paper"
 
                 })}
             >
@@ -131,7 +131,7 @@ export default function PostcallPage() {
                         bgcolor: theme.palette.mode === "dark" ? "grey.800" : "white",
                         color: theme.palette.mode === "dark" ? theme.palette.primary.light : theme.palette.secondary.main,
                         "&:hover": {
-                            bgcolor: theme.palette.mode === "dark" ? "gray.700" : "gray.100"
+                            bgcolor: theme.palette.mode === "dark" ? "grey.700" : "grey.100"
                         }
                     })}
                 >

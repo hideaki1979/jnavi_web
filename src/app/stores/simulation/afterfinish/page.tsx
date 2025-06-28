@@ -98,7 +98,7 @@ export default function AfterFinishPage() {
                         borderRadius: 4,
                         boxShadow: 6,
                         overflow: "hidden",
-                        bgcolor: theme.palette.mode === "dark" ? "gray.800" : "gray.100",
+                        bgcolor: theme.palette.mode === "dark" ? "grey.800" : "grey.100",
                         height: 200, width: 200,
                         mx: "auto", mb: 4
                     })}
