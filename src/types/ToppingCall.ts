@@ -1,5 +1,3 @@
-import { SelectedToppingInfo } from "./Image";
-
 /**
  * トッピング情報の型定義
  */
@@ -79,4 +77,10 @@ export interface SelectedToppingInfoMap {
 // シミュレーション用の選択オプション型
 export interface SelectedSimulationOptions {
     [toppingId: string]: string;
+}
+
+// 選択されたトッピングオプション情報の型
+export interface SelectedToppingInfo {
+    optionId: string | number;
+    storeToppingCallId?: string | number;
 }

@@ -12,12 +12,6 @@ export interface StoreImageUploadData {
     }[]
 }
 
-// 選択されたトッピングオプション情報の型
-export interface SelectedToppingInfo {
-    optionId: string | number;
-    storeToppingCallId?: string | number;
-}
-
 // 店舗別画像更新画面用のインターフェース
 export interface StoreImageEditData {
     id: number | string;
