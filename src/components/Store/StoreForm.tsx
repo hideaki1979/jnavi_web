@@ -12,12 +12,12 @@ import { AccessTime, EventBusy, ExpandMore, Map as MapIcon, Store } from "@mui/i
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from "@mui/material"
 import { useMemo } from "react"
 import { FormattedToppingOptionNameStoreData } from "@/types/Store"
-import { ResultToppingCall } from "@/types/ToppingCall"
+import { ToppingOptionMap } from "@/types/ToppingCall"
 
 interface StoreFormProps {
     mode: 'create' | 'edit';
     initialData?: FormattedToppingOptionNameStoreData;
-    toppingOptions: Record<number, ResultToppingCall>
+    toppingOptions: ToppingOptionMap;
 }
 
 /**

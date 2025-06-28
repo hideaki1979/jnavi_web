@@ -2,13 +2,14 @@
 
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { cleanupSpeechSynthesis } from "@/lib/speech-synthesis";
+import { QueryParams } from "@/types/ui";
 import { ArrowForward, PauseCircle, PlayCircle, StopCircle } from "@mui/icons-material";
 import { Box, Button, CircularProgress, IconButton, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 interface CallResultScreenProps {
     callText: string;
     nextHref: string;
-    nextQuery?: Record<string, string>
+    nextQuery?: QueryParams;
 }
 
 /**

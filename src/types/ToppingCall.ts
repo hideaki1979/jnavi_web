@@ -63,3 +63,24 @@ export interface SimulationToppingOption {
         storeToppingCallId?: string | number;
     }[]
 }
+
+// トッピングオプションマップ型
+export interface ToppingOptionMap {
+    [toppingId: number]: ResultToppingCall;
+}
+
+// 選択されたトッピング情報マップ型
+export interface SelectedToppingInfoMap {
+    [toppingId: string]: SelectedToppingInfo;
+}
+
+// シミュレーション用の選択オプション型
+export interface SelectedSimulationOptions {
+    [toppingId: string]: string;
+}
+
+// 選択されたトッピングオプション情報の型
+export interface SelectedToppingInfo {
+    optionId: string | number;
+    storeToppingCallId?: string | number;
+}

@@ -3,6 +3,7 @@
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { ToppingOptionSelector } from "@/components/simulation/ToppingOptionSelector"
 import { useStoreToppingCalls } from "@/hooks/api/useToppingCalls"
+import { SelectedSimulationOptions } from "@/types/ToppingCall"
 import { generateCallText } from "@/utils/toppingFormatter"
 import { ArrowForward, Block } from "@mui/icons-material"
 import { Alert, Box, Button, Card, CardMedia, Typography } from "@mui/material"
@@ -20,7 +21,7 @@ export default function PrecallPage() {
     const params = useSearchParams()
     const id = params.get("id") ?? ""
 
-    const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({})
+    const [selectedOptions, setSelectedOptions] = useState<SelectedSimulationOptions>({})
     const [error, setError] = useState<string | null>(null)
 
     // 店舗別コールトッピング情報取得
