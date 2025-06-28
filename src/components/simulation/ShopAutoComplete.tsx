@@ -1,6 +1,6 @@
 import { useDebounce } from "@/hooks/useDebounce";
 import { SimulationSelectStoresData } from "@/types/Store";
-import { Autocomplete, TextField, useTheme } from "@mui/material";
+import { Autocomplete, TextField } from "@mui/material";
 import { useMemo, useState } from "react";
 
 interface ShopAutocompleteProps {
@@ -21,7 +21,6 @@ interface ShopAutocompleteProps {
 export function ShopAutocomplete({ stores, selectedStore, onChange }: ShopAutocompleteProps) {
     const [inputValue, setInputValue] = useState('')
     const debouncedInputValue: string = useDebounce(inputValue, 300)
-    const theme = useTheme()
 
     // デバウンスされた入力値に基づいてフィルタリング
     const filteredStores = useMemo(() => {
@@ -63,7 +62,7 @@ export function ShopAutocomplete({ stores, selectedStore, onChange }: ShopAutoco
                     fullWidth
                     margin="normal"
                     size="small"
-                    sx={{
+                    sx={(theme) => ({
                         backgroundColor: theme.palette.background.paper,
                         "& .MuiOutlinedInput-root": {
                             "& fieldset": {
@@ -85,10 +84,10 @@ export function ShopAutocomplete({ stores, selectedStore, onChange }: ShopAutoco
                                 color: theme.palette.primary.main,
                             }
                         }
-                    }}
+                    })}
                 />
             )}
-            sx={{
+            sx={(theme) => ({
                 "& .MuiAutocomplete-paper": {
                     boxShadow: theme.shadows[8],
                     backgroundColor: theme.palette.background.paper,
@@ -104,7 +103,7 @@ export function ShopAutocomplete({ stores, selectedStore, onChange }: ShopAutoco
                         color: theme.palette.primary.contrastText,
                     }
                 }
-            }}
+            })}
         />
     )
 }

@@ -1,6 +1,6 @@
 import { SelectedToppingInfo } from "@/types/Image";
 import { SimulationToppingOption } from "@/types/ToppingCall";
-import { Box, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, useTheme } from "@mui/material";
+import { Box, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
 
 interface ToppingOptionRadioSelectorProps {
     options: SimulationToppingOption[];
@@ -26,7 +26,6 @@ export function ToppingOptionRadioSelector({
     selectedOptions,
     onOptionChange
 }: ToppingOptionRadioSelectorProps) {
-    const theme = useTheme()
     if (!options.length) return null
 
     return (
@@ -37,10 +36,10 @@ export function ToppingOptionRadioSelector({
                 >
                     <FormLabel
                         component="legend"
-                        sx={{
+                        sx={(theme) => ({
                             color: theme.palette.text.primary,
                             fontWeight: "bold",
-                        }}
+                        })}
                     >
                         {option.toppingName}
                     </FormLabel>
@@ -64,7 +63,7 @@ export function ToppingOptionRadioSelector({
                                 value={String(opt.optionId)}
                                 control={<Radio color="primary" />}
                                 label={opt.optionName}
-                                sx={{ color: theme.palette.text.primary }}
+                                sx={(theme) => ({ color: theme.palette.text.primary })}
                             />
                         ))}
                     </RadioGroup>

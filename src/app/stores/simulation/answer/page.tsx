@@ -1,7 +1,7 @@
 "use client"
 
 import { Map } from "@mui/icons-material";
-import { Box, Button, Typography, useTheme } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { useRouter, useSearchParams } from "next/navigation";
 
 /**
@@ -16,7 +16,6 @@ import { useRouter, useSearchParams } from "next/navigation";
  */
 
 export default function AnswerPage() {
-    const theme = useTheme()
     const params = useSearchParams()
     const result = params.get('result') ?? ''
     const router = useRouter()
@@ -27,13 +26,13 @@ export default function AnswerPage() {
             flexDirection="column"
             alignItems="center"
             px={{ xs: 4, md: 8 }} py={{ xs: 4, md: 8 }}
-            sx={{
+            sx={(theme) => ({
                 maxWidth: "42rem",
                 mx: "auto",
-                minHeight: "100vh"
-            }}
+                minHeight: "100vh",
+                color: theme.palette.text.primary
+            })}
             bgcolor="#cac8c8"
-            color={theme.palette.text.primary}
             width="100%"
         >
             <Typography

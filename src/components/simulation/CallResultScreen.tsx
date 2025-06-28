@@ -3,7 +3,7 @@
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { cleanupSpeechSynthesis } from "@/lib/speech-synthesis";
 import { ArrowForward, PauseCircle, PlayCircle, StopCircle } from "@mui/icons-material";
-import { Box, Button, CircularProgress, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, Button, CircularProgress, IconButton, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 interface CallResultScreenProps {
     callText: string;
@@ -22,7 +22,6 @@ interface CallResultScreenProps {
  */
 export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultScreenProps) {
     const router = useRouter()
-    const theme = useTheme()
     const { speak, cancel, pause, resume, isSpeaking, isPaused, isSupported, isMounted } = useSpeechSynthesis({
         rate: 0.8,
         pitch: 0.8,
@@ -82,7 +81,9 @@ export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultSc
                 width="100%" maxWidth={560}
                 bgcolor="#cac8c8" borderRadius={4} boxShadow={4}
                 p={4} display="flex" flexDirection="column" alignItems="center"
-                color={theme.palette.text.primary}
+                sx={(theme) => ({
+                    color: theme.palette.text.primary
+                })}
             >
                 <Typography variant="h6" fontWeight="bold" sx={{ mb: 4, textAlign: "center" }}>
                     事前コール内容
