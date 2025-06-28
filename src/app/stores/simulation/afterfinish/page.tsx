@@ -1,7 +1,7 @@
 "use client"
 
 import { ArrowForward } from "@mui/icons-material";
-import { Box, Button, Card, CardMedia, Checkbox, FormControlLabel, FormGroup, Typography, useTheme } from "@mui/material";
+import { Box, Button, Card, CardMedia, Checkbox, FormControlLabel, FormGroup, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -29,7 +29,6 @@ interface CheckItemsState {
  */
 
 export default function AfterFinishPage() {
-    const theme = useTheme()
     const router = useRouter()
 
     // チェックボックスの状態管理
@@ -73,29 +72,36 @@ export default function AfterFinishPage() {
         <Box
             display="flex" flexDirection="column" alignItems="center"
             justifyContent="center" px={{ xs: 2, md: 4 }}
-            width="100%"
+            py={{ xs: 4, md: 8 }} width="100%"
         >
             <Box
                 width="100%" maxWidth={560} bgcolor="#cac8c8"
-                borderRadius={4} color={theme.palette.text.primary}
+                borderRadius={4}
+                sx={(theme) => ({
+                    color: theme.palette.text.primary
+                })}
                 py={2}
             >
                 <Typography
                     variant="h6" fontWeight="bold" textAlign="center"
-                    mb={{ xs: 2, md: 4 }} color={theme.palette.text.primary}
+                    mb={{ xs: 2, md: 4 }}
                     pt={4}
+                    sx={(theme) => ({
+                        color: theme.palette.text.primary
+                    })}
+
                 >
                     完食後ルールクイズ
                 </Typography>
                 <Card
-                    sx={{
+                    sx={(theme) => ({
                         borderRadius: 4,
                         boxShadow: 6,
                         overflow: "hidden",
-                        bgcolor: theme.palette.mode === "dark" ? "gray.800" : "gray.100",
+                        bgcolor: theme.palette.mode === "dark" ? "grey.800" : "grey.100",
                         height: 200, width: 200,
                         mx: "auto", mb: 4
-                    }}
+                    })}
                 >
                     <CardMedia
                         component="img"

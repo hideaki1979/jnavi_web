@@ -5,7 +5,7 @@ import { ToppingOptionSelector } from "@/components/simulation/ToppingOptionSele
 import { useStoreToppingCalls } from "@/hooks/api/useToppingCalls"
 import { generateCallText } from "@/utils/toppingFormatter"
 import { ArrowForward, Block } from "@mui/icons-material"
-import { Alert, Box, Button, Card, CardMedia, Typography, useTheme } from "@mui/material"
+import { Alert, Box, Button, Card, CardMedia, Typography } from "@mui/material"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useMemo, useState } from "react"
 
@@ -16,7 +16,6 @@ import { useCallback, useMemo, useState } from "react"
  * - 選択されたトッピングコール情報をもとに、コールテキストを生成し、ResultPageに遷移。
  */
 export default function PrecallPage() {
-    const theme = useTheme()
     const router = useRouter()
     const params = useSearchParams()
     const id = params.get("id") ?? ""
@@ -68,7 +67,9 @@ export default function PrecallPage() {
                 variant="h6"
                 fontWeight="bold"
                 className="mb-8"
-                color={theme.palette.mode === "dark" ? "primary.light" : theme.palette.text.secondary}
+                sx={(theme) => ({
+                    color: theme.palette.mode === "dark" ? theme.palette.primary.light : theme.palette.text.secondary
+                })}
             >
                 事前コールシミュレーション
             </Typography>
@@ -76,12 +77,13 @@ export default function PrecallPage() {
 
             <Card
                 className="mb-8"
-                sx={{
+                sx={(theme) => ({
                     borderRadius: 4,
                     boxShadow: 6,
                     overflow: "hidden",
-                    bgcolor: theme.palette.mode === "dark" ? "gray.900" : "white"
-                }}
+                    bgcolor: theme.palette.mode === "dark" ? "grey.900" : "background.paper"
+
+                })}
             >
                 <CardMedia
                     component="img"
@@ -93,7 +95,10 @@ export default function PrecallPage() {
             <Typography
                 variant="body1"
                 className="mb-8 whitespace-pre-line"
-                color={theme.palette.text.primary}
+                sx={(theme) => ({
+                    color: theme.palette.text.primary
+                })}
+
             >
                 行列に並んでいると、店員さんから{"\n"}
                 「食券を見せてください」と言われました。{"\n"}
@@ -116,18 +121,17 @@ export default function PrecallPage() {
             <Box display="flex" gap={4} mt={8} justifyContent="center" sx={{ width: "100%" }}>
                 <Button
                     variant="outlined"
-                    color={theme.palette.mode === "dark" ? "primary" : "secondary"}
                     startIcon={<Block />}
                     onClick={() => router.push(`/stores/simulation/postcall?id=${id}`)}
-                    sx={{
+                    sx={(theme) => ({
                         borderWidth: 2,
                         fontWeight: "bold",
-                        bgcolor: theme.palette.mode === "dark" ? "grey.800" : "white",
-                        color: theme.palette.mode === "dark" ? "primary.light" : "secondary.main",
+                        bgcolor: theme.palette.mode === "dark" ? "grey.800" : "background.paper",
+                        color: theme.palette.mode === "dark" ? theme.palette.primary.light : theme.palette.secondary.main,
                         "&:hover": {
-                            bgcolor: theme.palette.mode === "dark" ? "gray.700" : "gray.100"
+                            bgcolor: theme.palette.mode === "dark" ? "grey.700" : "grey.100"
                         }
-                    }}
+                    })}
                 >
                     コール無し
                 </Button>

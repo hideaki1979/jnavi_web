@@ -74,7 +74,7 @@ export default function StoreMap({ mapData }: StoreMapProps) {
         setDrawerOpen(true)
     }
 
-    if (isLocationLoading || errorMessage) {
+    if (isLocationLoading || errorMessage || !isMounted) {
         return <LoadingErrorContainer loading={isLocationLoading} error={errorMessage} />
     }
 

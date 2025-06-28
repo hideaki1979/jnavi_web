@@ -4,7 +4,7 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { useAuthStore } from "@/lib/AuthStore";
 import { auth } from "@/lib/firebase";
 import { AccountCircle, AddBusiness, Logout, Menu as MenuIcon, PersonAdd, School } from "@mui/icons-material";
-import { AppBar, Box, Button, IconButton, Menu, MenuItem, Toolbar, Typography, useTheme } from "@mui/material";
+import { AppBar, Box, Button, IconButton, Menu, MenuItem, Toolbar, Typography } from "@mui/material";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -23,7 +23,6 @@ interface HeaderProps {
  */
 export function Header({ title = "J-Navi" }: HeaderProps) {
     const router = useRouter()
-    const theme = useTheme()
     const { isMobile } = useResponsive()
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
@@ -130,19 +129,19 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
         return (
             <AppBar
                 position="sticky"
-                sx={{
+                sx={(theme) => ({
                     backgroundColor: theme.palette.grey[600],
                     boxShadow: theme.shadows[4]
-                }}
+                })}
             >
                 <Toolbar sx={{ justifyContent: "space-between" }}>
                     <Typography
                         variant="h6" component="div"
-                        sx={{
+                        sx={(theme) => ({
                             fontWeight: "bold",
                             cursor: "pointer",
                             color: theme.palette.text.primary
-                        }}
+                        })}
                         onClick={() => router.push('/stores/map')}
                     >
                         {title}
@@ -156,20 +155,20 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
     return (
         <AppBar
             position="sticky"
-            sx={{
+            sx={(theme) => ({
                 backgroundColor: theme.palette.grey[600],
                 boxShadow: theme.shadows[4]
-            }}
+            })}
         >
             <Toolbar sx={{ justifyContent: "space-between" }}>
                 {/* アプリ名 */}
                 <Typography
                     variant="h6" component="div"
-                    sx={{
+                    sx={(theme) => ({
                         fontWeight: "bold",
                         cursor: "pointer",
                         color: theme.palette.text.primary
-                    }}
+                    })}
                     onClick={() => router.push('/stores/map')}
                 >
                     {title}
@@ -178,12 +177,11 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
                 {/* ナビゲーション部分 - マウント後のみ表示 */}
                 <>
                     {/* デスクトップ用ナビゲーション */}
-                    {!isMobile ? (
+                    {(!isMobile) ? (
                         <Box display="flex" gap={2}>
                             {navigationItems.map((item) => (
                                 <Button
                                     key={item.id}
-                                    color="inherit"
                                     startIcon={item.icon}
                                     onClick={() => 'action' in item && item.action ? item.action() : handleNavigation?.(item.path!)}
                                     sx={{
@@ -193,7 +191,8 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
                                         px: 2,
                                         "&:hover": {
                                             backgroundColor: "rgba(255, 255, 255, 0.1)"
-                                        }
+                                        },
+                                        color: "inherit"
                                     }}
                                 >
                                     {item.label}
