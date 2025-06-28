@@ -1,9 +1,9 @@
-import { SimulationToppingOption } from "@/types/ToppingCall";
+import { SelectedSimulationOptions, SimulationToppingOption } from "@/types/ToppingCall";
 import { Box, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
 
 interface ToppingOptionSelectorProps {
     options: SimulationToppingOption[];
-    selectedOptions: Record<string, string>;
+    selectedOptions: SelectedSimulationOptions;
     onOptionChange: (toppingId: string, optionId: string) => void;
 }
 
@@ -15,7 +15,7 @@ interface ToppingOptionSelectorProps {
  * - オプションが選択されると `onOptionChange` コールバックが呼び出される。
  * 
  * @param {SimulationToppingOption[]} options - トッピングオプションの配列。
- * @param {Record<string, string>} selectedOptions - 選択されたトッピングオプションを示す記録。
+ * @param {SelectedSimulationOptions} selectedOptions - 選択されたトッピングオプションを示す記録。
  * @param {Function} onOptionChange - オプションが選択されたときに呼び出されるコールバック関数。
  */
 

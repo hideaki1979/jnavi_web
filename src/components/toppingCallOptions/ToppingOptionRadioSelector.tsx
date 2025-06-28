@@ -1,10 +1,9 @@
-import { SelectedToppingInfo } from "@/types/Image";
-import { SimulationToppingOption } from "@/types/ToppingCall";
+import { SelectedToppingInfoMap, SimulationToppingOption } from "@/types/ToppingCall";
 import { Box, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
 
 interface ToppingOptionRadioSelectorProps {
     options: SimulationToppingOption[];
-    selectedOptions: Record<string, SelectedToppingInfo>;
+    selectedOptions: SelectedToppingInfoMap;
     onOptionChange: (toppingId: string, optionId: string, storeToppingCallId: string) => void;
 }
 

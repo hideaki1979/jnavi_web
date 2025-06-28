@@ -1,9 +1,9 @@
-import { ResultToppingCall } from "@/types/ToppingCall";
+import { CallOptionData, FormattedToppingOptionIds, ToppingOptionMap } from "@/types/ToppingCall";
 import { Checkbox, FormControl, FormControlLabel, FormGroup, Typography } from "@mui/material";
 
 interface StoreRegisterToppingCallsCheckProps {
-    toppingOptions: Record<number, ResultToppingCall>;
-    selectedOption: Record<number, number[]>
+    toppingOptions: ToppingOptionMap;
+    selectedOption: FormattedToppingOptionIds;
     onOptionChange: (toppingId: number, optionId: number, isChecked: boolean) => void;
     callType: "pre_call" | "post_call"
 }
@@ -34,7 +34,7 @@ export function StoreRegisterToppingCallsCheck({
                     <FormGroup
                         className="grid grid-cols-3"
                     >
-                        {call_options.map(option => (
+                        {call_options.map((option: CallOptionData) => (
                             <FormControlLabel
                                 key={option.id}
                                 control={

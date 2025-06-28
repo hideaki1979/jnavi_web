@@ -4,11 +4,13 @@
  * - handleFirebaseError: Firebaseエラーオブジェクトから日本語メッセージを取得
  */
 
+import { FirebaseErrorMessageMap } from "@/types/firebase";
+
 /**
  * Firebaseの認証エラーコードを日本語メッセージに変換する
  */
 export function getFirebaseAuthErrorMessage(errorCode: string): string {
-    const errorMessages: Record<string, string> = {
+    const errorMessages: FirebaseErrorMessageMap = {
         // 認証関連エラー
         'auth/invalid-credential': 'メールアドレスまたはパスワードが正しくありません。',
         'auth/user-not-found': 'このメールアドレスで登録されたアカウントが見つかりません。',

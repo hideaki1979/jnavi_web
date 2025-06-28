@@ -1,6 +1,6 @@
 "use client"
 
-import { BaseToppingCall, FormattedToppingOptionIds, ResultToppingCall } from "@/types/ToppingCall";
+import { BaseToppingCall, FormattedToppingOptionIds, ToppingOptionMap } from "@/types/ToppingCall";
 import { StoreFormInput, StoreInputSchema } from "@/validations/store";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Control, FieldErrors, useForm, UseFormHandleSubmit, UseFormReset } from "react-hook-form";
@@ -15,7 +15,7 @@ interface UseStoreFormOptions {
         preCallFormattedIds?: FormattedToppingOptionIds;
         postCallFormattedIds?: FormattedToppingOptionIds;
     },
-    toppingOptions: Record<number, ResultToppingCall>;
+    toppingOptions: ToppingOptionMap;
 }
 
 interface UseStoreFormReturn {
@@ -26,7 +26,7 @@ interface UseStoreFormReturn {
     reset: UseFormReset<StoreFormInput>;
 
     // トッピングコール
-    toppingOptionData: Record<number, ResultToppingCall>;
+    toppingOptionData: ToppingOptionMap;
     selectedPreCallOptions: FormattedToppingOptionIds;
     selectedPostCallOptions: FormattedToppingOptionIds;
     handleChangePreCallOptionCheck: (toppingId: number, optionId: number, checked: boolean) => void;
@@ -72,7 +72,7 @@ export function useStoreForm(
     { mode, initialData, toppingOptions }: UseStoreFormOptions
 ): UseStoreFormReturn {
     // トッピングコール関連の状態
-    const [toppingOptionData, setToppingOptionData] = useState<Record<number, ResultToppingCall>>({})
+    const [toppingOptionData, setToppingOptionData] = useState<ToppingOptionMap>({})
     const [selectedPreCallOptions, setSelectedPreCallOptions] = useState<FormattedToppingOptionIds>({})
     const [selectedPostCallOptions, setSelectedPostCallOptions] = useState<FormattedToppingOptionIds>({})
 

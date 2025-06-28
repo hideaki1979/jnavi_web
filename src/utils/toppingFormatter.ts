@@ -1,4 +1,4 @@
-import { SimulationToppingOption } from "@/types/ToppingCall";
+import { SelectedSimulationOptions, SimulationToppingOption } from "@/types/ToppingCall";
 
 /**
  * トッピング選択からコールテキストを生成するフォーマッター。
@@ -9,7 +9,7 @@ import { SimulationToppingOption } from "@/types/ToppingCall";
  * コールテキストを生成（precall, postcall用）
  */
 export function generateCallText(
-    selectedOptions: Record<string, string>,
+    selectedOptions: SelectedSimulationOptions,
     toppingOptions: SimulationToppingOption[]
 ): string {
     return toppingOptions.map(option => {

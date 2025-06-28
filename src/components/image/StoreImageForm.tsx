@@ -1,13 +1,12 @@
 'use client'
 
-import { SimulationToppingOption } from "@/types/ToppingCall";
+import { SelectedToppingInfoMap, SimulationToppingOption } from "@/types/ToppingCall";
 import { ExpressValidationError } from "@/types/validation";
 import { ImageEditFormValues, ImageUploadFormValues } from "@/validations/image";
 import { Box, Button, CircularProgress, Divider, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
 import Image from "next/image";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 import { ToppingOptionRadioSelector } from "../toppingCallOptions/ToppingOptionRadioSelector";
-import { SelectedToppingInfo } from "@/types/Image";
 import { ValidationErrorList } from "../feedback/validationErrorList";
 
 const MENU_TYPE = [
@@ -26,7 +25,7 @@ interface StoreImageFormProps {
     control: Control<ImageFormValues>;
     errors: FieldErrors<ImageFormValues>;
     toppingOptions: SimulationToppingOption[];
-    selectedToppingInfo: Record<string, SelectedToppingInfo>
+    selectedToppingInfo: SelectedToppingInfoMap;
     onToppingChange: (toppingId: string, optionId: string, storeToppingCallId: string) => void;
     errorMessage: string | null;
     validationErrors: ExpressValidationError[];

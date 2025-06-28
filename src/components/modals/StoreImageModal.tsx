@@ -4,6 +4,7 @@
  */
 import { UI_CONSTANTS } from "@/constants/ui";
 import { StoreImageDownloadData } from "@/types/Store";
+import { MenuTypeLabels } from "@/types/ui";
 import { Close, Delete, EditNote } from "@mui/icons-material";
 import { Box, Dialog, DialogContent, DialogTitle, Divider, IconButton, Tooltip, Typography } from "@mui/material";
 import Image from "next/image";
@@ -12,7 +13,7 @@ interface StoreImageModalProps {
     open: boolean;
     image: StoreImageDownloadData | null;
     onClose: () => void;
-    menuTypeLabels: Record<string, string>;
+    menuTypeLabels: MenuTypeLabels;
     currentUserId?: string;
     onUpdate?: (imageId: string | number) => void;
     onDelete?: (imageId: string | number) => void;
@@ -24,7 +25,7 @@ interface StoreImageModalProps {
  * - 画像のプレビュー・閉じる操作を提供
  * - 画像のトッピングコール情報を表示
  *
- * @param {{ open: boolean; image: StoreImageDownloadData | null; onClose: () => void; menuTypeLabels: Record<string, string> }} props
+ * @param {{ open: boolean; image: StoreImageDownloadData | null; onClose: () => void; menuTypeLabels: MenuTypeLabels }} props
  * @returns {JSX.Element}
  */
 export default function StoreImageModal({

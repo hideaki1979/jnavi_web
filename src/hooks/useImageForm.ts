@@ -1,5 +1,4 @@
-import { SelectedToppingInfo } from "@/types/Image";
-import { SimulationToppingOption } from "@/types/ToppingCall";
+import { SelectedToppingInfoMap, SimulationToppingOption } from "@/types/ToppingCall";
 import { ExpressValidationError } from "@/types/validation";
 import { imageEditFormSchema, ImageEditFormValues, imageUploadFormSchema, ImageUploadFormValues, validateFileSizeBeforeCompression } from "@/validations/image";
 import { useCallback, useEffect, useState } from "react";
@@ -43,7 +42,7 @@ interface UseImageFormReturn {
 
     // トッピング関連
     toppingOptions: SimulationToppingOption[];
-    selectedToppingInfo: Record<string, SelectedToppingInfo>;
+    selectedToppingInfo: SelectedToppingInfoMap;
     handleOptionChange: (toppingId: string, optionId: string, storeToppingCallId: string) => void;
 
     // エラーハンドリング
@@ -87,7 +86,7 @@ export function useImageForm({ mode, storeId, initialData, initialToppingOptions
     const [imageUrl, setImageUrl] = useState('')
     // トッピング選択状態
     const [selectedToppingInfo, setSelectedToppingInfo]
-        = useState<Record<string, SelectedToppingInfo>>({})
+        = useState<SelectedToppingInfoMap>({})
 
     // API エラーハンドリング
     const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
@@ -148,7 +147,7 @@ export function useImageForm({ mode, storeId, initialData, initialToppingOptions
 
             // トッピング選択状態の初期設定
             if (initialData.toppingSelections) {
-                const initialToppingInfo: Record<string, SelectedToppingInfo> = {}
+                const initialToppingInfo: SelectedToppingInfoMap = {}
                 initialData.toppingSelections.forEach((selection) => {
                     initialToppingInfo[String(selection.topping_id)] = {
                         optionId: String(selection.call_option_id),

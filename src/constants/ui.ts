@@ -1,3 +1,5 @@
+import { MenuTypeLabels } from "@/types/ui"
+
 export const UI = {
     HEADER_HEIGHT: 64,
 } as const
@@ -8,7 +10,7 @@ export const UI_CONSTANTS = {
     }
 } as const
 
-export const MENU_TYPE_LABELS: Record<string, string> = {
+export const MENU_TYPE_LABELS: MenuTypeLabels = {
     "1": "通常",
     "2": "限定"
 } as const

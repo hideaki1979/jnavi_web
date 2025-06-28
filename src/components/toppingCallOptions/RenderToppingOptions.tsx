@@ -1,3 +1,4 @@
+import { FormattedToppingOptionNames } from "@/types/ToppingCall"
 import { Box, Chip, Typography } from "@mui/material"
 
 /**
@@ -9,7 +10,7 @@ import { Box, Chip, Typography } from "@mui/material"
  *              ...
  *          }
  */
-export function RenderToppingOptions(options?: Record<string, string[]>) {
+export function RenderToppingOptions(options?: FormattedToppingOptionNames) {
     if (!options) return null
     return Object.entries(options).map(([toppingName, optionList]) => (
         <Box key={toppingName} display="flex" alignItems="flex-start" flexDirection="column" mb={2}>
