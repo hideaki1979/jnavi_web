@@ -14,6 +14,8 @@ Next.js, Material-UI, Firebase で構築された、二郎系ラーメン専門�
 
 https://jnavi-web.vercel.app/stores/map
 
+※Renderが不安定で良くDownしてしまうため、動かない場合があります。
+
 ## 機能
 
 - **ユーザー認証**: メールアドレスとパスワードによるサインアップ・ログイン機能
