@@ -8,11 +8,15 @@ import { useDialogState } from "@/hooks/useDialogState";
 import StoreDetailsSection from "./StoreDetailsSection";
 import StoreCloseActionsPanel from "./StoreCloseActionsPanel";
 import { useStore } from "@/hooks/api/useStores";
-import { useStoreImages } from "@/hooks/api/useImages";
+// import { useStoreImages } from "@/hooks/api/useImages";
 import dynamic from "next/dynamic";
 
 const StoreImageGallery = dynamic(() => import('../image/StoreImageGallery'), {
-  loading: () => <CircularProgress />
+  loading: () => (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 4 }}>
+      <CircularProgress size='3rem' />
+    </Box>
+  )
 })
 
 type StoreInfoDrawerProps = {
@@ -53,14 +57,12 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
   const storeId = store?.id ? String(store.id) : "" // storeがnullなら、確実に空文字列""にする
   const isQueryEnabled = open && !!storeId   // storeIdが""なら、ここはfalseになる
 
-  // APIクエリ
-  const { data: imageData, isLoading: isImageLoading, isError: isImageError, error: imageError } = useStoreImages(storeId, isQueryEnabled)
 
   const { data: storeData, isLoading: isStoreLoading, isError: isStoreError, error: storeError } = useStore(storeId, isQueryEnabled)
 
-  const isLoading = isImageLoading || isStoreLoading
-  const hasError = isImageError || isStoreError
-  const errorMessage = isImageError ? (imageError as Error).message : isStoreError ? (storeError as Error).message : null
+  const isLoading = isStoreLoading
+  const hasError = isStoreError
+  const errorMessage = isStoreError ? (storeError as Error).message : null
 
   return (
     <Drawer
@@ -98,7 +100,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
           <>
             <StoreImageGallery
               store={store}
-              imageData={imageData || []}
+              storeId={storeId}
               modalOpen={modalOpen}
               setModalOpen={setModalOpen}
               selectedImage={selectedImage}
