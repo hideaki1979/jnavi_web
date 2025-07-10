@@ -1,15 +1,19 @@
 import { MapStore, StoreImageDownloadData } from "@/types/Store";
-import { Box, Drawer, IconButton } from "@mui/material";
+import { Box, CircularProgress, Drawer, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import LoadingErrorContainer from "../feedback/LoadingErrorContainer";
 import { useState } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useDialogState } from "@/hooks/useDialogState";
-import StoreImageGallery from "../image/StoreImageGallery";
 import StoreDetailsSection from "./StoreDetailsSection";
 import StoreCloseActionsPanel from "./StoreCloseActionsPanel";
 import { useStore } from "@/hooks/api/useStores";
 import { useStoreImages } from "@/hooks/api/useImages";
+import dynamic from "next/dynamic";
+
+const StoreImageGallery = dynamic(() => import('../image/StoreImageGallery'), {
+  loading: () => <CircularProgress />
+})
 
 type StoreInfoDrawerProps = {
   open: boolean;

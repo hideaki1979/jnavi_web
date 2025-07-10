@@ -1,6 +1,5 @@
 import { getMapAll } from "@/app/api/stores";
-import StoreMap from "@/components/Store/StoreMap";
-
+import StoreMapClient from "@/components/Store/StoreMapClient";
 /**
  * 店舗マップ画面コンポーネント
  * - 店舗情報を表示するマップを表示
@@ -12,7 +11,7 @@ import StoreMap from "@/components/Store/StoreMap";
 export default async function MapPage() {
     try {
         const mapData = await getMapAll()
-        return <StoreMap mapData={mapData} />
+        return <StoreMapClient mapData={mapData} />
     } catch (error) {
         console.error('MAPデータ取得失敗：', error)
         // エラーページを表示するか、空のマップを表示
