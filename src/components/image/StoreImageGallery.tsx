@@ -3,7 +3,7 @@ import { useAuthStore } from "@/lib/AuthStore";
 import { auth } from "@/lib/firebase";
 import { MapStore, StoreImageDownloadData } from "@/types/Store"
 import { AddPhotoAlternate, EditNote } from "@mui/icons-material";
-import { Box, IconButton, ImageList, ImageListItem, ImageListItemBar, Tooltip, Typography } from "@mui/material";
+import { Alert, Box, CircularProgress, IconButton, ImageList, ImageListItem, ImageListItemBar, Tooltip, Typography } from "@mui/material";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useState } from "react";
@@ -12,11 +12,11 @@ import { ConfirmDialog } from "../modals/ConfirmDialog";
 import { ResultDialog } from "../modals/ResultDialog";
 import { getDisplayMenuName } from "@/utils/storeUtils";
 import { MENU_TYPE_LABELS } from "@/constants/ui";
-import { useDeleteStoreImage } from "@/hooks/api/useImages";
+import { useDeleteStoreImage, useStoreImages } from "@/hooks/api/useImages";
 
 interface StoreImageGalleryProps {
     store: MapStore | null;
-    imageData: StoreImageDownloadData[];
+    storeId: string;
     modalOpen: boolean;
     setModalOpen: (open: boolean) => void;
     selectedImage: StoreImageDownloadData | null;
@@ -25,6 +25,7 @@ interface StoreImageGalleryProps {
     setImageDeleteDialog: Dispatch<SetStateAction<DialogState>>;
     imageDeleteResult: ResultDialogState;
     setImageDeleteResult: Dispatch<SetStateAction<ResultDialogState>>;
+    enabled: boolean;
 }
 
 /**
@@ -33,7 +34,7 @@ interface StoreImageGalleryProps {
  */
 export default function StoreImageGallery({
     store,
-    imageData,
+    storeId,
     modalOpen,
     setModalOpen,
     selectedImage,
@@ -41,12 +42,16 @@ export default function StoreImageGallery({
     imageDeleteDialog,
     setImageDeleteDialog,
     imageDeleteResult,
-    setImageDeleteResult
+    setImageDeleteResult,
+    enabled
 }: StoreImageGalleryProps) {
     const router = useRouter()
     const { isAuthenticated, user } = useAuthStore()
     const [imageDeleteTargetId, setImageDeleteTargetId] = useState<string | number | null>(null)
     const deleteImageMutation = useDeleteStoreImage()
+    // APIクエリ
+    const { data: imageData, isLoading: isImageLoading, isError: isImageError } = useStoreImages(storeId, enabled)
+
 
     const handleImageClick = (img: StoreImageDownloadData) => {
         setSelectedImage(img)
@@ -191,45 +196,62 @@ export default function StoreImageGallery({
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                     {store?.address}
                 </Typography>
-                {/* 画像スライダー */}
-                {imageData && imageData.length > 0 ? (
-                    <Box sx={{ width: "100%", overflowX: "auto", mb: 4 }}>
-                        <ImageList
-                            sx={{
-                                flexWrap: "nowrap",
-                                display: "flex",
-                                overflow: "auto",
-                                minHeight: 180
-                            }}
-                            cols={2.5}
-                            rowHeight={180}
-                        >
-                            {imageData.map((img) => (
-                                <ImageListItem key={img.id} sx={{ minWidth: 240, position: 'relative' }}>
-                                    <Image
-                                        src={img.image_url}
-                                        alt={img.menu_name}
-                                        fill
-                                        loading="lazy"
-                                        style={{ borderRadius: 8, objectFit: "cover", cursor: "pointer" }}
-                                        onClick={() => handleImageClick(img)}
-                                        sizes='(max-width: 768px) 100vw, 50vw'
-                                    />
-                                    <ImageListItemBar
-                                        title={`【${MENU_TYPE_LABELS[img.menu_type]}】${img.menu_name}`}
-                                        position="bottom"
-                                        sx={{
-                                            '& .MuiImageListItemBar-title': {
-                                                fontSize: '0.85rem', // 12px相当
-                                                lineHeight: 1.2
-                                            }
-                                        }}
-                                    />
-                                </ImageListItem>
-                            ))}
-                        </ImageList>
+                {/* 画像ギャラリーのローディングとエラーハンドリング */}
+                {isImageLoading && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 180, py: 2 }}>
+                        <CircularProgress />
                     </Box>
-                ) : null}
+                )}
+                {isImageError && (
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                        画像の読み込みに失敗しました。
+                    </Alert>
+                )}
+                {/* 画像スライダー */}
+                {!isImageLoading && !isImageError && (
+                    imageData && imageData.length > 0 ? (
+                        <Box sx={{ width: "100%", overflowX: "auto", mb: 4 }}>
+                            <ImageList
+                                sx={{
+                                    flexWrap: "nowrap",
+                                    display: "flex",
+                                    overflow: "auto",
+                                    minHeight: 180
+                                }}
+                                cols={2.5}
+                                rowHeight={180}
+                            >
+                                {imageData.map((img) => (
+                                    <ImageListItem key={img.id} sx={{ minWidth: 240, position: 'relative' }}>
+                                        <Image
+                                            src={img.image_url}
+                                            alt={img.menu_name}
+                                            fill
+                                            loading="lazy"
+                                            style={{ borderRadius: 8, objectFit: "cover", cursor: "pointer" }}
+                                            onClick={() => handleImageClick(img)}
+                                            sizes='(max-width: 768px) 100vw, 50vw'
+                                        />
+                                        <ImageListItemBar
+                                            title={`【${MENU_TYPE_LABELS[img.menu_type]}】${img.menu_name}`}
+                                            position="bottom"
+                                            sx={{
+                                                '& .MuiImageListItemBar-title': {
+                                                    fontSize: '0.85rem', // 12px相当
+                                                    lineHeight: 1.2
+                                                }
+                                            }}
+                                        />
+                                    </ImageListItem>
+                                ))}
+                            </ImageList>
+                        </Box>
+                    ) : (
+                        <Typography variant="body1" color="text.secondary" sx={{ mt: 2, mb: 4 }}>
+                            画像はまだ投稿されていません。
+                        </Typography>
+                    )
+                )}
             </Box>
             {/* 画像モーダル */}
             <StoreImageModal

@@ -21,15 +21,9 @@ export default async function StoreUpdatePage({ params }: StoreUpdatePageProps) 
 
     const { id: storeId } = await params
     // データ取得: カスタムフックuseStoreを使用
-    try {
-        const [storeData, toppingOptions] = await Promise.all([
-            getStoreById(storeId),
-            getToppingCallOptions()
-        ])
-        return <StoreForm mode="edit" initialData={storeData} toppingOptions={toppingOptions} />
-    } catch (error) {
-        console.error('店舗データ・トッピングデータの取得失敗:', error)
-        // notFound()を呼び出すか、エラーページを表示
-        throw new Error('店舗データの取得・トッピングデータ取得に失敗しました')
-    }
+    const [storeData, toppingOptions] = await Promise.all([
+        getStoreById(storeId),
+        getToppingCallOptions()
+    ])
+    return <StoreForm mode="edit" initialData={storeData} toppingOptions={toppingOptions} />
 }
