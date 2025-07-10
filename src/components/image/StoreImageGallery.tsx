@@ -25,6 +25,7 @@ interface StoreImageGalleryProps {
     setImageDeleteDialog: Dispatch<SetStateAction<DialogState>>;
     imageDeleteResult: ResultDialogState;
     setImageDeleteResult: Dispatch<SetStateAction<ResultDialogState>>;
+    enabled: boolean;
 }
 
 /**
@@ -41,14 +42,15 @@ export default function StoreImageGallery({
     imageDeleteDialog,
     setImageDeleteDialog,
     imageDeleteResult,
-    setImageDeleteResult
+    setImageDeleteResult,
+    enabled
 }: StoreImageGalleryProps) {
     const router = useRouter()
     const { isAuthenticated, user } = useAuthStore()
     const [imageDeleteTargetId, setImageDeleteTargetId] = useState<string | number | null>(null)
     const deleteImageMutation = useDeleteStoreImage()
     // APIクエリ
-    const { data: imageData, isLoading: isImageLoading, isError: isImageError } = useStoreImages(storeId)
+    const { data: imageData, isLoading: isImageLoading, isError: isImageError } = useStoreImages(storeId, enabled)
 
 
     const handleImageClick = (img: StoreImageDownloadData) => {
@@ -245,7 +247,7 @@ export default function StoreImageGallery({
                             </ImageList>
                         </Box>
                     ) : (
-                        <Typography variant="body1" color="error" sx={{ mt: 2, mb: 4 }}>
+                        <Typography variant="body1" color="text.secondary" sx={{ mt: 2, mb: 4 }}>
                             画像はまだ投稿されていません。
                         </Typography>
                     )

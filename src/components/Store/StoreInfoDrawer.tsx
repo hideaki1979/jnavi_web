@@ -109,6 +109,7 @@ export function StoreInfoDrawer({ open, store, onClose }: StoreInfoDrawerProps) 
               setImageDeleteDialog={setImageDeleteDialog}
               imageDeleteResult={imageDeleteResult}
               setImageDeleteResult={setImageDeleteResult}
+              enabled={isQueryEnabled}
             />
 
             <StoreDetailsSection
