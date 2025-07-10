@@ -1,5 +1,6 @@
 import { getMapAll } from "@/app/api/stores";
-import StoreMap from "@/components/Store/StoreMap";
+import { CircularProgress } from "@mui/material";
+import dynamic from "next/dynamic";
 
 /**
  * 店舗マップ画面コンポーネント
@@ -9,6 +10,12 @@ import StoreMap from "@/components/Store/StoreMap";
  * - マーカーをクリックすると店舗情報を表示するドロワーコンポーネントを表示
  * - ドロワーコンポーネントは閉じるボタンをクリックすることで消える
  */
+
+const StoreMap = dynamic(() => import('@/components/Store/StoreMap'), {
+    loading: () => <CircularProgress />,
+    ssr: false
+})
+
 export default async function MapPage() {
     try {
         const mapData = await getMapAll()
