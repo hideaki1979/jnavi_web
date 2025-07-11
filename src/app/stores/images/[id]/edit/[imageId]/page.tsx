@@ -2,7 +2,6 @@ import { getImageById } from '@/app/api/images'
 import { getStoreToppingCalls } from '@/app/api/stores'
 import { SimulationToppingOption } from '@/types/ToppingCall'
 import StoreImageEditForm from '@/components/image/StoreImageEditForm'
-
 interface ImageUploadPageProps {
     params: Promise<{
         id: string;

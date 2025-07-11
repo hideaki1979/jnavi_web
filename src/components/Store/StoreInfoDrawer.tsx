@@ -1,5 +1,5 @@
 import { MapStore, StoreImageDownloadData } from "@/types/Store";
-import { Box, CircularProgress, Drawer, IconButton } from "@mui/material";
+import { Box, Drawer, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import LoadingErrorContainer from "../feedback/LoadingErrorContainer";
 import { useState } from "react";
@@ -12,11 +12,7 @@ import { useStore } from "@/hooks/api/useStores";
 import dynamic from "next/dynamic";
 
 const StoreImageGallery = dynamic(() => import('../image/StoreImageGallery'), {
-  loading: () => (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 4 }}>
-      <CircularProgress size='3rem' />
-    </Box>
-  )
+  loading: () => <LoadingErrorContainer loading={true} />
 })
 
 type StoreInfoDrawerProps = {

@@ -1,4 +1,14 @@
-import { AuthForm } from "@/components/auth/AuthForm";
+"use client"
+
+import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer";
+import dynamic from "next/dynamic";
+
+
+const AuthForm = dynamic(() =>
+    import("@/components/auth/AuthForm").then(mod => mod.AuthForm), {
+    loading: () => <LoadingErrorContainer loading={true} />,
+    ssr: false
+})
 
 /**
  * サインアップページ。
