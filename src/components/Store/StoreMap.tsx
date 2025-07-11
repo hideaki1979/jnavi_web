@@ -1,14 +1,24 @@
 "use client"
 
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer";
-import { StoreInfoDrawer } from "@/components/Store/StoreInfoDrawer";
 import { MapData, MapStore } from "@/types/Store";
-import { Box, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import { AdvancedMarker, APIProvider, Map, Pin } from '@vis.gl/react-google-maps'
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
 const defaultCenter = { lat: 35.681236, lng: 139.767125 } // 東京駅
 const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!
+
+const StoreInfoDrawer = dynamic(() =>
+    import('@/components/Store/StoreInfoDrawer').then(mod => mod.StoreInfoDrawer), {
+    loading: () => (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <CircularProgress size="3rem" />
+        </Box>
+    ),
+    ssr: false
+})
 
 interface StoreMapProps {
     mapData: MapData[]

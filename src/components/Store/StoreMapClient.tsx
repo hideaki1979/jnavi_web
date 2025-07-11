@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic'
 
 const StoreMap = dynamic(() => import('@/components/Store/StoreMap'), {
     loading: () => (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
             <CircularProgress size="3rem" />
         </Box>
     ),

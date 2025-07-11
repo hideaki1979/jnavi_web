@@ -1,4 +1,18 @@
-import { AuthForm } from "@/components/auth/AuthForm";
+"use client"
+
+import { Box, CircularProgress } from "@mui/material";
+import dynamic from "next/dynamic";
+
+const AuthForm = dynamic(() =>
+    import("@/components/auth/AuthForm").then(mod => mod.AuthForm), {
+    loading: () => (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <CircularProgress size="3rem" />
+        </Box>
+    ),
+    ssr: false
+})
+
 
 /**
  * ログインページ。

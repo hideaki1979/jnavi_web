@@ -7,12 +7,12 @@ import { Alert, Box, CircularProgress, IconButton, ImageList, ImageListItem, Ima
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useState } from "react";
-import StoreImageModal from "../modals/StoreImageModal";
 import { ConfirmDialog } from "../modals/ConfirmDialog";
 import { ResultDialog } from "../modals/ResultDialog";
 import { getDisplayMenuName } from "@/utils/storeUtils";
 import { MENU_TYPE_LABELS } from "@/constants/ui";
 import { useDeleteStoreImage, useStoreImages } from "@/hooks/api/useImages";
+import dynamic from "next/dynamic";
 
 interface StoreImageGalleryProps {
     store: MapStore | null;
@@ -27,6 +27,15 @@ interface StoreImageGalleryProps {
     setImageDeleteResult: Dispatch<SetStateAction<ResultDialogState>>;
     enabled: boolean;
 }
+
+const StoreImageModal = dynamic(() => import("../modals/StoreImageModal"), {
+    loading: () => (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <CircularProgress size="3rem" />
+        </Box>
+    ),
+    ssr: false
+})
 
 /**
  * 店舗画像ギャラリーコンポーネント
