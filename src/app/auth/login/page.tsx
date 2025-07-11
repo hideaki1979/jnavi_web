@@ -1,15 +1,11 @@
 "use client"
 
-import { Box, CircularProgress } from "@mui/material";
+import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer";
 import dynamic from "next/dynamic";
 
 const AuthForm = dynamic(() =>
     import("@/components/auth/AuthForm").then(mod => mod.AuthForm), {
-    loading: () => (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <CircularProgress size="3rem" />
-        </Box>
-    ),
+    loading: () => <LoadingErrorContainer loading={true} />,
     ssr: false
 })
 

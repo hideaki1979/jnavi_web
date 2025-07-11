@@ -1,15 +1,11 @@
 "use client"
 
 import { MapData } from '@/types/Store'
-import { Box, CircularProgress } from '@mui/material';
 import dynamic from 'next/dynamic'
+import LoadingErrorContainer from '../feedback/LoadingErrorContainer';
 
 const StoreMap = dynamic(() => import('@/components/Store/StoreMap'), {
-    loading: () => (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <CircularProgress size="3rem" />
-        </Box>
-    ),
+    loading: () => <LoadingErrorContainer loading={true} />,
     ssr: false
 })
 

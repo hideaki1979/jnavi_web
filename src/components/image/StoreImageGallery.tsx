@@ -3,7 +3,7 @@ import { useAuthStore } from "@/lib/AuthStore";
 import { auth } from "@/lib/firebase";
 import { MapStore, StoreImageDownloadData } from "@/types/Store"
 import { AddPhotoAlternate, EditNote } from "@mui/icons-material";
-import { Alert, Box, CircularProgress, IconButton, ImageList, ImageListItem, ImageListItemBar, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, ImageList, ImageListItem, ImageListItemBar, Tooltip, Typography } from "@mui/material";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useState } from "react";
@@ -13,6 +13,7 @@ import { getDisplayMenuName } from "@/utils/storeUtils";
 import { MENU_TYPE_LABELS } from "@/constants/ui";
 import { useDeleteStoreImage, useStoreImages } from "@/hooks/api/useImages";
 import dynamic from "next/dynamic";
+import LoadingErrorContainer from "../feedback/LoadingErrorContainer";
 
 interface StoreImageGalleryProps {
     store: MapStore | null;
@@ -29,11 +30,7 @@ interface StoreImageGalleryProps {
 }
 
 const StoreImageModal = dynamic(() => import("../modals/StoreImageModal"), {
-    loading: () => (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <CircularProgress size="3rem" />
-        </Box>
-    ),
+    loading: () => <LoadingErrorContainer loading={true} />,
     ssr: false
 })
 
@@ -206,16 +203,8 @@ export default function StoreImageGallery({
                     {store?.address}
                 </Typography>
                 {/* 画像ギャラリーのローディングとエラーハンドリング */}
-                {isImageLoading && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 180, py: 2 }}>
-                        <CircularProgress />
-                    </Box>
-                )}
-                {isImageError && (
-                    <Alert severity="error" sx={{ mt: 2 }}>
-                        画像の読み込みに失敗しました。
-                    </Alert>
-                )}
+                {isImageLoading && <LoadingErrorContainer loading={true} />}
+                {isImageError && <LoadingErrorContainer loading={false} error="画像の読み込みに失敗しました" />}
                 {/* 画像スライダー */}
                 {!isImageLoading && !isImageError && (
                     imageData && imageData.length > 0 ? (

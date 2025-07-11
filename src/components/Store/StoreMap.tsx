@@ -2,8 +2,8 @@
 
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer";
 import { MapData, MapStore } from "@/types/Store";
-import { Box, CircularProgress, Typography } from "@mui/material";
-import { AdvancedMarker, APIProvider, Map, Pin } from '@vis.gl/react-google-maps'
+import { Box, Typography } from "@mui/material";
+import { AdvancedMarker, APIProvider, Map as GoogleMap, Pin } from '@vis.gl/react-google-maps'
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
@@ -12,11 +12,7 @@ const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!
 
 const StoreInfoDrawer = dynamic(() =>
     import('@/components/Store/StoreInfoDrawer').then(mod => mod.StoreInfoDrawer), {
-    loading: () => (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <CircularProgress size="3rem" />
-        </Box>
-    ),
+    loading: () => null,
     ssr: false
 })
 
@@ -100,7 +96,7 @@ export default function StoreMap({ mapData }: StoreMapProps) {
                         width="100vw"
                         height="70vh"
                     >
-                        <Map
+                        <GoogleMap
                             mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID}
                             center={center}
                             defaultZoom={14}
@@ -128,7 +124,7 @@ export default function StoreMap({ mapData }: StoreMapProps) {
                                     />
                                 </AdvancedMarker>
                             ))}
-                        </Map>
+                        </GoogleMap>
                         <StoreInfoDrawer
                             open={drawerOpen}
                             store={selectedStore}
