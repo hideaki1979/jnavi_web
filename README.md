@@ -34,7 +34,7 @@ https://jnavi-web.vercel.app/stores/map
 - **言語**: TypeScript
 - **状態管理**: TanStack React Query v5, Zustand v5
 - **フォーム管理**: React Hook Form v7, Zod v3
-- **認証・DB**: Firebase (Authentication, Storage)
+- **認証・ストレージ**: Firebase (Authentication, Storage)
 - **API クライアント**: Axios
 - **マップ**: @vis.gl/react-google-maps
 
