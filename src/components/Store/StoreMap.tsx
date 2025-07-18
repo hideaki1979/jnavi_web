@@ -32,7 +32,6 @@ export default function StoreMap({ mapData }: StoreMapProps) {
     const [selectedStore, setSelectedStore] = useState<MapStore | null>(null)
     const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
     const [isLocationLoading, setIsLocationLoading] = useState(false)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [isMounted, setIsMounted] = useState(false)
 
     useEffect(() => {
@@ -45,8 +44,9 @@ export default function StoreMap({ mapData }: StoreMapProps) {
 
         setIsLocationLoading(true)
         if (!navigator.geolocation) {
+            // 位置情報がサポートされていない場合は東京駅を使用
+            setCenter(defaultCenter)
             setIsLocationLoading(false)
-            setErrorMessage("位置情報取得の権限がありません。")
             return
         }
 
@@ -60,8 +60,9 @@ export default function StoreMap({ mapData }: StoreMapProps) {
             },
             (positionError) => {
                 console.error("現在地情報取得エラー：", positionError)
+                // 位置情報取得に失敗した場合は東京駅を使用
+                setCenter(defaultCenter)
                 setIsLocationLoading(false)
-                setErrorMessage("現在地情報取得に失敗しました")
             },
             {
                 enableHighAccuracy: true,
@@ -80,8 +81,8 @@ export default function StoreMap({ mapData }: StoreMapProps) {
         setDrawerOpen(true)
     }
 
-    if (isLocationLoading || errorMessage || !isMounted) {
-        return <LoadingErrorContainer loading={isLocationLoading} error={errorMessage} />
+    if (isLocationLoading || !isMounted) {
+        return <LoadingErrorContainer loading={isLocationLoading || !isMounted} error={null} />
     }
 
     return (
