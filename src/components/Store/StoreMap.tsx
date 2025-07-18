@@ -83,7 +83,7 @@ export default function StoreMap({ mapData }: StoreMapProps) {
     }
 
     if (isLocationLoading || !isMounted) {
-        return <LoadingErrorContainer loading={isLocationLoading} error={null} />
+        return <LoadingErrorContainer loading={isLocationLoading || !isMounted} error={null} />
     }
 
     return (
