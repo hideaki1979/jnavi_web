@@ -64,32 +64,82 @@ export function AuthSocialButtons({ onError, onErrors }: AuthSocialButtonsProps)
     return (
         <Box display="flex" flexDirection="column" gap={2}>
             <Button
-                variant="outlined"
+                variant="contained"
                 fullWidth
                 startIcon={<Google />}
                 onClick={handleGoogleAuth}
-                sx={{ py: 1.5 }}
+                sx={{
+                    py: 1.5,
+                    backgroundColor: '#ffffff',
+                    color: '#1f1f1f',
+                    border: '1px solid #dadce0',
+                    boxShadow: 'none',
+                    '&:hover': {
+                        backgroundColor: '#f8f9fa',
+                        boxShadow: '0 1px 2px 0 rgba(60,64,67,.30), 0 1px 3px 1px rgba(60,64,67,.15)',
+                    },
+                    '&:active': {
+                        backgroundColor: '#f1f3f4',
+                    },
+                    '&:disabled': {
+                        backgroundColor: '#f8f9fa',
+                        color: '#5f6368',
+                    },
+                    '& .MuiButton-startIcon': {
+                        color: '#4285f4', // Google blue for icon
+                    }
+                }}
                 disabled={loading !== null}
             >
-                {loading === 'google' ? <CircularProgress size={24} color="inherit" /> : 'Googleでログイン'}
+                {loading === 'google' ? <CircularProgress size={24} sx={{ color: '#4285f4' }} /> : 'Googleでログイン'}
             </Button>
             <Button
-                variant="outlined"
+                variant="contained"
                 fullWidth
                 startIcon={<Facebook />}
                 onClick={handleFacebookAuth}
                 disabled={loading !== null}
-                sx={{ py: 1.5 }}
+                sx={{
+                    py: 1.5,
+                    backgroundColor: '#1877F2',
+                    color: '#ffffff',
+                    '&:hover': {
+                        backgroundColor: '#166FE5',
+                        boxShadow: '0 2px 4px 0 rgba(0,0,0,0.2), 0 3px 10px 0 rgba(0,0,0,0.19)',
+                    },
+                    '&:active': {
+                        backgroundColor: '#1464D6',
+                    },
+                    '&:disabled': {
+                        backgroundColor: '#E4E6EA',
+                        color: '#BEC3C9',
+                    }
+                }}
             >
                 {loading === 'facebook' ? <CircularProgress size={24} color="inherit" /> : 'Facebookでログイン'}
             </Button>
             <Button
-                variant="outlined"
+                variant="contained"
                 fullWidth
                 startIcon={<GitHub />}
                 onClick={handleGitHubAuth}
                 disabled={loading !== null}
-                sx={{ py: 1.5 }}
+                sx={{
+                    py: 1.5,
+                    backgroundColor: '#24292e',
+                    color: '#ffffff',
+                    '&:hover': {
+                        backgroundColor: '#1c2025',
+                        opacity: 0.8,
+                    },
+                    '&:active': {
+                        backgroundColor: '#181b20',
+                    },
+                    '&:disabled': {
+                        backgroundColor: '#f6f8fa',
+                        color: '#959da5',
+                    }
+                }}
             >
                 {loading === 'github' ? <CircularProgress size={24} color="inherit" /> : 'Githubでログイン'}
             </Button>

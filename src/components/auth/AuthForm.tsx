@@ -7,7 +7,7 @@
 import { signInWithEmail, signUpWithEmail } from "@/lib/auth"
 import { LoginFormInput, loginSchema, SignupFormInput, signupSchema } from "@/validations/auth"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Alert, Box, Button, CircularProgress, Divider, Typography } from "@mui/material"
+import { Alert, Box, Button, CircularProgress, Divider, IconButton, Typography } from "@mui/material"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Control, useForm } from "react-hook-form"
@@ -21,6 +21,7 @@ import { auth } from "@/lib/firebase"
 import { ValidationErrorList } from "../feedback/validationErrorList"
 import { useApiError } from "@/hooks/useApiError"
 import { useAsyncOperation } from "@/hooks/useAsyncOperation"
+import MapIcon from '@mui/icons-material/Map';
 
 interface AuthFormProps {
     mode: 'login' | 'signup'
@@ -152,18 +153,45 @@ export function AuthForm({ mode }: AuthFormProps) {
             sx={{
                 maxWidth: 540,
                 mx: "auto",
+                my: 4,
                 p: 4,
                 backgroundColor: "grey.300",
                 color: "grey.700",
                 borderRadius: 2,
                 boxShadow: 2,
-                height: "100vh",
+                height: "88vh",
                 overflowY: "auto"
             }}
         >
-            <Typography variant="h5" fontWeight="bold" textAlign="center">
-                {isSignup ? "アカウント作成" : "ログイン"}
-            </Typography>
+            {/* タイトルとMapアイコンを横並びに配置 */}
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                    mb: 2
+                }}
+            >
+                <Typography variant="h5" fontWeight="bold" textAlign="center">
+                    {isSignup ? "アカウント作成" : "ログイン"}
+                </Typography>
+                <IconButton
+                    sx={{
+                        position: "absolute",
+                        right: 0,
+                        "&:hover": {
+                            backgroundColor: "primary.light",
+                            color: "black"
+                        }
+                    }}
+                    title="マップ画面"
+                    onClick={() => router.push('/stores/map')}
+                >
+                    <MapIcon />
+                </IconButton>
+
+            </Box>
 
             {/* エラーメッセージ表示（統一化） */}
             {errorMessage && (
@@ -223,7 +251,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             )}
 
             <Button type="submit" variant="contained" fullWidth disabled={loading}
-                sx={{ mt: 4, mb: 4, py: 2, fontWeight: "bold" }}
+                sx={{ mt: 2, mb: 2, py: 2, fontWeight: "bold" }}
             >
                 {loading ? <CircularProgress size={24} color="inherit" /> : (isSignup ? "アカウント作成" : "ログイン")}
             </Button>
