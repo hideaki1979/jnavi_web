@@ -24,7 +24,6 @@ export function RenderToppingOptions(options?: FormattedToppingOptionNames) {
                         label={option}
                         size="small"
                         color="primary"
-                        variant="outlined"
                     />
                 ))}
             </Box>
