@@ -280,22 +280,52 @@ npm install
 `.env.local` ファイルを作成し、以下の設定を追加：
 
 ```bash
-# Firebase 設定
-NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+# バックエンド API URL（開発環境の場合）
+NEXT_PUBLIC_API_URL=http://localhost:8000
 
-# Firebase Admin SDK
-FIREBASE_ADMIN_PROJECT_ID=your_project_id
-FIREBASE_ADMIN_PRIVATE_KEY=your_private_key
-FIREBASE_ADMIN_CLIENT_EMAIL=your_client_email
-
-# Google Maps API
+# Google Maps API 設定
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
-NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=your_map_id
+# Google Maps JavaScript API の API キー
+# Google Cloud Console で Maps JavaScript API を有効化して取得
+
+NEXT_PUBLIC_GOOGLE_MAPS_ID=your_map_id
+# Google Maps のカスタムマップ ID
+# Google Cloud Console で Map ID を作成して取得
+
+# Firebase クライアント設定（フロントエンド用）
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+# Firebase プロジェクトの Web API キー
+# Firebase Console > プロジェクト設定 > 全般 > Web API キー
+
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+# Firebase プロジェクトの認証ドメイン
+# 例: my-project-12345.firebaseapp.com
+
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+# Firebase プロジェクト ID
+# Firebase Console > プロジェクト設定 > 全般 > プロジェクト ID
+
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+# Firebase Cloud Messaging の送信者 ID
+# Firebase Console > プロジェクト設定 > クラウドメッセージング > 送信者 ID
+
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+# Firebase アプリの ID
+# Firebase Console > プロジェクト設定 > 全般 > アプリ ID
+
+# Firebase Admin SDK 設定（サーバーサイド用）
+FIREBASE_PROJECT_ID=your_project_id
+# Firebase プロジェクト ID（サーバーサイド用）
+# Firebase Console > プロジェクト設定 > 全般 > プロジェクト ID
+
+FIREBASE_CLIENT_EMAIL=your_client_email
+# Firebase Admin SDK のサービスアカウントメールアドレス
+# Firebase Console > プロジェクト設定 > サービスアカウント > 新しい秘密鍵の生成
+
+FIREBASE_PRIVATE_KEY=your_private_key
+# Firebase Admin SDK の秘密鍵
+# Firebase Console > プロジェクト設定 > サービスアカウント > 新しい秘密鍵の生成
+# 注意: 改行文字（\n）を含むため、文字列として適切にエスケープする必要があります
 ```
 
 ### 3. アプリケーション起動
@@ -399,6 +429,20 @@ src/
 - 🖼️ **画像最適化**: 自動圧縮・WebP フォーマット
 - 🗺️ **マップ最適化**: 条件付きレンダリング・クラスタリング
 
+### コード規約・重要実装ポイント
+
+- **TypeScript Strict Mode**: 型安全性を重視し、`any`型の使用を原則禁止します。
+- **コンポーネント設計**:
+  - 200 行を超えるコンポーネントは機能ごとに分割します。
+  - 3 箇所以上で使用されるロジックはカスタムフックに抽出し、共通化します。
+- **状態管理**:
+  - サーバー状態は TanStack React Query、クライアント状態は Zustand で管理します。
+  - API フックは`src/hooks/api`に集約します。
+- **フォーム**: React Hook Form と Zod を組み合わせ、型安全で再利用性の高いフォームを構築します。
+- **認証**: Firebase Authentication と HTTP Only のセッションクッキーを組み合わせたセキュアな認証基盤を実装します。
+- **Next.js App Router**: Server Components を積極的に活用し、パフォーマンスを最適化します。
+- **ハイドレーションエラー対策**: `useResponsive`フックなどを用いて、サーバーとクライアントのレンダリング差異を吸収します。
+
 ## ライセンス
 
 このプロジェクトは **MIT ライセンス** の下で公開されています。
@@ -406,5 +450,3 @@ src/
 ## デモサイト
 
 🌐 **本番環境**: https://jnavi-web.vercel.app/stores/map
-
-※ホスティングサービス（Vercel）が不安定なため、一時的にアクセスできない場合があります。
