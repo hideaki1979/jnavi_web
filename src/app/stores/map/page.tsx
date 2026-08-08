@@ -1,6 +1,17 @@
 import { getMapAll } from "@/app/api/stores";
 import { unwrapActionResult } from "@/lib/actionResult";
 import StoreMapClient from "@/components/Store/StoreMapClient";
+
+/**
+ * ビルド時のプリレンダリングを行わず、リクエスト時にレンダリングする。
+ *
+ * このページはバックエンドAPIから店舗マップ情報を取得するため、
+ * 静的生成のままだとビルドがAPIの稼働状況に依存し、
+ * API側の一時的な障害でデプロイ自体が失敗してしまう。
+ * また、店舗を登録・更新しても再デプロイするまで画面に反映されない。
+ */
+export const dynamic = 'force-dynamic'
+
 /**
  * 店舗マップ画面コンポーネント
  * - 店舗情報を表示するマップを表示
