@@ -1,4 +1,5 @@
 import { getToppingCallOptions } from "@/app/api/toppingCalls"
+import { unwrapActionResult } from "@/lib/actionResult"
 import StoreForm from "@/components/Store/StoreForm"
 
 /**
@@ -10,7 +11,7 @@ import StoreForm from "@/components/Store/StoreForm"
  */
 
 export default async function CreateStorePage() {
-    const toppingOptions = await getToppingCallOptions()
+    const toppingOptions = unwrapActionResult(await getToppingCallOptions())
     return <StoreForm mode="create" toppingOptions={toppingOptions} />
 }
 

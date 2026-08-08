@@ -1,6 +1,7 @@
 import StoreForm from "@/components/Store/StoreForm"
 import { getStoreById } from "@/app/api/stores";
 import { getToppingCallOptions } from "@/app/api/toppingCalls";
+import { unwrapActionResult } from "@/lib/actionResult";
 
 interface StoreUpdatePageProps {
     params: Promise<{
@@ -21,9 +22,11 @@ export default async function StoreUpdatePage({ params }: StoreUpdatePageProps) 
 
     const { id: storeId } = await params
     // データ取得: カスタムフックuseStoreを使用
-    const [storeData, toppingOptions] = await Promise.all([
+    const [storeResult, toppingOptionsResult] = await Promise.all([
         getStoreById(storeId),
         getToppingCallOptions()
     ])
+    const storeData = unwrapActionResult(storeResult)
+    const toppingOptions = unwrapActionResult(toppingOptionsResult)
     return <StoreForm mode="edit" initialData={storeData} toppingOptions={toppingOptions} />
 }

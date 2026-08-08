@@ -1,4 +1,5 @@
 import { createUser, getUserByUid } from "@/app/api/user"
+import { unwrapActionResult } from "@/lib/actionResult"
 import { useNotification } from "@/lib/notification"
 import { User } from "@/types/user"
 import { ApiClientError } from "@/types/validation"
@@ -18,7 +19,7 @@ const userKeys = {
 export const useUser = (uid: string, idToken: string) => {
     return useQuery({
         queryKey: userKeys.detail(uid),
-        queryFn: () => getUserByUid(uid, idToken),
+        queryFn: async () => unwrapActionResult(await getUserByUid(uid, idToken)),
         enabled: !!uid && !!idToken
     })
 }
@@ -30,8 +31,8 @@ export const useCreateUser = () => {
     const { showNotification } = useNotification()
 
     return useMutation({
-        mutationFn: ({ user, idToken }: { user: User, idToken: string }) =>
-            createUser(user, idToken),
+        mutationFn: async ({ user, idToken }: { user: User, idToken: string }) =>
+            unwrapActionResult(await createUser(user, idToken)),
         onSuccess: () => showNotification("ユーザー登録が完了しました", "success"),
         onError: (error) => {
             console.error("ユーザー登録処理に失敗しました", error)

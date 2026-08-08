@@ -1,4 +1,5 @@
 import { getStoreToppingCalls } from "@/app/api/stores"
+import { unwrapActionResult } from "@/lib/actionResult"
 import { SimulationToppingOption } from "@/types/ToppingCall"
 import StoreImageUploadForm from "@/components/image/StoreImageUploadForm"
 
@@ -17,7 +18,7 @@ export default async function StoreImageUploadPage({ params }: StoreImageUploadP
     const { id } = await params
 
     // トッピング情報を取得
-    const toppingCallData = await getStoreToppingCalls(id, "all")
+    const toppingCallData = unwrapActionResult(await getStoreToppingCalls(id, "all"))
 
     const toppingOptions: SimulationToppingOption[]
         = toppingCallData?.formattedToppingOptions?.map(([, opt]) => opt) ?? []

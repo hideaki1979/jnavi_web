@@ -1,7 +1,16 @@
+/**
+ * 店舗画像関連のAPI通信を行う関数群。
+ *
+ * いずれの関数もエラー時に例外を throw せず、`ActionResult` として結果を返す。
+ * Server Action 内で throw された例外は本番ビルドで Next.js にサニタイズされ、
+ * APIが返したエラーメッセージ・バリデーション詳細がクライアントへ届かないため。
+ * 受け取り側は `unwrapActionResult()` で値の取り出し／例外化を行う。
+ */
 "use server"
 
 import ApiClient from "@/lib/ApiClient";
-import { StoreImageEditData, StoreImageUploadData } from "@/types/Image";
+import type { ActionResult } from "@/types/actionResult";
+import type { StoreImageEditData, StoreImageUploadData } from "@/types/Image";
 
 const api = ApiClient.getInstance()
 
@@ -11,6 +20,7 @@ const api = ApiClient.getInstance()
  * @param storeId 店舗ID
  * @param imageData アップロードする画像データ
  * @param idToken 認証用IDトークン
+ * @returns APIレスポンスを含む処理結果
  */
 
 export const uploadStoreImage = async (storeId: string | number, imageData: StoreImageUploadData, idToken: string) => {
@@ -20,12 +30,15 @@ export const uploadStoreImage = async (storeId: string | number, imageData: Stor
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        return res.data
+        return { success: true as const, data: res.data }
     } catch (error) {
-        throw ApiClient.handlerError(
-            error,
-            "画像アップロード処理でエラーが発生しました。"
-        )
+        return {
+            success: false as const,
+            error: ApiClient.toActionError(
+                error,
+                "画像アップロード処理でエラーが発生しました。"
+            )
+        }
     }
 }
 
@@ -36,7 +49,7 @@ export const uploadStoreImage = async (storeId: string | number, imageData: Stor
  * @param imageId 画像ID
  * @param imageData 更新する画像データ
  * @param idToken 認証用IDトークン
- * @returns APIレスポンス
+ * @returns APIレスポンスを含む処理結果
  */
 
 export const updateStoreImage = async (storeId: string | number, imageId: string | number, imageData: StoreImageUploadData, idToken: string) => {
@@ -46,12 +59,15 @@ export const updateStoreImage = async (storeId: string | number, imageId: string
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        return res.data
+        return { success: true as const, data: res.data }
     } catch (error) {
-        throw ApiClient.handlerError(
-            error,
-            "店舗画像更新処理でエラーが発生しました。"
-        )
+        return {
+            success: false as const,
+            error: ApiClient.toActionError(
+                error,
+                "店舗画像更新処理でエラーが発生しました。"
+            )
+        }
     }
 }
 
@@ -61,7 +77,7 @@ export const updateStoreImage = async (storeId: string | number, imageId: string
  * @param storeId 店舗ID
  * @param imageId 画像ID
  * @param idToken 認証用IDトークン
- * @returns APIレスポンス
+ * @returns APIレスポンスを含む処理結果
  */
 
 export const deleteStoreImage = async (storeId: string | number, imageId: string | number, idToken: string) => {
@@ -71,12 +87,15 @@ export const deleteStoreImage = async (storeId: string | number, imageId: string
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        return res.data
+        return { success: true as const, data: res.data }
     } catch (error) {
-        throw ApiClient.handlerError(
-            error,
-            "画像削除処理でエラーが発生しました。"
-        )
+        return {
+            success: false as const,
+            error: ApiClient.toActionError(
+                error,
+                "画像削除処理でエラーが発生しました。"
+            )
+        }
     }
 }
 
@@ -84,20 +103,23 @@ export const deleteStoreImage = async (storeId: string | number, imageId: string
  * 店舗IDと画像IDを指定して画像情報を取得するAPI通信を行う関数。
  * - 画像情報取得APIにGETリクエストを送信
  * - 成功時にはAPIレスポンスの画像情報を返す
- * - エラー時にはエラーハンドリングを行う
+ * - エラー時にはエラー情報を持つ失敗結果を返す
  * @param storeId 店舗ID
  * @param imageId 画像ID
- * @returns 画像情報
+ * @returns 画像情報を含む処理結果
  */
 
-export const getImageById = async (storeId: string | number, imageId: string | number): Promise<StoreImageEditData> => {
+export const getImageById = async (storeId: string | number, imageId: string | number): Promise<ActionResult<StoreImageEditData>> => {
     try {
         const res = await api.get(`/stores/${storeId}/images/${imageId}`)
-        return res.data.data
+        return { success: true, data: res.data.data }
     } catch (error) {
-        throw ApiClient.handlerError(
-            error,
-            "画像取得（１件取得）処理でエラーが発生しました。"
-        )
+        return {
+            success: false,
+            error: ApiClient.toActionError(
+                error,
+                "画像取得（１件取得）処理でエラーが発生しました。"
+            )
+        }
     }
 }

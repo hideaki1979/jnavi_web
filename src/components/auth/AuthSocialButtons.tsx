@@ -1,6 +1,7 @@
 "use client"
 
 import { createUser, getUserByUid } from "@/app/api/user";
+import { unwrapActionResult } from "@/lib/actionResult";
 import { signInWithFacebook, signInWithGitHub, signInWithGoogle } from "@/lib/auth"
 import { auth } from "@/lib/firebase";
 import { User } from "@/types/user";
@@ -35,15 +36,18 @@ export function AuthSocialButtons({ onError, onErrors }: AuthSocialButtonsProps)
             const user = await signInFunction()
             const idToken = await auth.currentUser?.getIdToken()
             if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
-            const userData = await getUserByUid(user.uid, idToken)
+            // 取得に失敗した場合（未登録ユーザーの404を含む）は未登録として扱い、新規登録を試みる
+            const userResult = await getUserByUid(user.uid, idToken)
+            const userData = userResult.success ? userResult.data : null
 
             if (!userData) {
-                await createUser({
+                // Server Actionは失敗時も結果オブジェクトを返すため、ここで例外化する
+                unwrapActionResult(await createUser({
                     uid: user.uid,
                     email: user.email ?? '',
                     displayName: user.displayName ?? '',
                     authProvider: provider
-                }, idToken)
+                }, idToken))
             }
 
             router.replace(`/stores/map`)

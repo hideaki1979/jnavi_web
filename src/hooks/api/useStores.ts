@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { StoreInput } from "@/types/Store"
 import { useNotification } from "@/lib/notification"
 import { getCurrentUserIdToken } from "@/lib/authToken"
+import { unwrapActionResult } from "@/lib/actionResult"
 import { ApiClientError } from "@/types/validation"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef } from "react"
@@ -22,7 +23,7 @@ const storeKeys = {
 export const useAllStores = () => {
     return useQuery({
         queryKey: storeKeys.list,
-        queryFn: getStoreAll
+        queryFn: async () => unwrapActionResult(await getStoreAll())
     })
 }
 
@@ -32,7 +33,7 @@ export const useAllStores = () => {
 export const useStoresForMap = () => {
     return useQuery({
         queryKey: storeKeys.maps,
-        queryFn: getMapAll
+        queryFn: async () => unwrapActionResult(await getMapAll())
     })
 }
 
@@ -43,7 +44,7 @@ export const useStoresForMap = () => {
 export const useStore = (id: string, enabled: boolean = true) => {
     return useQuery({
         queryKey: storeKeys.detail(id),
-        queryFn: () => getStoreById(id),
+        queryFn: async () => unwrapActionResult(await getStoreById(id)),
         enabled: !!id && enabled  // IDがない場合はクエリを実行しない
     })
 }
@@ -69,7 +70,7 @@ export const useCreateStore = () => {
     return useMutation({
         mutationFn: async (storeData: StoreInput) => {
             const idToken = await getCurrentUserIdToken()
-            return createStore(storeData, idToken)
+            return unwrapActionResult(await createStore(storeData, idToken))
         },
         onSuccess: async (data) => {
             // 店舗一覧とマップ情報のキャッシュを無効化
@@ -115,7 +116,7 @@ export const useUpdateStore = () => {
     return useMutation({
         mutationFn: async ({ id, storeData }: { id: string; storeData: StoreInput }) => {
             const idToken = await getCurrentUserIdToken()
-            return updateStore(id, storeData, idToken)
+            return unwrapActionResult(await updateStore(id, storeData, idToken))
         },
         onSuccess: async (data, { id }) => {
             // 更新された店舗の詳細情報、店舗一覧、マップ情報のキャッシュを無効化
@@ -150,7 +151,7 @@ export const useCloseStore = () => {
     return useMutation({
         mutationFn: async ({ id, storeName }: { id: string, storeName: string }) => {
             const idToken = await getCurrentUserIdToken()
-            return storeClose(id, storeName, idToken)
+            return unwrapActionResult(await storeClose(id, storeName, idToken))
         },
         onSuccess: async (data, { id }) => {
             // 店舗関連のキャッシュをすべて無効化
