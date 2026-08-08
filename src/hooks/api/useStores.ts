@@ -2,6 +2,7 @@ import { createStore, getMapAll, getStoreAll, getStoreById, storeClose, updateSt
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { StoreInput } from "@/types/Store"
 import { useNotification } from "@/lib/notification"
+import { getCurrentUserIdToken } from "@/lib/authToken"
 import { ApiClientError } from "@/types/validation"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef } from "react"
@@ -66,7 +67,10 @@ export const useCreateStore = () => {
     }, [])
 
     return useMutation({
-        mutationFn: (storeData: StoreInput) => createStore(storeData),
+        mutationFn: async (storeData: StoreInput) => {
+            const idToken = await getCurrentUserIdToken()
+            return createStore(storeData, idToken)
+        },
         onSuccess: async (data) => {
             // 店舗一覧とマップ情報のキャッシュを無効化
             await queryClient.invalidateQueries({ queryKey: storeKeys.all })
@@ -109,8 +113,10 @@ export const useUpdateStore = () => {
     }, [])
 
     return useMutation({
-        mutationFn: ({ id, storeData }: { id: string; storeData: StoreInput }) =>
-            updateStore(id, storeData),
+        mutationFn: async ({ id, storeData }: { id: string; storeData: StoreInput }) => {
+            const idToken = await getCurrentUserIdToken()
+            return updateStore(id, storeData, idToken)
+        },
         onSuccess: async (data, { id }) => {
             // 更新された店舗の詳細情報、店舗一覧、マップ情報のキャッシュを無効化
             await queryClient.invalidateQueries({ queryKey: storeKeys.detail(id) })
@@ -142,7 +148,10 @@ export const useCloseStore = () => {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: ({ id, storeName }: { id: string, storeName: string }) => storeClose(id, storeName),
+        mutationFn: async ({ id, storeName }: { id: string, storeName: string }) => {
+            const idToken = await getCurrentUserIdToken()
+            return storeClose(id, storeName, idToken)
+        },
         onSuccess: async (data, { id }) => {
             // 店舗関連のキャッシュをすべて無効化
             await queryClient.invalidateQueries({ queryKey: storeKeys.detail(id) })

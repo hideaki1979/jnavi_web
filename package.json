@@ -23,7 +23,7 @@
     "browser-image-compression": "^2.0.2",
     "firebase": "^11.8.1",
     "firebase-admin": "^13.4.0",
-    "next": "15.3.8",
+    "next": "15.5.23",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.4",
@@ -39,7 +39,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.3.2",
+    "eslint-config-next": "15.5.23",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
