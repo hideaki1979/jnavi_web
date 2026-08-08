@@ -73,6 +73,8 @@ export default function StoreImageEditForm({
 
     // 画像ファイルアップロード
     const onSubmit = async (values: ImageEditFormValues) => {
+        // 前回の送信で残ったAPIエラーを消してから再送信する
+        clearErrors()
         setUpdating(true)
         try {
             // 画像ファイル必須チェック
@@ -118,7 +120,8 @@ export default function StoreImageEditForm({
             validationErrors={validationErrors}
             submitButtonLabel='画像変更'
             isSubmitting={updating}
-            onSubmit={handleSubmit(onSubmit)}
+            // 第2引数はクライアント検証で弾かれた時のハンドラ（onSubmitに入らないためここでもAPIエラーを消す）
+            onSubmit={handleSubmit(onSubmit, clearErrors)}
         />
     )
 }

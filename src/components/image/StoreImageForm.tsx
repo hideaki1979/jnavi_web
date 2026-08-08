@@ -3,7 +3,7 @@
 import { SelectedToppingInfoMap, SimulationToppingOption } from "@/types/ToppingCall";
 import { ExpressValidationError } from "@/types/validation";
 import { ImageEditFormValues, ImageUploadFormValues } from "@/validations/image";
-import { Box, Button, CircularProgress, Divider, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Divider, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
 import Image from "next/image";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 import { ToppingOptionRadioSelector } from "../toppingCallOptions/ToppingOptionRadioSelector";
@@ -49,6 +49,7 @@ export function StoreImageForm({
     toppingOptions,
     selectedToppingInfo,
     onToppingChange,
+    errorMessage,
     validationErrors,
     submitButtonLabel,
     isSubmitting,
@@ -162,6 +163,13 @@ export function StoreImageForm({
                         onOptionChange={onToppingChange}
                     />
                 </>
+            )}
+
+            {/* エラーメッセージ表示（画像形式エラーなど、detailsを持たないAppError由来のエラーもここに出る） */}
+            {errorMessage && (
+                <Alert severity="error" sx={{ mt: 4, fontSize: 12 }}>
+                    {errorMessage}
+                </Alert>
             )}
 
             {/* バリデーションエラー表示 */}

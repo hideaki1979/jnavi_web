@@ -7,9 +7,9 @@ import { StoreSubmitButton } from "@/components/Store/StoreSubmitButton"
 import StoreSwitch from "@/components/Store/StoreSwitch"
 import { useCreateStore, useUpdateStore } from "@/hooks/api/useStores"
 import { useStoreForm } from "@/hooks/useStoreForm"
-import { StoreFormInput } from "@/validations/store"
+import { STORE_DETAIL_MAX_LENGTH, STORE_TEXT_MAX_LENGTH, StoreFormInput } from "@/validations/store"
 import { AccessTime, EventBusy, ExpandMore, Map as MapIcon, Store } from "@mui/icons-material"
-import { Accordion, AccordionDetails, AccordionSummary, Typography } from "@mui/material"
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Typography } from "@mui/material"
 import { useMemo } from "react"
 import { FormattedToppingOptionNameStoreData } from "@/types/Store"
 import { ToppingOptionMap } from "@/types/ToppingCall"
@@ -64,8 +64,10 @@ export default function StoreForm({ mode, initialData, toppingOptions }: StoreFo
         handleChangePostCallOptionCheck,
 
         // エラーハンドリング
+        errorMessage,
         validationErrors,
         setError,
+        clearErrors,
 
         // 送信データ生成
         createSubmitData
@@ -84,6 +86,8 @@ export default function StoreForm({ mode, initialData, toppingOptions }: StoreFo
      */
 
     const onSubmit = async (formData: StoreFormInput): Promise<void> => {
+        // 前回の送信で残ったAPIエラーを消してから再送信する
+        clearErrors()
         try {
             const submitData = createSubmitData(formData)
             if (mode === 'create') {
@@ -106,18 +110,19 @@ export default function StoreForm({ mode, initialData, toppingOptions }: StoreFo
 
     return (
         <form
-            onSubmit={handleSubmit(onSubmit)}
+            // 第2引数はクライアント検証で弾かれた時のハンドラ（onSubmitに入らないためここでもAPIエラーを消す）
+            onSubmit={handleSubmit(onSubmit, clearErrors)}
             className="border dark:border-gray-300 shadow-md rounded-md p-8 bg-gray-200 text-slate-800"
             noValidate
         >
             <Typography variant="h5" fontWeight="bold" textAlign="center" mb={6}>
                 {mode === 'create' ? '店舗登録画面' : '店舗編集画面'}
             </Typography>
-            <StoreFormInputText name="store_name" control={control} label="店舗名" errors={errors} startAdornment={<Store />} required margin="normal" />
-            <StoreFormInputText name="branch_name" control={control} label="支店名" errors={errors} startAdornment={<Store />} margin="normal" />
-            <StoreFormInputText name="address" control={control} label="住所" errors={errors} startAdornment={<MapIcon />} required margin="normal" />
-            <StoreFormInputText name="business_hours" control={control} label="営業時間" errors={errors} startAdornment={<AccessTime />} required margin="normal" />
-            <StoreFormInputText name="regular_holidays" control={control} label="定休日" errors={errors} startAdornment={<EventBusy />} required margin="normal" />
+            <StoreFormInputText name="store_name" control={control} label="店舗名" errors={errors} startAdornment={<Store />} required margin="normal" maxLength={STORE_TEXT_MAX_LENGTH} />
+            <StoreFormInputText name="branch_name" control={control} label="支店名" errors={errors} startAdornment={<Store />} margin="normal" maxLength={STORE_TEXT_MAX_LENGTH} />
+            <StoreFormInputText name="address" control={control} label="住所" errors={errors} startAdornment={<MapIcon />} required margin="normal" maxLength={STORE_TEXT_MAX_LENGTH} />
+            <StoreFormInputText name="business_hours" control={control} label="営業時間" errors={errors} startAdornment={<AccessTime />} required margin="normal" maxLength={STORE_TEXT_MAX_LENGTH} />
+            <StoreFormInputText name="regular_holidays" control={control} label="定休日" errors={errors} startAdornment={<EventBusy />} required margin="normal" maxLength={STORE_TEXT_MAX_LENGTH} />
             <StoreSwitch name="prior_meal_voucher" control={control} label="事前食券購入有無" />
 
             {/* 事前トッピングコール情報 */}
@@ -152,11 +157,18 @@ export default function StoreForm({ mode, initialData, toppingOptions }: StoreFo
                     />
                 </AccordionDetails>
             </Accordion>
-            <StoreFormInputText name="topping_details" control={control} label="トッピング補足情報" errors={errors} margin="normal" multiline rows={3} />
-            <StoreFormInputText name="call_details" control={control} label="コール補足情報" errors={errors} margin="normal" multiline rows={3} />
+            <StoreFormInputText name="topping_details" control={control} label="トッピング補足情報" errors={errors} margin="normal" multiline rows={3} maxLength={STORE_DETAIL_MAX_LENGTH} />
+            <StoreFormInputText name="call_details" control={control} label="コール補足情報" errors={errors} margin="normal" multiline rows={3} maxLength={STORE_DETAIL_MAX_LENGTH} />
             <StoreSwitch name="is_all_increased" control={control} label="全マシコール有無" />
             <StoreSwitch name="is_lot" control={control} label="ロット制有無" />
-            <StoreFormInputText name="lot_detail" control={control} label="ロット補足情報" errors={errors} margin="normal" multiline rows={3} />
+            <StoreFormInputText name="lot_detail" control={control} label="ロット補足情報" errors={errors} margin="normal" multiline rows={3} maxLength={STORE_DETAIL_MAX_LENGTH} />
+
+            {/* エラーメッセージ表示（APIエラー：detailsを持たないAppError由来のエラーもここに出る） */}
+            {errorMessage && (
+                <Alert severity="error" sx={{ mt: 4, fontSize: 12 }}>
+                    {errorMessage}
+                </Alert>
+            )}
 
             {/* バリデーションエラー表示 */}
             <ValidationErrorList errors={validationErrors} />

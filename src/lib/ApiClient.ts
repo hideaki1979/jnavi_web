@@ -48,19 +48,20 @@ class ApiClient {
             const responseData = axiosError.response?.data
 
             // APIからのエラーメッセージを優先
-            const errorMessage = responseData?.message || axiosError.message
+            // バックエンドは { success: false, error: string } 形式で返すため `error` を最優先で読む
+            // （`message` は旧形式との互換用フォールバック）
+            const errorMessage = responseData?.error || responseData?.message || axiosError.message
+
+            // バリデーションエラーの詳細は `details`（旧形式は `errors`）に入る
+            const validationDetails = responseData?.details ?? responseData?.errors
 
             // カスタムエラークラスを使用する
             const customError = new ApiClientErrorImpl(
                 `API呼出中にエラー発生：${errorMessage}`,
-                responseData?.errors,
+                Array.isArray(validationDetails) ? validationDetails : undefined,
                 axiosError  // 元のAxiosErrorを保持
             )
 
-            // express-validationのエラー配列があれば追加
-            if (responseData?.errors && Array.isArray(responseData.errors)) {
-                customError.errors = responseData.errors
-            }
             return customError
         }
 
