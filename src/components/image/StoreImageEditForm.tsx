@@ -72,6 +72,8 @@ export default function StoreImageEditForm({
 
     // 画像ファイルアップロード
     const onSubmit = async (values: ImageEditFormValues) => {
+        // 前回の送信で残ったAPIエラーを消してから再送信する
+        clearErrors()
         setUpdating(true)
         try {
             // 画像ファイル必須チェック

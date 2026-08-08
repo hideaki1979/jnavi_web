@@ -1,3 +1,4 @@
+import { ExpressValidationError } from "@/types/validation";
 import { Box, List, ListItem, Typography } from "@mui/material";
 
 /**
@@ -6,11 +7,24 @@ import { Box, List, ListItem, Typography } from "@mui/material";
  */
 
 interface ValidationErrorListProps {
-    errors?: { msg: string; param?: string }[];
+    errors?: ExpressValidationError[];
 }
+
+/**
+ * エラー項目からフィールド名を取得する。
+ * express-validator v7 は `path`、v6 以前は `param` にフィールド名を持つ。
+ */
+const getFieldName = (err: ExpressValidationError): string | undefined =>
+    err.path ?? err.param
 
 export function ValidationErrorList({ errors }: ValidationErrorListProps) {
     if (!errors || errors.length === 0) return null
+
+    // 同一フィールドで同じメッセージが重複することがあるため除外する
+    // （必須項目は trim 前後で notEmpty を2回検証するため、空文字送信時に重複する）
+    const uniqueErrors = errors.filter((err, idx, arr) =>
+        arr.findIndex(e => getFieldName(e) === getFieldName(err) && e.msg === err.msg) === idx
+    )
 
     return (
         <Box mt={2}>
@@ -18,12 +32,15 @@ export function ValidationErrorList({ errors }: ValidationErrorListProps) {
                 エラー詳細：
             </Typography>
             <List dense>
-                {errors.map((err, idx) => (
-                    <ListItem key={idx} sx={{ color: "error.main", pl: 0 }}>
-                        {err.param ? `[${err.param}]` : ''}
-                        {err.msg}
-                    </ListItem>
-                ))}
+                {uniqueErrors.map((err, idx) => {
+                    const fieldName = getFieldName(err)
+                    return (
+                        <ListItem key={`${fieldName ?? 'error'}-${idx}`} sx={{ color: "error.main", pl: 0 }}>
+                            {fieldName ? `[${fieldName}]` : ''}
+                            {err.msg}
+                        </ListItem>
+                    )
+                })}
             </List>
         </Box>
     )

@@ -1,6 +1,6 @@
 import { SelectedToppingInfoMap, SimulationToppingOption } from "@/types/ToppingCall";
 import { ExpressValidationError } from "@/types/validation";
-import { imageEditFormSchema, ImageEditFormValues, imageUploadFormSchema, ImageUploadFormValues, validateFileSizeBeforeCompression } from "@/validations/image";
+import { imageEditFormSchema, ImageEditFormValues, IMAGE_OUTPUT_MIME_TYPE, imageUploadFormSchema, ImageUploadFormValues, validateFileSizeBeforeCompression } from "@/validations/image";
 import { useCallback, useEffect, useState } from "react";
 import { Control, FieldErrors, useForm, UseFormHandleSubmit, UseFormReset, UseFormSetValue } from "react-hook-form";
 import { useApiError } from "./useApiError";
@@ -169,16 +169,20 @@ export function useImageForm({ mode, storeId, initialData, initialToppingOptions
             validateFileSizeBeforeCompression(file)
 
             // ファイル画像圧縮処理
+            // fileTypeを指定してJPEGへ変換する。iPhoneのHEIC/HEIFや、
+            // 環境によって付与される image/jpg をサーバが受け付ける形式に正規化するため
             const compressed = await imageCompression(file, {
                 maxWidthOrHeight: 1080,
                 maxSizeMB: 5,   // 圧縮後のファイルサイズ
-                useWebWorker: true
+                useWebWorker: true,
+                fileType: IMAGE_OUTPUT_MIME_TYPE
             })
-            // Blob→File型に変換
-            const compressedFile = compressed instanceof File
+            // Blob→File型に変換（拡張子・MIMEタイプも変換後の形式に揃える）
+            const convertedFileName = file.name.replace(/\.[^.]+$/, '') + '.jpg'
+            const compressedFile = compressed instanceof File && compressed.type === IMAGE_OUTPUT_MIME_TYPE
                 ? compressed
-                : new File([compressed], file.name, {
-                    type: file.type,
+                : new File([compressed], convertedFileName, {
+                    type: IMAGE_OUTPUT_MIME_TYPE,
                     lastModified: Date.now()
                 })
             // 古いURLを解放
