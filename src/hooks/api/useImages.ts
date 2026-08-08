@@ -2,6 +2,7 @@ import { deleteStoreImage, getImageById, updateStoreImage, uploadStoreImage } fr
 import { getStoreImages, getStoreToppingCalls } from "@/app/api/stores"
 import { useNotification } from "@/lib/notification"
 import { getCurrentUserIdToken } from "@/lib/authToken"
+import { unwrapActionResult } from "@/lib/actionResult"
 import { StoreImageUploadData } from "@/types/Image"
 import { ApiClientError } from "@/types/validation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -21,7 +22,7 @@ const imageKeys = {
 export const useStoreImages = (storeId: string, enabled: boolean = true) => {
     return useQuery({
         queryKey: imageKeys.store(storeId),
-        queryFn: () => getStoreImages(storeId),
+        queryFn: async () => unwrapActionResult(await getStoreImages(storeId)),
         enabled: !!storeId && enabled
     })
 }
@@ -34,7 +35,7 @@ export const useStoreImages = (storeId: string, enabled: boolean = true) => {
 export const useStoreImage = (storeId: string, imageId: string) => {
     return useQuery({
         queryKey: imageKeys.detail(storeId, imageId),
-        queryFn: () => getImageById(storeId, imageId),
+        queryFn: async () => unwrapActionResult(await getImageById(storeId, imageId)),
         enabled: !!storeId && !!imageId
     })
 }
@@ -56,7 +57,7 @@ export const useStoreToppingCallsForImage = (
     const { mode = "all", enabled = true } = options
     return useQuery({
         queryKey: [...imageKeys.storeToppingCalls(storeId), mode],
-        queryFn: () => getStoreToppingCalls(storeId, mode),
+        queryFn: async () => unwrapActionResult(await getStoreToppingCalls(storeId, mode)),
         enabled: !!storeId && enabled
     })
 }
@@ -71,7 +72,7 @@ export const useUploadStoreImage = () => {
     return useMutation({
         mutationFn: async ({ storeId, imageData }: { storeId: string, imageData: StoreImageUploadData }) => {
             const idToken = await getCurrentUserIdToken()
-            return uploadStoreImage(storeId, imageData, idToken)
+            return unwrapActionResult(await uploadStoreImage(storeId, imageData, idToken))
         },
         onSuccess: async (data, { storeId }) => {
             // 該当店舗の画像一覧キャッシュを無効化
@@ -100,7 +101,7 @@ export const useUpdateStoreImage = () => {
             imageData: StoreImageUploadData
         }) => {
             const idToken = await getCurrentUserIdToken()
-            return updateStoreImage(storeId, imageId, imageData, idToken)
+            return unwrapActionResult(await updateStoreImage(storeId, imageId, imageData, idToken))
         },
         onSuccess: async (data, { storeId, imageId }) => {
             // 画像詳細と一覧のキャッシュを無効化
@@ -124,11 +125,11 @@ export const useDeleteStoreImage = () => {
     const { showNotification } = useNotification()
 
     return useMutation({
-        mutationFn: ({ storeId, imageId, idToken }: {
+        mutationFn: async ({ storeId, imageId, idToken }: {
             storeId: string,
             imageId: string,
             idToken: string
-        }) => deleteStoreImage(storeId, imageId, idToken),
+        }) => unwrapActionResult(await deleteStoreImage(storeId, imageId, idToken)),
         onSuccess: (data, { storeId }) => {
             // 該当店舗の画像一覧キャッシュを無効化
             queryClient.invalidateQueries({ queryKey: imageKeys.store(storeId) })

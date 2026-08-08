@@ -1,5 +1,6 @@
 import { getImageById } from '@/app/api/images'
 import { getStoreToppingCalls } from '@/app/api/stores'
+import { unwrapActionResult } from '@/lib/actionResult'
 import { SimulationToppingOption } from '@/types/ToppingCall'
 import StoreImageEditForm from '@/components/image/StoreImageEditForm'
 interface ImageUploadPageProps {
@@ -16,10 +17,12 @@ interface ImageUploadPageProps {
 export default async function ImageUpdatePage({ params }: ImageUploadPageProps) {
     const { id: storeId, imageId } = await params
 
-    const [imageData, toppingCallData] = await Promise.all([
+    const [imageResult, toppingCallResult] = await Promise.all([
         getImageById(storeId, imageId),
         getStoreToppingCalls(storeId, 'all')
     ])
+    const imageData = unwrapActionResult(imageResult)
+    const toppingCallData = unwrapActionResult(toppingCallResult)
     const toppingOptions: SimulationToppingOption[] = toppingCallData.formattedToppingOptions?.map(([, opt]) => opt) ?? []
     return (
         <StoreImageEditForm

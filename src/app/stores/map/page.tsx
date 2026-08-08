@@ -1,4 +1,5 @@
 import { getMapAll } from "@/app/api/stores";
+import { unwrapActionResult } from "@/lib/actionResult";
 import StoreMapClient from "@/components/Store/StoreMapClient";
 /**
  * 店舗マップ画面コンポーネント
@@ -9,6 +10,6 @@ import StoreMapClient from "@/components/Store/StoreMapClient";
  * - ドロワーコンポーネントは閉じるボタンをクリックすることで消える
  */
 export default async function MapPage() {
-    const mapData = await getMapAll()
+    const mapData = unwrapActionResult(await getMapAll())
     return <StoreMapClient mapData={mapData} />
 }

@@ -1,5 +1,6 @@
 import { getStoreToppingCalls } from "@/app/api/stores"
 import { getToppingCallOptions } from "@/app/api/toppingCalls"
+import { unwrapActionResult } from "@/lib/actionResult"
 import { useQuery } from "@tanstack/react-query"
 
 // クエリキーを一元管理
@@ -16,7 +17,7 @@ const toppingCallKeys = {
 export const useToppingCallOptions = () => {
     return useQuery({
         queryKey: toppingCallKeys.options,
-        queryFn: getToppingCallOptions
+        queryFn: async () => unwrapActionResult(await getToppingCallOptions())
     })
 }
 
@@ -28,7 +29,7 @@ export const useToppingCallOptions = () => {
 export const useStoreToppingCalls = (storeId: string, mode: "all" | "pre_call" | "post_call" = "all") => {
     return useQuery({
         queryKey: toppingCallKeys.storeWithMode(storeId, mode),
-        queryFn: () => getStoreToppingCalls(storeId, mode),
+        queryFn: async () => unwrapActionResult(await getStoreToppingCalls(storeId, mode)),
         enabled: !!storeId
     })
 }

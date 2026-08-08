@@ -1,30 +1,44 @@
-"use server"
-
-import ApiClient from "@/lib/ApiClient";
-import { User } from "@/types/user";
-
-const api = ApiClient.getInstance()
-
 /**
  * ユーザー情報の作成・取得API通信を行う関数群。
  * - createUser: ユーザー新規登録API呼び出し
  * - getUserByUid: UIDによるユーザー情報取得API呼び出し
+ *
+ * いずれの関数もエラー時に例外を throw せず、`ActionResult` として結果を返す。
+ * Server Action 内で throw された例外は本番ビルドで Next.js にサニタイズされ、
+ * APIが返したエラーメッセージ・バリデーション詳細がクライアントへ届かないため。
+ * 受け取り側は `unwrapActionResult()` で値の取り出し／例外化を行う。
  */
+"use server"
 
-export const createUser = async (user: User, idToken: string): Promise<void> => {
+import ApiClient from "@/lib/ApiClient";
+import type { ActionResult } from "@/types/actionResult";
+import type { User } from "@/types/user";
+
+const api = ApiClient.getInstance()
+
+/**
+ * ユーザー新規登録API呼び出しを行う関数。
+ * @param user 登録するユーザー情報
+ * @param idToken 認証トークン
+ * @returns 登録処理の結果
+ */
+export const createUser = async (user: User, idToken: string): Promise<ActionResult<void>> => {
     try {
-        const res = await api.post('/users', user, {
+        await api.post('/users', user, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        return res.data
+        return { success: true, data: undefined }
     } catch (error) {
-        throw ApiClient.handlerError(
-            error,
-            "ユーザー情報登録時にエラーが発生しました。"
-        )
+        return {
+            success: false,
+            error: ApiClient.toActionError(
+                error,
+                "ユーザー情報登録時にエラーが発生しました。"
+            )
+        }
     }
 }
 
@@ -32,21 +46,23 @@ export const createUser = async (user: User, idToken: string): Promise<void> => 
  * UIDによるユーザー情報取得API呼び出しを行う関数。
  * @param uid ユーザーのUID
  * @param idToken 認証トークン
- * @returns ユーザー情報が取得できた場合はUserオブジェクト、取得できなかった場合はnull
+ * @returns ユーザー情報を含む処理結果
  */
-export const getUserByUid = async (uid: string, idToken: string): Promise<User | null> => {
+export const getUserByUid = async (uid: string, idToken: string): Promise<ActionResult<User | null>> => {
     try {
         const res = await api.get(`/users/${uid}`, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        return res.data
+        return { success: true, data: res.data }
     } catch (error) {
-        ApiClient.handlerError(
-            error,
-            'ユーザー情報取得中に予期せぬエラーが発生しました'
-        )
-        return null
+        return {
+            success: false,
+            error: ApiClient.toActionError(
+                error,
+                'ユーザー情報取得中に予期せぬエラーが発生しました'
+            )
+        }
     }
 }

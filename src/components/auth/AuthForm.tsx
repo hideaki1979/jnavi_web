@@ -15,6 +15,7 @@ import { AuthFormInputText } from "./AuthFormInputText"
 import { Email, Lock, Person } from "@mui/icons-material"
 import Link from "next/link"
 import { createUser } from "@/app/api/user"
+import { unwrapActionResult } from "@/lib/actionResult"
 import { handleFirebaseError } from "@/utils/firebaseErrorMessages"
 import { AuthSocialButtons } from "./AuthSocialButtons"
 import { auth } from "@/lib/firebase"
@@ -72,12 +73,13 @@ export function AuthForm({ mode }: AuthFormProps) {
                     const idToken = await auth.currentUser?.getIdToken()
                     if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
 
-                    await createUser({
+                    // Server Actionは失敗時も結果オブジェクトを返すため、ここで例外化する
+                    unwrapActionResult(await createUser({
                         uid: user.uid,
                         email: signUpData.email,
                         displayName: signUpData.name,
                         authProvider: 'email'
-                    }, idToken)
+                    }, idToken))
 
                     // サーバーにIDトークンを送信してセッションクッキーを設定
                     const res = await fetch('/api/auth/session', {
