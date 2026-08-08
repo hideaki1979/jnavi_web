@@ -110,7 +110,8 @@ export default function StoreForm({ mode, initialData, toppingOptions }: StoreFo
 
     return (
         <form
-            onSubmit={handleSubmit(onSubmit)}
+            // 第2引数はクライアント検証で弾かれた時のハンドラ（onSubmitに入らないためここでもAPIエラーを消す）
+            onSubmit={handleSubmit(onSubmit, clearErrors)}
             className="border dark:border-gray-300 shadow-md rounded-md p-8 bg-gray-200 text-slate-800"
             noValidate
         >

@@ -149,7 +149,8 @@ export function AuthForm({ mode }: AuthFormProps) {
     return (
         <Box
             component="form"
-            onSubmit={handleSubmit(onSubmit)}
+            // 第2引数はクライアント検証で弾かれた時のハンドラ（onSubmitに入らないためここでもAPIエラーを消す）
+            onSubmit={handleSubmit(onSubmit, clearErrors)}
             sx={{
                 maxWidth: 540,
                 mx: "auto",

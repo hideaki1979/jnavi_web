@@ -100,7 +100,8 @@ export default function StoreImageUploadForm({ storeId, toppingOptions }: StoreI
             validationErrors={validationErrors}
             submitButtonLabel="画像アップロード"
             isSubmitting={uploading}
-            onSubmit={handleSubmit(onSubmit)}
+            // 第2引数はクライアント検証で弾かれた時のハンドラ（onSubmitに入らないためここでもAPIエラーを消す）
+            onSubmit={handleSubmit(onSubmit, clearErrors)}
         />
     )
 }
