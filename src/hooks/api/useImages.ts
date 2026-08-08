@@ -1,6 +1,7 @@
 import { deleteStoreImage, getImageById, updateStoreImage, uploadStoreImage } from "@/app/api/images"
 import { getStoreImages, getStoreToppingCalls } from "@/app/api/stores"
 import { useNotification } from "@/lib/notification"
+import { getCurrentUserIdToken } from "@/lib/authToken"
 import { StoreImageUploadData } from "@/types/Image"
 import { ApiClientError } from "@/types/validation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -68,8 +69,10 @@ export const useUploadStoreImage = () => {
     const { showNotification } = useNotification()
 
     return useMutation({
-        mutationFn: ({ storeId, imageData }: { storeId: string, imageData: StoreImageUploadData }) =>
-            uploadStoreImage(storeId, imageData),
+        mutationFn: async ({ storeId, imageData }: { storeId: string, imageData: StoreImageUploadData }) => {
+            const idToken = await getCurrentUserIdToken()
+            return uploadStoreImage(storeId, imageData, idToken)
+        },
         onSuccess: async (data, { storeId }) => {
             // 該当店舗の画像一覧キャッシュを無効化
             await queryClient.invalidateQueries({ queryKey: imageKeys.store(storeId) })
@@ -91,11 +94,14 @@ export const useUpdateStoreImage = () => {
     const { showNotification } = useNotification()
 
     return useMutation({
-        mutationFn: ({ storeId, imageId, imageData }: {
+        mutationFn: async ({ storeId, imageId, imageData }: {
             storeId: string,
             imageId: string,
             imageData: StoreImageUploadData
-        }) => updateStoreImage(storeId, imageId, imageData),
+        }) => {
+            const idToken = await getCurrentUserIdToken()
+            return updateStoreImage(storeId, imageId, imageData, idToken)
+        },
         onSuccess: async (data, { storeId, imageId }) => {
             // 画像詳細と一覧のキャッシュを無効化
             await queryClient.invalidateQueries({ queryKey: imageKeys.detail(storeId, imageId) })

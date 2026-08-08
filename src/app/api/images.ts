@@ -8,11 +8,18 @@ const api = ApiClient.getInstance()
 /**
  * 店舗画像アップロードAPI通信を行う関数。
  * - uploadStoreImage: 店舗画像のアップロードAPI呼び出し
+ * @param storeId 店舗ID
+ * @param imageData アップロードする画像データ
+ * @param idToken 認証用IDトークン
  */
 
-export const uploadStoreImage = async (storeId: string | number, imageData: StoreImageUploadData) => {
+export const uploadStoreImage = async (storeId: string | number, imageData: StoreImageUploadData, idToken: string) => {
     try {
-        const res = await api.post(`/stores/${storeId}/images`, imageData)
+        const res = await api.post(`/stores/${storeId}/images`, imageData, {
+            headers: {
+                'Authorization': `Bearer ${idToken}`
+            }
+        })
         return res.data
     } catch (error) {
         throw ApiClient.handlerError(
@@ -28,12 +35,17 @@ export const uploadStoreImage = async (storeId: string | number, imageData: Stor
  * @param storeId 店舗ID
  * @param imageId 画像ID
  * @param imageData 更新する画像データ
+ * @param idToken 認証用IDトークン
  * @returns APIレスポンス
  */
 
-export const updateStoreImage = async (storeId: string | number, imageId: string | number, imageData: StoreImageUploadData) => {
+export const updateStoreImage = async (storeId: string | number, imageId: string | number, imageData: StoreImageUploadData, idToken: string) => {
     try {
-        const res = await api.put(`/stores/${storeId}/images/${imageId}`, imageData)
+        const res = await api.put(`/stores/${storeId}/images/${imageId}`, imageData, {
+            headers: {
+                'Authorization': `Bearer ${idToken}`
+            }
+        })
         return res.data
     } catch (error) {
         throw ApiClient.handlerError(

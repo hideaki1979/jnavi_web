@@ -17,13 +17,19 @@ const api = ApiClient.getInstance()
  * - 成功時にはAPIレスポンスのメッセージを返す
  * - エラー時にはエラーハンドリングを行う
  * @param storeData 店舗情報
+ * @param idToken 認証用IDトークン
  * @returns APIレスポンスのメッセージ
  */
 export const createStore = async (
-    storeData: StoreInput
+    storeData: StoreInput,
+    idToken: string
 ): Promise<string> => {
     try {
-        const res = await api.post('/stores', storeData)
+        const res = await api.post('/stores', storeData, {
+            headers: {
+                'Authorization': `Bearer ${idToken}`
+            }
+        })
         return res.data.message
     } catch (error) {
         throw ApiClient.handlerError(
@@ -40,15 +46,21 @@ export const createStore = async (
  * - エラー時にはエラーハンドリングを行う
  * @param storeId 店舗ID
  * @param storeData 更新する店舗情報
+ * @param idToken 認証用IDトークン
  * @returns APIレスポンスのメッセージ
  */
 
 export const updateStore = async (
     storeId: string,
-    storeData: StoreInput
+    storeData: StoreInput,
+    idToken: string
 ): Promise<string> => {
     try {
-        const res = await api.put(`/stores/${storeId}`, storeData)
+        const res = await api.put(`/stores/${storeId}`, storeData, {
+            headers: {
+                'Authorization': `Bearer ${idToken}`
+            }
+        })
         return res.data.message
     } catch (error) {
         throw ApiClient.handlerError(
@@ -167,14 +179,19 @@ export const getStoreById = async (id: string): Promise<FormattedToppingOptionNa
  * 店舗の閉店処理を行うAPI関数
  * @param id 閉店する店舗のID
  * @param storeName 閉店する店舗の店舗名（指定されていない場合は空文字列）
+ * @param idToken 認証用IDトークン
  * @returns 閉店結果のAPIレスポンス
  * @throws 店舗閉店処理でエラーが発生した場合
  */
 
-export const storeClose = async (id: string, storeName: string): Promise<StoreCloseApiRes> => {
+export const storeClose = async (id: string, storeName: string, idToken: string): Promise<StoreCloseApiRes> => {
     try {
         const res = await api.patch(`/stores/${id}/close`, {
             storeName: storeName
+        }, {
+            headers: {
+                'Authorization': `Bearer ${idToken}`
+            }
         })
         return res.data
     } catch (error) {
