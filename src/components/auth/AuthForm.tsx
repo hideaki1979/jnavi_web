@@ -9,7 +9,7 @@ import { LoginFormInput, loginSchema, SignupFormInput, signupSchema } from "@/va
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Alert, Box, Button, CircularProgress, Divider, IconButton, Typography } from "@mui/material"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Control, useForm } from "react-hook-form"
 import { AuthFormInputText } from "./AuthFormInputText"
 import { Email, Lock, Person } from "@mui/icons-material"
@@ -47,6 +47,15 @@ export function AuthForm({ mode }: AuthFormProps) {
     // 認証をやり直したら、リダイレクト時の案内は役目を終えるので隠す
     const [showAuthNotice, setShowAuthNotice] = useState(true)
     const router = useRouter()
+
+    // アカウント作成成功メッセージを1.5秒見せてから遷移する。
+    // タイマーはアンマウント時に解除し、その間にユーザーが自分で
+    // 別画面へ移動した場合にその操作を上書きしないようにする。
+    useEffect(() => {
+        if (!successMsg) return
+        const timer = setTimeout(() => router.replace(redirectTo), 1500)
+        return () => clearTimeout(timer)
+    }, [successMsg, redirectTo, router])
 
     const isSignup = mode === 'signup'
     const schema = isSignup ? signupSchema : loginSchema
@@ -89,8 +98,8 @@ export function AuthForm({ mode }: AuthFormProps) {
 
                     // サーバーにIDトークンを送信してセッションクッキーを設定
                     await createSession(idToken)
+                    // 遷移は successMsg を監視する useEffect 側で行う（タイマー解除のため）
                     setSuccessMsg("アカウント作成が成功しました。")
-                    setTimeout(() => router.replace(redirectTo), 1500)
 
                 } else {
                     const loginData = data as LoginFormInput

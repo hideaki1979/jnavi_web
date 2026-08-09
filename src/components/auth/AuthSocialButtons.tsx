@@ -25,7 +25,7 @@ interface AuthSocialButtonsProps {
  * @param {AuthSocialButtonsProps} props
  * @prop {string} [redirectTo] 認証成功後の遷移先。呼び出し側で検証済みのパスを渡すこと。既定は`/stores/map`
  * @prop {() => void} [onAuthStart] 認証開始時に呼ばれるコールバック
- * @prop {string} [onError] エラーハンドリング関数、Firebaseのエラーメッセージを引数に受け取ります。
+ * @prop {(error: string) => void} [onError] エラーハンドリング関数、Firebaseのエラーメッセージを引数に受け取ります。
  * @prop {({ msg: string, param?: string }[]) => void} [onErrors] エラーハンドリング関数、Firebaseのエラーメッセージの配列を引数に受け取ります。
  */
 export function AuthSocialButtons({
