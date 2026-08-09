@@ -4,7 +4,7 @@
  */
 "use client"
 
-import { signInWithEmail, signUpWithEmail } from "@/lib/auth"
+import { createSession, signInWithEmail, signUpWithEmail } from "@/lib/auth"
 import { LoginFormInput, loginSchema, SignupFormInput, signupSchema } from "@/validations/auth"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Alert, Box, Button, CircularProgress, Divider, IconButton, Typography } from "@mui/material"
@@ -88,16 +88,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                     }, idToken))
 
                     // サーバーにIDトークンを送信してセッションクッキーを設定
-                    const res = await fetch('/api/auth/session', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${idToken}`
-                        }
-                    })
-                    if (!res.ok) {
-                        throw new Error('セッションの作成に失敗しました。')
-                    }
+                    await createSession(idToken)
                     setSuccessMsg("アカウント作成が成功しました。")
                     setTimeout(() => router.replace(redirectTo), 1500)
 
@@ -107,16 +98,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                     const idToken = await auth.currentUser?.getIdToken()
                     if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
                     // サーバーにIDトークンを送信してセッションクッキーを設定
-                    const res = await fetch('/api/auth/session', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${idToken}`
-                        }
-                    })
-                    if (!res.ok) {
-                        throw new Error('セッションの作成に失敗しました。')
-                    }
+                    await createSession(idToken)
                     router.replace(redirectTo)
                 }
             })

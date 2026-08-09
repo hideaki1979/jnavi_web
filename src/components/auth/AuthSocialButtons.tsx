@@ -2,7 +2,7 @@
 
 import { createUser, getUserByUid } from "@/app/api/user";
 import { unwrapActionResult } from "@/lib/actionResult";
-import { signInWithFacebook, signInWithGitHub, signInWithGoogle } from "@/lib/auth"
+import { createSession, signInWithFacebook, signInWithGitHub, signInWithGoogle } from "@/lib/auth"
 import { auth } from "@/lib/firebase";
 import { User } from "@/types/user";
 import { handleFirebaseError } from "@/utils/firebaseErrorMessages";
@@ -60,6 +60,10 @@ export function AuthSocialButtons({
                     authProvider: provider
                 }, idToken))
             }
+
+            // 遷移前にセッションクッキーを発行する。
+            // これが無いと復帰先が保護ルートの場合、proxy にログイン画面へ差し戻される。
+            await createSession(idToken)
 
             router.replace(redirectTo)
         } catch (error) {

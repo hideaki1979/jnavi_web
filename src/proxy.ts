@@ -15,8 +15,10 @@ function redirectToLogin(request: NextRequest, errorCode?: 'session_expired' | '
  * 認証が必要なルートへのリクエスト時に、セッションの有無と有効性を検証し、不正な場合はログインページへリダイレクトします。
  *
  * セッションが存在しない、または認証APIによる検証に失敗した場合、元のリクエストパスを`redirect_to`クエリパラメータとして付与し、ログインページへリダイレクトします。
- * リダイレクト理由は`error`クエリパラメータで伝えます（セッション無効：`session_expired` / API通信エラー：`auth_failed`）。
- * 未ログイン（セッションCookieなし）は想定内のため`error`を付与しません。
+ * リダイレクト理由は`error`クエリパラメータで伝えます。
+ * - `session_expired`：認証APIが明示的に未認証（401 + `isAuth: false`）を返した＝セッションが無効
+ * - `auth_failed`：通信エラー・タイムアウト・5xx・想定外の応答など、原因を特定できない失敗
+ * - なし：未ログイン（セッションCookieなし）。想定内のため理由を出しません
  *
  * これらのクエリパラメータは`useAuthRedirect`（src/hooks/useAuthRedirect.ts）で読み取られます。
  */
@@ -40,15 +42,17 @@ export async function proxy(request: NextRequest) {
             signal: AbortSignal.timeout(5000)    // 5秒タイムアウト
         });
 
+        // 想定外の応答者（WAFのHTML応答等）に備え、JSONパース失敗はnullとして扱う。
+        const body: { isAuth?: boolean } | null = await responseAPI.json().catch(() => null)
+
         // ステータスに加えて本文の isAuth まで検証する。
-        // JSONパースに失敗した場合（想定外の応答者）は認証失敗として扱う。
-        const isAuth = responseAPI.status === 200 &&
-            await responseAPI.json().then(data => data?.isAuth === true).catch(() => false)
+        if (responseAPI.status === 200 && body?.isAuth === true) return NextResponse.next()
 
-        // 認証されていない場合はログインページへリダイレクト
-        if (!isAuth) return redirectToLogin(request, 'session_expired')
-
-        return NextResponse.next()
+        // 認証APIが明示的に「未認証」を返した場合のみセッション切れとして案内する。
+        // 5xxや想定外の応答・本文の解析失敗は原因を特定できないため auth_failed とする
+        // （「有効期限が切れました」と誤って案内しないため）。
+        const isSessionInvalid = responseAPI.status === 401 && body?.isAuth === false
+        return redirectToLogin(request, isSessionInvalid ? 'session_expired' : 'auth_failed')
 
     } catch (error) {
         console.error('認証APIエラー：', error)

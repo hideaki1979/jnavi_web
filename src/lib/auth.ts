@@ -2,6 +2,7 @@
  * Firebase Authenticationを利用した認証・ユーザー管理のための関数群。
  * - Google/Facebook/Github認証
  * - メールアドレスによるサインアップ・ログイン
+ * - セッションクッキーの作成
  * - サインアウト
  */
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, User, signOut as firebaseSignOut } from "firebase/auth";
@@ -38,6 +39,28 @@ export const signInWithEmail = async (email: string, password: string): Promise<
     const result = await signInWithEmailAndPassword(auth, email, password);
     return result.user;
 };
+
+/**
+ * IDトークンをサーバーに送信し、HttpOnlyのセッションクッキーを発行させる。
+ *
+ * このクッキーが無いと proxy（src/proxy.ts）が保護ルートへのアクセスを
+ * ログイン画面へ差し戻すため、認証成功後の画面遷移より前に必ず呼ぶこと。
+ *
+ * @param idToken Firebaseから取得したIDトークン
+ * @throws {Error} セッションクッキーの発行に失敗した場合
+ */
+export const createSession = async (idToken: string): Promise<void> => {
+    const res = await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`
+        }
+    })
+    if (!res.ok) {
+        throw new Error('セッションの作成に失敗しました。')
+    }
+}
 
 // サインアウト
 export const signOut = async (): Promise<void> => {
