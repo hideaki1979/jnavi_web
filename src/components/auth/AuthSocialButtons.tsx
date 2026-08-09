@@ -6,12 +6,15 @@ import { signInWithFacebook, signInWithGitHub, signInWithGoogle } from "@/lib/au
 import { auth } from "@/lib/firebase";
 import { User } from "@/types/user";
 import { handleFirebaseError } from "@/utils/firebaseErrorMessages";
+import { DEFAULT_REDIRECT_PATH } from "@/utils/redirectPath";
 import { Facebook, GitHub, Google } from "@mui/icons-material"
 import { Box, Button, CircularProgress } from "@mui/material"
 import { useRouter } from "next/navigation"
 import { useState } from "react";
 
 interface AuthSocialButtonsProps {
+    redirectTo?: string;
+    onAuthStart?: () => void;
     onError?: (error: string) => void;
     onErrors?: (errors: { msg: string, param?: string }[]) => void;
 }
@@ -20,10 +23,17 @@ interface AuthSocialButtonsProps {
  * SNS認証（Google, Facebook, Github）用ボタンコンポーネント。
  * -各SNS認証のハンドリング、ユーザー作成・取得処理
  * @param {AuthSocialButtonsProps} props
+ * @prop {string} [redirectTo] 認証成功後の遷移先。呼び出し側で検証済みのパスを渡すこと。既定は`/stores/map`
+ * @prop {() => void} [onAuthStart] 認証開始時に呼ばれるコールバック
  * @prop {string} [onError] エラーハンドリング関数、Firebaseのエラーメッセージを引数に受け取ります。
  * @prop {({ msg: string, param?: string }[]) => void} [onErrors] エラーハンドリング関数、Firebaseのエラーメッセージの配列を引数に受け取ります。
  */
-export function AuthSocialButtons({ onError, onErrors }: AuthSocialButtonsProps) {
+export function AuthSocialButtons({
+    redirectTo = DEFAULT_REDIRECT_PATH,
+    onAuthStart,
+    onError,
+    onErrors
+}: AuthSocialButtonsProps) {
     const router = useRouter()
     const [loading, setLoading] = useState<string | null>(null)
 
@@ -32,6 +42,7 @@ export function AuthSocialButtons({ onError, onErrors }: AuthSocialButtonsProps)
         signInFunction: () => Promise<User>
     ) => {
         setLoading(provider)
+        onAuthStart?.()
         try {
             const user = await signInFunction()
             const idToken = await auth.currentUser?.getIdToken()
@@ -50,8 +61,11 @@ export function AuthSocialButtons({ onError, onErrors }: AuthSocialButtonsProps)
                 }, idToken))
             }
 
-            router.replace(`/stores/map`)
+            router.replace(redirectTo)
         } catch (error) {
+            // 失敗時はボタンを再度押せるようにローディングを解除する
+            // （成功時は遷移するため解除しない）
+            setLoading(null)
             const errMsg = handleFirebaseError(error)
             onError?.(errMsg)
             // errors配列があればセット

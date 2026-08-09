@@ -22,6 +22,7 @@ import { auth } from "@/lib/firebase"
 import { ValidationErrorList } from "../feedback/validationErrorList"
 import { useApiError } from "@/hooks/useApiError"
 import { useAsyncOperation } from "@/hooks/useAsyncOperation"
+import { useAuthRedirect } from "@/hooks/useAuthRedirect"
 import MapIcon from '@mui/icons-material/Map';
 
 interface AuthFormProps {
@@ -41,6 +42,10 @@ export function AuthForm({ mode }: AuthFormProps) {
     const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
     const { isLoading: loading, execute: executeAuth } = useAsyncOperation<void>()
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
+    // proxy から渡される認証失敗理由・元ページへの復帰先
+    const { redirectTo, authErrorMessage, redirectQuery } = useAuthRedirect()
+    // 認証をやり直したら、リダイレクト時の案内は役目を終えるので隠す
+    const [showAuthNotice, setShowAuthNotice] = useState(true)
     const router = useRouter()
 
     const isSignup = mode === 'signup'
@@ -57,13 +62,14 @@ export function AuthForm({ mode }: AuthFormProps) {
      * @description
      * 認証フォームの送信ハンドラ。
      * - サインアップ：メール/パスワード認証、ユーザー作成
-     * - ログイン：メール/パスワード認証、認証成功でstores/mapに遷移
+     * - ログイン：メール/パスワード認証、認証成功でredirect_to（無ければstores/map）に遷移
      * - エラーハンドリング：Firebaseのエラーメッセージを表示
      * @param {LoginFormInput | SignupFormInput} data
      * @returns {Promise<void>}
      */
     const onSubmit = async (data: LoginFormInput | SignupFormInput) => {
         clearErrors()   // 送信前にエラークリア
+        setShowAuthNotice(false)
 
         try {
             await executeAuth(async () => {
@@ -93,7 +99,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                         throw new Error('セッションの作成に失敗しました。')
                     }
                     setSuccessMsg("アカウント作成が成功しました。")
-                    setTimeout(() => router.replace(`/stores/map`), 1500)
+                    setTimeout(() => router.replace(redirectTo), 1500)
 
                 } else {
                     const loginData = data as LoginFormInput
@@ -111,7 +117,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                     if (!res.ok) {
                         throw new Error('セッションの作成に失敗しました。')
                     }
-                    router.replace(`/stores/map`)
+                    router.replace(redirectTo)
                 }
             })
         } catch (err) {
@@ -196,6 +202,13 @@ export function AuthForm({ mode }: AuthFormProps) {
 
             </Box>
 
+            {/* proxyからのリダイレクト理由（認証失敗・セッション切れ）の案内 */}
+            {showAuthNotice && authErrorMessage && (
+                <Alert severity="warning" sx={{ mt: 4, fontSize: 12 }}>
+                    {authErrorMessage}
+                </Alert>
+            )}
+
             {/* エラーメッセージ表示（統一化） */}
             {errorMessage && (
                 <Alert severity="error" sx={{ mt: 4, fontSize: 12 }}>
@@ -258,22 +271,28 @@ export function AuthForm({ mode }: AuthFormProps) {
             >
                 {loading ? <CircularProgress size={24} color="inherit" /> : (isSignup ? "アカウント作成" : "ログイン")}
             </Button>
+            {/* ログイン⇔アカウント作成を行き来しても復帰先を失わないようredirect_toを引き継ぐ */}
             {isSignup
                 ? (<Typography textAlign="center">
                     作成済の方は
-                    <Link href="/auth/login" className="text-blue-600 ml-2 font-bold">
+                    <Link href={`/auth/login${redirectQuery}`} className="text-blue-600 ml-2 font-bold">
                         ログイン
                     </Link>
                 </Typography>)
                 : (<Typography textAlign="center">
                     アカウント作成は
-                    <Link href="/auth/signup" className="text-blue-600 ml-2 font-bold">
+                    <Link href={`/auth/signup${redirectQuery}`} className="text-blue-600 ml-2 font-bold">
                         こちら
                     </Link>
                 </Typography>)
             }
             <Divider sx={{ my: 2 }} textAlign="center" >または</Divider>
-            <AuthSocialButtons onError={handleSocialError} onErrors={handleSocialValidationErrors} />
+            <AuthSocialButtons
+                redirectTo={redirectTo}
+                onAuthStart={() => setShowAuthNotice(false)}
+                onError={handleSocialError}
+                onErrors={handleSocialValidationErrors}
+            />
         </Box>
     )
 }
