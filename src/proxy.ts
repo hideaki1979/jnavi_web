@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
  *
  * セッションが存在しない、または認証APIによる検証に失敗した場合、元のリクエストパスを`redirect_to`クエリパラメータとして付与し、ログインページへリダイレクトします。API通信エラー時は追加で`error=auth_failed`も付与されます。
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const session = request.cookies.get('session')?.value
 
     if (!session) {
