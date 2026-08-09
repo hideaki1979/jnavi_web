@@ -1,14 +1,16 @@
 "use client"
 
 import { ImageUploadFormValues } from "@/validations/image"
-import { useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer"
 import { useAuthStore } from "@/lib/AuthStore"
 import { useUploadStoreImage } from "@/hooks/api/useImages"
 import { useAsyncOperation } from "@/hooks/useAsyncOperation"
+import { useDelayedRedirect } from "@/hooks/useDelayedRedirect"
 import { StoreImageForm } from "@/components/image/StoreImageForm"
 import { useImageForm } from "@/hooks/useImageForm"
 import { SimulationToppingOption } from "@/types/ToppingCall"
+import { buildLoginPath } from "@/utils/redirectPath"
 
 interface StoreImageUploadFormProps {
     storeId: string;
@@ -22,7 +24,10 @@ interface StoreImageUploadFormProps {
  * @returns 画像アップロード画面
  */
 export default function StoreImageUploadForm({ storeId, toppingOptions }: StoreImageUploadFormProps) {
-    const router = useRouter()
+    // 未認証時にログイン後の復帰先として渡すため、現在のパスを取得する
+    const pathname = usePathname()
+    // 遷移はタイマー解除付きのフック経由で行う（アンマウント後の発火を防ぐ）
+    const { scheduleRedirect, isRedirectScheduled } = useDelayedRedirect()
 
     const { isLoading: uploading, execute: executeUpload } = useAsyncOperation<void>()
     // AuthStoreからユーザー情報を取得
@@ -65,7 +70,8 @@ export default function StoreImageUploadForm({ storeId, toppingOptions }: StoreI
                 }
                 // ユーザー認証チェックを追加
                 if (!user?.uid) {
-                    setTimeout(() => router.replace('/auth/login'), 1500)
+                    // ログイン後に元の画面へ戻れるよう redirect_to を付ける（proxyのサーバー側遷移と挙動を揃える）
+                    scheduleRedirect({ path: buildLoginPath(pathname), delayMs: 1500 })
                     throw new Error("未認証なので、ログインしてください")
                 }
 
@@ -73,7 +79,8 @@ export default function StoreImageUploadForm({ storeId, toppingOptions }: StoreI
 
                 await imageUploadMutation.mutateAsync({ storeId, imageData })
                 clearErrors()
-                setTimeout(() => router.push('/stores/map'), 2500)
+                // 成功トーストを見せてからマップへ遷移する
+                scheduleRedirect({ path: '/stores/map', delayMs: 2500, mode: 'push' })
             })
         } catch (error) {
             setError(error)
@@ -99,7 +106,8 @@ export default function StoreImageUploadForm({ storeId, toppingOptions }: StoreI
             errorMessage={errorMessage}
             validationErrors={validationErrors}
             submitButtonLabel="画像アップロード"
-            isSubmitting={uploading}
+            // 遷移待ちの間もボタンを押せると、二重送信やタイマーの取り合いになるため止める
+            isSubmitting={uploading || isRedirectScheduled}
             // 第2引数はクライアント検証で弾かれた時のハンドラ（onSubmitに入らないためここでもAPIエラーを消す）
             onSubmit={handleSubmit(onSubmit, clearErrors)}
         />

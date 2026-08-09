@@ -7,8 +7,11 @@
 /** `redirect_to` が無い・不正な場合のフォールバック遷移先 */
 export const DEFAULT_REDIRECT_PATH = '/stores/map'
 
+/** ログイン画面のパス */
+export const LOGIN_PATH = '/auth/login'
+
 /** ログイン後に戻すとループする・意味の無いパス */
-const EXCLUDED_REDIRECT_PREFIXES = ['/auth/login', '/auth/signup', '/api'] as const
+const EXCLUDED_REDIRECT_PREFIXES = [LOGIN_PATH, '/auth/signup', '/api'] as const
 
 /** 相対パスの解決にのみ使うダミーオリジン（外部URL判定用） */
 const DUMMY_ORIGIN = 'http://localhost'
@@ -55,4 +58,20 @@ export function sanitizeRedirectPath(value: string | null | undefined): string {
     if (isExcluded) return DEFAULT_REDIRECT_PATH
 
     return `${parsed.pathname}${parsed.search}${parsed.hash}`
+}
+
+/**
+ * 復帰先を `redirect_to` に載せたログイン画面のパスを組み立てる。
+ *
+ * proxy（`src/proxy.ts`）のサーバー側リダイレクトと挙動を揃えるため、
+ * クライアント側の認証チェックから遷移する場合もこれを使う。
+ *
+ * @param returnPath ログイン後に戻したいパス（`usePathname()` の値など）
+ * @returns `redirect_to` 付きのログイン画面パス。戻す意味が無い場合はクエリなしの {@link LOGIN_PATH}
+ */
+export function buildLoginPath(returnPath: string | null | undefined): string {
+    const sanitized = sanitizeRedirectPath(returnPath)
+    // フォールバック値＝ログイン後の既定の遷移先なので、わざわざクエリに載せない
+    if (sanitized === DEFAULT_REDIRECT_PATH) return LOGIN_PATH
+    return `${LOGIN_PATH}?${new URLSearchParams({ redirect_to: sanitized }).toString()}`
 }

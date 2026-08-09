@@ -1,15 +1,17 @@
 "use client"
 
-import { useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import React, { useMemo, useState } from 'react'
 import { useAuthStore } from '@/lib/AuthStore'
 import { ImageEditFormValues } from '@/validations/image'
 import LoadingErrorContainer from '@/components/feedback/LoadingErrorContainer'
 import { useUpdateStoreImage } from '@/hooks/api/useImages'
+import { useDelayedRedirect } from '@/hooks/useDelayedRedirect'
 import { StoreImageForm } from '@/components/image/StoreImageForm'
 import { useImageForm } from '@/hooks/useImageForm'
 import { StoreImageEditData } from '@/types/Image'
 import { SimulationToppingOption } from '@/types/ToppingCall'
+import { buildLoginPath } from '@/utils/redirectPath'
 
 interface StoreImageEditFormProps {
     storeId: string;
@@ -35,7 +37,10 @@ export default function StoreImageEditForm({
     const updateImageMutation = useUpdateStoreImage()
     const [updating, setUpdating] = useState<boolean>(false)
 
-    const router = useRouter()
+    // 未認証時にログイン後の復帰先として渡すため、現在のパスを取得する
+    const pathname = usePathname()
+    // 遷移はタイマー解除付きのフック経由で行う（アンマウント後の発火を防ぐ）
+    const { scheduleRedirect, isRedirectScheduled } = useDelayedRedirect()
 
     const initialDataForForm = useMemo(() => {
         if (!initialImageData) return undefined
@@ -84,15 +89,16 @@ export default function StoreImageEditForm({
             // ユーザー認証チェック
             if (!user?.uid) {
                 setError(new Error("未認証なので、ログインしてください"))
-                setUpdating(false)
-                setTimeout(() => router.replace('/auth/login'), 1500)
+                // ログイン後に元の画面へ戻れるよう redirect_to を付ける（proxyのサーバー側遷移と挙動を揃える）
+                scheduleRedirect({ path: buildLoginPath(pathname), delayMs: 1500 })
                 return
             }
 
             const editImageData = await createSubmitData(values, user.uid)
             await updateImageMutation.mutateAsync({ storeId, imageId, imageData: editImageData })
             clearErrors() // 成功時はエラーをクリア
-            setTimeout(() => router.replace(`/stores/map`), 1500)
+            // 成功トーストを見せてからマップへ遷移する
+            scheduleRedirect({ path: '/stores/map', delayMs: 1500 })
         } catch (error) {
             setError(error)
         } finally {
@@ -119,7 +125,8 @@ export default function StoreImageEditForm({
             errorMessage={errorMessage}
             validationErrors={validationErrors}
             submitButtonLabel='画像変更'
-            isSubmitting={updating}
+            // 遷移待ちの間もボタンを押せると、二重送信やタイマーの取り合いになるため止める
+            isSubmitting={updating || isRedirectScheduled}
             // 第2引数はクライアント検証で弾かれた時のハンドラ（onSubmitに入らないためここでもAPIエラーを消す）
             onSubmit={handleSubmit(onSubmit, clearErrors)}
         />
