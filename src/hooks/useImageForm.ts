@@ -1,7 +1,7 @@
 import { SelectedToppingInfoMap, SimulationToppingOption } from "@/types/ToppingCall";
 import { ExpressValidationError } from "@/types/validation";
 import { imageEditFormSchema, ImageEditFormValues, IMAGE_OUTPUT_MIME_TYPE, imageUploadFormSchema, ImageUploadFormValues, validateFileSizeBeforeCompression } from "@/validations/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Control, FieldErrors, useForm, UseFormHandleSubmit, UseFormReset, UseFormSetValue } from "react-hook-form";
 import { useApiError } from "./useApiError";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -82,11 +82,37 @@ interface UseImageFormReturn {
  * - 送信データの生成
  */
 export function useImageForm({ mode, storeId, initialData, initialToppingOptions }: UseImageFormOptions): UseImageFormReturn {
+    // 編集モードの初期値をレンダリング中に導出する
+    const editInitialData = mode === 'edit' ? initialData : undefined
+
+    const initialImageUrl = editInitialData?.imageUrl || ''
+
+    const initialToppingInfo = useMemo<SelectedToppingInfoMap>(() => {
+        const toppingInfo: SelectedToppingInfoMap = {}
+        editInitialData?.toppingSelections?.forEach((selection) => {
+            toppingInfo[String(selection.topping_id)] = {
+                optionId: String(selection.call_option_id),
+                storeToppingCallId: String(selection.store_topping_call_id)
+            }
+        })
+        return toppingInfo
+    }, [editInitialData])
+
     // 画像URL状態
-    const [imageUrl, setImageUrl] = useState('')
+    const [imageUrl, setImageUrl] = useState(initialImageUrl)
     // トッピング選択状態
     const [selectedToppingInfo, setSelectedToppingInfo]
-        = useState<SelectedToppingInfoMap>({})
+        = useState<SelectedToppingInfoMap>(initialToppingInfo)
+
+    // initialDataが差し替わったら初期値へ戻す。
+    // React公式の「props変更時にレンダリング中でstateを調整する」パターン
+    // （https://react.dev/reference/react/useState#storing-information-from-previous-renders）
+    const [appliedInitialData, setAppliedInitialData] = useState(editInitialData)
+    if (appliedInitialData !== editInitialData) {
+        setAppliedInitialData(editInitialData)
+        setSelectedToppingInfo(initialToppingInfo)
+        if (initialImageUrl) setImageUrl(initialImageUrl)
+    }
 
     // API エラーハンドリング
     const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
@@ -111,7 +137,7 @@ export function useImageForm({ mode, storeId, initialData, initialToppingOptions
     const schema = mode === 'create' ? imageUploadFormSchema : imageEditFormSchema
 
     // フォームのデフォルト値設定
-    const defaultValues = mode === 'create'
+    const defaultValues = useMemo(() => mode === 'create'
         ? {
             menuType: "1",
             menuName: "",
@@ -121,44 +147,17 @@ export function useImageForm({ mode, storeId, initialData, initialToppingOptions
             menuType: initialData?.menuType || "",
             menuName: initialData?.menuName || "",
             imageFile: undefined
-        }
+        }, [mode, initialData])
 
     // react-hook-form+zod定義
+    // initialData差し替え時のフォーム再初期化は react-hook-form の values に任せる
+    // （useEffect + reset だと同期setStateを伴い react-hooks/set-state-in-effect に抵触するため）
     const { control, handleSubmit, setValue, formState: { errors }, reset }
         = useForm<ImageFormValues>({
             resolver: zodResolver(schema),
-            defaultValues
+            defaultValues,
+            values: editInitialData ? defaultValues : undefined
         })
-
-    // 編集モードの初期化処理
-    useEffect(() => {
-        if (mode === 'edit' && initialData) {
-
-            // フォームフィールドの初期値設定
-            reset({
-                menuName: initialData.menuName || "",
-                menuType: initialData.menuType || "",
-                imageFile: undefined
-            })
-            // 画像URLの設定
-            if (initialData.imageUrl) {
-                setImageUrl(initialData.imageUrl)
-            }
-
-            // トッピング選択状態の初期設定
-            if (initialData.toppingSelections) {
-                const initialToppingInfo: SelectedToppingInfoMap = {}
-                initialData.toppingSelections.forEach((selection) => {
-                    initialToppingInfo[String(selection.topping_id)] = {
-                        optionId: String(selection.call_option_id),
-                        storeToppingCallId: String(selection.store_topping_call_id)
-                    }
-                })
-                setSelectedToppingInfo(initialToppingInfo)
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [mode, initialData])
 
     // 画像選択・リサイズ
     const handleImageChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {

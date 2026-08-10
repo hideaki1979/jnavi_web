@@ -31,27 +31,19 @@ export default function StoreMap({ mapData }: StoreMapProps) {
     const [center, setCenter] = useState(defaultCenter)
     const [selectedStore, setSelectedStore] = useState<MapStore | null>(null)
     const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
-    const [isLocationLoading, setIsLocationLoading] = useState(false)
-    const [isMounted, setIsMounted] = useState(false)
-
-    useEffect(() => {
-        setIsMounted(true)
-    }, [])
+    // 位置情報が使える環境でのみローディングから開始する（使えない場合は東京駅のまま即表示）
+    const [isLocationLoading, setIsLocationLoading] = useState(
+        () => typeof navigator !== "undefined" && !!navigator.geolocation
+    )
 
     // 位置情報取得の現在地設定
     useEffect(() => {
-        if (!isMounted) return
+        if (!navigator.geolocation) return
 
-        setIsLocationLoading(true)
-        if (!navigator.geolocation) {
-            // 位置情報がサポートされていない場合は東京駅を使用
-            setCenter(defaultCenter)
-            setIsLocationLoading(false)
-            return
-        }
-
+        let isActive = true
         navigator.geolocation.getCurrentPosition(
             (position) => {
+                if (!isActive) return
                 setCenter({
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
@@ -59,6 +51,7 @@ export default function StoreMap({ mapData }: StoreMapProps) {
                 setIsLocationLoading(false)
             },
             (positionError) => {
+                if (!isActive) return
                 console.error("現在地情報取得エラー：", positionError)
                 // 位置情報取得に失敗した場合は東京駅を使用
                 setCenter(defaultCenter)
@@ -70,7 +63,11 @@ export default function StoreMap({ mapData }: StoreMapProps) {
                 maximumAge: 600000  // 10分
             }
         )
-    }, [isMounted])
+        return () => {
+            // アンマウント後のstate更新を防ぐ
+            isActive = false
+        }
+    }, [])
 
     /**
      * マーカークリックハンドラ
@@ -81,8 +78,8 @@ export default function StoreMap({ mapData }: StoreMapProps) {
         setDrawerOpen(true)
     }
 
-    if (isLocationLoading || !isMounted) {
-        return <LoadingErrorContainer loading={isLocationLoading || !isMounted} error={null} />
+    if (isLocationLoading) {
+        return <LoadingErrorContainer loading={isLocationLoading} error={null} />
     }
 
     return (

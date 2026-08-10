@@ -1,5 +1,5 @@
 import { useMediaQuery, useTheme } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useIsHydrated } from "./useIsHydrated";
 
 /**
  * ハイドレーションエラーを回避しつつ、レスポンシブなブレークポイントを提供するカスタムフック
@@ -16,13 +16,12 @@ import { useEffect, useState } from "react";
  *  - mounted: コンポーネントがマウントされたかどうか
  */
 export function useResponsive() {
-    const [mounted, setMounted] = useState(false)
+    // ハイドレーション完了判定（useSyncExternalStoreベース。エフェクト内setStateを使わない）
+    const mounted = useIsHydrated()
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down('md'))
     const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'))
     const isDesktop = useMediaQuery(theme.breakpoints.up('lg'))
-
-    useEffect(() => setMounted(true), [])
 
     return {
         isMobile: mounted ? isMobile : false,
