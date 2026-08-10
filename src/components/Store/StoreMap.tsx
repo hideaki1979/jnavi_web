@@ -1,6 +1,7 @@
 "use client"
 
 import LoadingErrorContainer from "@/components/feedback/LoadingErrorContainer";
+import { useIsHydrated } from "@/hooks/useIsHydrated";
 import { MapData, MapStore } from "@/types/Store";
 import { Box, Typography } from "@mui/material";
 import { AdvancedMarker, APIProvider, Map as GoogleMap, Pin } from '@vis.gl/react-google-maps'
@@ -31,10 +32,16 @@ export default function StoreMap({ mapData }: StoreMapProps) {
     const [center, setCenter] = useState(defaultCenter)
     const [selectedStore, setSelectedStore] = useState<MapStore | null>(null)
     const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
-    // 位置情報が使える環境でのみローディングから開始する（使えない場合は東京駅のまま即表示）
-    const [isLocationLoading, setIsLocationLoading] = useState(
-        () => typeof navigator !== "undefined" && !!navigator.geolocation
-    )
+    // 現在地の取得が完了したか（成功・失敗どちらも完了扱い）
+    const [isLocationResolved, setIsLocationResolved] = useState(false)
+    const isHydrated = useIsHydrated()
+
+    // ハイドレーション完了までは常にローディングを表示し、サーバーとクライアントの
+    // 初回出力を一致させる（navigator の有無で初期値を変えると hydration mismatch になる）。
+    // 完了後は、位置情報が使えない環境なら東京駅のまま即座に地図を表示する。
+    const isLocationLoading = isHydrated
+        ? Boolean(navigator.geolocation) && !isLocationResolved
+        : true
 
     // 位置情報取得の現在地設定
     useEffect(() => {
@@ -48,14 +55,14 @@ export default function StoreMap({ mapData }: StoreMapProps) {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 })
-                setIsLocationLoading(false)
+                setIsLocationResolved(true)
             },
             (positionError) => {
                 if (!isActive) return
                 console.error("現在地情報取得エラー：", positionError)
                 // 位置情報取得に失敗した場合は東京駅を使用
                 setCenter(defaultCenter)
-                setIsLocationLoading(false)
+                setIsLocationResolved(true)
             },
             {
                 enableHighAccuracy: true,

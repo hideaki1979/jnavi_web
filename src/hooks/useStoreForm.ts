@@ -71,6 +71,9 @@ interface UseStoreFormReturn {
 export function useStoreForm(
     { mode, initialData, toppingOptions }: UseStoreFormOptions
 ): UseStoreFormReturn {
+    // 初期データは編集モードでのみ反映する（作成モードでは常に空から開始する）
+    const editInitialData = mode === 'edit' ? initialData : undefined
+
     // トッピングコール選択肢はpropsをそのまま使うためレンダリング中に導出する
     const toppingOptionData = useMemo<ToppingOptionMap>(() => toppingOptions ?? {}, [toppingOptions])
 
@@ -82,13 +85,12 @@ export function useStoreForm(
         Object.keys(toppingOptionData).forEach(key => {
             emptySelectedOptions[Number(key)] = []
         })
-        const editData = mode === 'edit' ? initialData : undefined
         // 事前／着丼前で同一オブジェクトを共有しないようそれぞれ複製する
         return {
-            preCall: editData?.preCallFormattedIds ?? { ...emptySelectedOptions },
-            postCall: editData?.postCallFormattedIds ?? { ...emptySelectedOptions }
+            preCall: editInitialData?.preCallFormattedIds ?? { ...emptySelectedOptions },
+            postCall: editInitialData?.postCallFormattedIds ?? { ...emptySelectedOptions }
         }
-    }, [toppingOptionData, initialData, mode])
+    }, [toppingOptionData, editInitialData])
 
     const [selectedPreCallOptions, setSelectedPreCallOptions] = useState<FormattedToppingOptionIds>(initialSelectedOptions.preCall)
     const [selectedPostCallOptions, setSelectedPostCallOptions] = useState<FormattedToppingOptionIds>(initialSelectedOptions.postCall)
@@ -120,7 +122,7 @@ export function useStoreForm(
             topping_details = "",
             call_details = "",
             lot_detail = ""
-        } = initialData || {}
+        } = editInitialData || {}
 
         return {
             store_name,
@@ -135,15 +137,17 @@ export function useStoreForm(
             call_details,
             lot_detail
         }
-    }, [initialData])
+    }, [editInitialData])
 
     // react-hook-form設定
     // initialData差し替え時のフォーム再初期化は react-hook-form の values に任せる
     // （useEffect + reset だと同期setStateを伴い react-hooks/set-state-in-effect に抵触するため）
+    // values は常に渡す。undefined を渡すと react-hook-form は何もせず前の入力値が
+    // 残るため、編集→作成のようにモードが切り替わったときにフォームを空へ戻せない。
     const { control, handleSubmit, formState: { errors }, reset } = useForm<StoreFormInput>({
         resolver: zodResolver(StoreInputSchema),
         defaultValues,
-        values: mode === 'edit' && initialData ? defaultValues : undefined
+        values: defaultValues
     })
 
     // ハンドラー関数を生成

@@ -107,11 +107,13 @@ export function useImageForm({ mode, storeId, initialData, initialToppingOptions
     // initialDataが差し替わったら初期値へ戻す。
     // React公式の「props変更時にレンダリング中でstateを調整する」パターン
     // （https://react.dev/reference/react/useState#storing-information-from-previous-renders）
+    // このブロックはinitialDataが「変化したとき」だけ走るため、画像URLも無条件に
+    // 初期値へ戻す。条件を付けると新しいinitialDataに画像が無い場合に前の画像が残る。
     const [appliedInitialData, setAppliedInitialData] = useState(editInitialData)
     if (appliedInitialData !== editInitialData) {
         setAppliedInitialData(editInitialData)
         setSelectedToppingInfo(initialToppingInfo)
-        if (initialImageUrl) setImageUrl(initialImageUrl)
+        setImageUrl(initialImageUrl)
     }
 
     // API エラーハンドリング
@@ -152,11 +154,13 @@ export function useImageForm({ mode, storeId, initialData, initialToppingOptions
     // react-hook-form+zod定義
     // initialData差し替え時のフォーム再初期化は react-hook-form の values に任せる
     // （useEffect + reset だと同期setStateを伴い react-hooks/set-state-in-effect に抵触するため）
+    // values は常に渡す。undefined を渡すと react-hook-form は何もせず前の入力値が
+    // 残るため、編集→作成のようにモードが切り替わったときにフォームを空へ戻せない。
     const { control, handleSubmit, setValue, formState: { errors }, reset }
         = useForm<ImageFormValues>({
             resolver: zodResolver(schema),
             defaultValues,
-            values: editInitialData ? defaultValues : undefined
+            values: defaultValues
         })
 
     // 画像選択・リサイズ
