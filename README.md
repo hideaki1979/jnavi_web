@@ -260,7 +260,7 @@ graph TB
 
 ### 前提条件
 
-- Node.js (v18 以上)
+- Node.js (v22 以上 / firebase-admin 14 系の要件)
 - npm / yarn / pnpm
 - Firebase プロジェクトの設定
 

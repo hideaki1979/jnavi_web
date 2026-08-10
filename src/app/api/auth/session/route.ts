@@ -1,4 +1,4 @@
-import * as admin from 'firebase-admin'
+import { getAuth } from 'firebase-admin/auth'
 import { NextRequest, NextResponse } from 'next/server';
 import '@/lib/server/firebaseAdmin'
 
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
         // 5日間有効なセッションクッキーを作成
         const expiresIn = 60 * 60 * 24 * 5 * 1000
-        const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn })
+        const sessionCookie = await getAuth().createSessionCookie(idToken, { expiresIn })
 
         const options = {
             name: 'session',
