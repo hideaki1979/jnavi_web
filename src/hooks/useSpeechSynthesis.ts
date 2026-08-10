@@ -1,5 +1,6 @@
 import { cancelSpeech, getJapaneseVoices, pauseSpeech, resumeSpeech, speakText } from "@/lib/speech-synthesis";
 import { useCallback, useEffect, useState } from "react";
+import { useIsHydrated } from "./useIsHydrated";
 
 interface UseSpeechSynthesisOptions {
     rate?: number;
@@ -41,46 +42,46 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}): Use
     const [isPaused, setIsPaused] = useState(false)
     const [isSupported, setIsSupported] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
-    const [isMounted, setIsMounted] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([])
-    const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null)
+    // 呼び出し側が明示的に選択したボイス（未選択なら先頭のボイスを既定値として使う）
+    const [voiceOverride, setVoiceOverride] = useState<SpeechSynthesisVoice | null>(null)
 
     // マウント状態の管理（ハイドレーションエラー対策）
-    useEffect(() => {
-        setIsMounted(true)
-    }, [])
+    const isMounted = useIsHydrated()
 
-    // 初期化とサポート状況の確認
+    // 既定ボイスはレンダリング中に導出する（エフェクト内setStateを避ける）
+    const selectedVoice = voiceOverride ?? availableVoices[0] ?? null
+
+    // 初期化とサポート状況の確認（エフェクトはクライアントでのみ実行されるためマウント判定は不要）
     useEffect(() => {
-        if (!isMounted) return
+        let isActive = true
         const loadVoices = async () => {
-            setIsLoading(true)
             try {
                 // 音声合成APIの初期化を実行
                 const japaneseVoices = await getJapaneseVoices()
+                if (!isActive) return
                 const supported = japaneseVoices.length > 0
                 setIsSupported(supported)
                 setAvailableVoices(japaneseVoices)
                 if (!supported) setError('日本語音声が取得できませんでした')
             } catch (initError) {
+                if (!isActive) return
                 // 初期化に失敗した場合はサポート外として扱う
                 setIsSupported(false)
                 setAvailableVoices([])
                 setError(initError instanceof Error ? initError.message : '音声合成の初期化に失敗しました')
                 console.warn('音声合成の初期化に失敗しました:', initError)
             } finally {
-                setIsLoading(false)
+                if (isActive) setIsLoading(false)
             }
         }
         loadVoices()
-    }, [isMounted])
-
-    useEffect(() => {
-        if (availableVoices.length > 0 && !selectedVoice) {
-            setSelectedVoice(availableVoices[0])
+        return () => {
+            // アンマウント後のstate更新を防ぐ
+            isActive = false
         }
-    }, [availableVoices, selectedVoice])
+    }, [])
 
     // 注意: 状態監視はイベント駆動（speak関数内のコールバック）で行います
     // ポーリング処理は不要です
@@ -155,7 +156,8 @@ export function useSpeechSynthesis(options: UseSpeechSynthesisOptions = {}): Use
     }, [isSupported, isPaused])
 
     const setVoice = useCallback((voice: SpeechSynthesisVoice | null) => {
-        setSelectedVoice(voice)
+        // null を渡すと既定ボイス（先頭）に戻る
+        setVoiceOverride(voice)
     }, [])
 
     return {

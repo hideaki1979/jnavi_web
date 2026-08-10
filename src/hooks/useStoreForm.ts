@@ -2,7 +2,7 @@
 
 import { BaseToppingCall, FormattedToppingOptionIds, ToppingOptionMap } from "@/types/ToppingCall";
 import { StoreFormInput, StoreInputSchema } from "@/validations/store";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Control, FieldErrors, useForm, UseFormHandleSubmit, UseFormReset } from "react-hook-form";
 import { useApiError } from "./useApiError";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -71,10 +71,39 @@ interface UseStoreFormReturn {
 export function useStoreForm(
     { mode, initialData, toppingOptions }: UseStoreFormOptions
 ): UseStoreFormReturn {
-    // トッピングコール関連の状態
-    const [toppingOptionData, setToppingOptionData] = useState<ToppingOptionMap>({})
-    const [selectedPreCallOptions, setSelectedPreCallOptions] = useState<FormattedToppingOptionIds>({})
-    const [selectedPostCallOptions, setSelectedPostCallOptions] = useState<FormattedToppingOptionIds>({})
+    // 初期データは編集モードでのみ反映する（作成モードでは常に空から開始する）
+    const editInitialData = mode === 'edit' ? initialData : undefined
+
+    // トッピングコール選択肢はpropsをそのまま使うためレンダリング中に導出する
+    const toppingOptionData = useMemo<ToppingOptionMap>(() => toppingOptions ?? {}, [toppingOptions])
+
+    // トッピングコール選択状態の初期値をレンダリング中に導出する
+    // - 作成モード：全トッピングを空選択で初期化
+    // - 編集モード：既存の選択済みIDを反映（未指定なら空選択）
+    const initialSelectedOptions = useMemo(() => {
+        const emptySelectedOptions: FormattedToppingOptionIds = {}
+        Object.keys(toppingOptionData).forEach(key => {
+            emptySelectedOptions[Number(key)] = []
+        })
+        // 事前／着丼前で同一オブジェクトを共有しないようそれぞれ複製する
+        return {
+            preCall: editInitialData?.preCallFormattedIds ?? { ...emptySelectedOptions },
+            postCall: editInitialData?.postCallFormattedIds ?? { ...emptySelectedOptions }
+        }
+    }, [toppingOptionData, editInitialData])
+
+    const [selectedPreCallOptions, setSelectedPreCallOptions] = useState<FormattedToppingOptionIds>(initialSelectedOptions.preCall)
+    const [selectedPostCallOptions, setSelectedPostCallOptions] = useState<FormattedToppingOptionIds>(initialSelectedOptions.postCall)
+
+    // initialData / toppingOptions が差し替わったら選択状態を初期値に戻す。
+    // React公式の「props変更時にレンダリング中でstateを調整する」パターン
+    // （https://react.dev/reference/react/useState#storing-information-from-previous-renders）
+    const [appliedInitialOptions, setAppliedInitialOptions] = useState(initialSelectedOptions)
+    if (appliedInitialOptions !== initialSelectedOptions) {
+        setAppliedInitialOptions(initialSelectedOptions)
+        setSelectedPreCallOptions(initialSelectedOptions.preCall)
+        setSelectedPostCallOptions(initialSelectedOptions.postCall)
+    }
 
     // APIエラーハンドリング
     const { errorMessage, validationErrors, setError, clearErrors } = useApiError()
@@ -93,7 +122,7 @@ export function useStoreForm(
             topping_details = "",
             call_details = "",
             lot_detail = ""
-        } = initialData || {}
+        } = editInitialData || {}
 
         return {
             store_name,
@@ -108,31 +137,18 @@ export function useStoreForm(
             call_details,
             lot_detail
         }
-    }, [initialData])
+    }, [editInitialData])
 
     // react-hook-form設定
+    // initialData差し替え時のフォーム再初期化は react-hook-form の values に任せる
+    // （useEffect + reset だと同期setStateを伴い react-hooks/set-state-in-effect に抵触するため）
+    // values は常に渡す。undefined を渡すと react-hook-form は何もせず前の入力値が
+    // 残るため、編集→作成のようにモードが切り替わったときにフォームを空へ戻せない。
     const { control, handleSubmit, formState: { errors }, reset } = useForm<StoreFormInput>({
         resolver: zodResolver(StoreInputSchema),
-        defaultValues
+        defaultValues,
+        values: defaultValues
     })
-
-    // initialDataが変更されたらフォームと状態をリセットする
-    useEffect(() => {
-        if (initialData) {
-            // フォームの値をリセット
-            reset(defaultValues);
-
-            // トッピングコールの選択状態をリセット
-            const initSelectedOptions: FormattedToppingOptionIds = {};
-            if (toppingOptionData && Object.keys(toppingOptionData).length > 0) {
-                Object.keys(toppingOptionData).forEach(key => {
-                    initSelectedOptions[Number(key)] = [];
-                });
-                setSelectedPreCallOptions(initialData.preCallFormattedIds || { ...initSelectedOptions });
-                setSelectedPostCallOptions(initialData.postCallFormattedIds || { ...initSelectedOptions });
-            }
-        }
-    }, [initialData, defaultValues, reset, toppingOptionData]);
 
     // ハンドラー関数を生成
     const handleChangePreCallOptionCheck = useCallback(
@@ -186,23 +202,6 @@ export function useStoreForm(
         },
         []
     )
-
-    // トッピングコール情報の初期化
-    useEffect(() => {
-        if (!toppingOptions) return
-
-        setToppingOptionData(toppingOptions)
-
-        // 作成モードの場合、トッピングを空で初期化
-        if (mode === 'create') {
-            const initSelectedOptions: FormattedToppingOptionIds = {}
-            Object.keys(toppingOptions).forEach(key => {
-                initSelectedOptions[Number(key)] = []
-            })
-            setSelectedPreCallOptions({ ...initSelectedOptions })
-            setSelectedPostCallOptions({ ...initSelectedOptions })
-        }
-    }, [toppingOptions, mode])
 
     // 送信データ生成関数
     const createSubmitData = useCallback((formData: StoreFormInput) => {
