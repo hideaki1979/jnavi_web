@@ -1,4 +1,5 @@
 import { Box, Skeleton } from "@mui/material";
+import LoadingAnnouncement from "@/components/feedback/LoadingAnnouncement";
 
 /**
  * 店舗マップ画面のローディングUI。
@@ -10,14 +11,14 @@ export default function StoreMapLoading() {
     return (
         <Box
             role="status"
-            aria-label="読み込み中"
             sx={{
                 width: "100%",
                 // ヘッダー（MUI Toolbarの既定高さ）を差し引く
                 height: { xs: "calc(100vh - 56px)", sm: "calc(100vh - 64px)" },
             }}
         >
-            {/* 矩形は装飾。読み込み中であることはコンテナのrole/ラベルが伝える */}
+            <LoadingAnnouncement />
+            {/* 矩形は装飾。読み込み中であることはLoadingAnnouncementが伝える */}
             <Skeleton aria-hidden variant="rectangular" width="100%" height="100%" />
         </Box>
     );

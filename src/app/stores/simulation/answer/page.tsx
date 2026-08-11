@@ -1,5 +1,6 @@
 "use client"
 
+import LoadingAnnouncement from "@/components/feedback/LoadingAnnouncement";
 import { Map } from "@mui/icons-material";
 import { Box, Button, Skeleton, Typography } from "@mui/material";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -53,12 +54,13 @@ export default function AnswerPage() {
               *
               * MUIのSkeletonは素の<span>でrole/aria-*を一切出力しないため、
               * そのままでは支援技術に読み込み中であることが伝わらない。
-              * FormSkeleton や map/loading.tsx と同じく、コンテナ側に
-              * role="status"とラベルを置き、矩形自体は装飾として隠す。
+              * FormSkeleton や map/loading.tsx と同じく、コンテナに role="status"、
+              * その中に読み上げ用の実テキストを置き、矩形自体は装飾として隠す。
               */}
             <Suspense
                 fallback={
-                    <Box role="status" aria-label="読み込み中">
+                    <Box role="status">
+                        <LoadingAnnouncement />
                         <Skeleton aria-hidden variant="text" width="6rem" sx={{ fontSize: "2.125rem", mb: 8 }} />
                     </Box>
                 }
