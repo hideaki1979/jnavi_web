@@ -1,11 +1,11 @@
 "use client"
 
 import { useResponsive } from "@/hooks/useResponsive";
+import { signOut } from "@/lib/auth";
 import { useAuthStore } from "@/lib/AuthStore";
-import { auth } from "@/lib/firebase";
+import { useNotification } from "@/lib/notification";
 import { AccountCircle, AddBusiness, Logout, Menu as MenuIcon, PersonAdd, School } from "@mui/icons-material";
 import { AppBar, Box, Button, IconButton, Menu, MenuItem, Toolbar, Typography } from "@mui/material";
-import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
@@ -28,6 +28,7 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
 
     // Zustandから認証状態を取得
     const { isAuthenticated, isLoading } = useAuthStore()
+    const { showNotification } = useNotification()
 
     /**
      * ヘッダーメニューを開くハンドラ
@@ -63,17 +64,21 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
     /**
      * サインアウトハンドラ
      *
-     * Firebase Authenticationのサインアウトを実行し、結果に応じて
+     * サーバー側のセッションクッキー破棄とFirebaseのサインアウトを実行し、結果に応じて
      * - 成功時： `/auth/login` にルーターをプッシュし、メニューを閉じる
-     * - 失敗時： エラーメッセージをコンソールに表示
+     * - 失敗時： ログイン状態を維持したまま、再試行を促す通知を表示
+     *
+     * 失敗時に画面遷移しないのは、セッションクッキーが残ったまま「ログアウトできた」と
+     * 誤解させないため（#80）。
      */
     const handleSignOut = async () => {
         try {
-            await signOut(auth)
+            await signOut()
             router.push(`/auth/login`)
             handleMenuClose()
         } catch (error) {
             console.error(`ログアウト失敗： ${error}`)
+            showNotification('ログアウトに失敗しました。通信環境をご確認のうえ、もう一度お試しください。', 'error')
         }
     }
 

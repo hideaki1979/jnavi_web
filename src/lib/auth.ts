@@ -62,7 +62,33 @@ export const createSession = async (idToken: string): Promise<void> => {
     }
 }
 
-// サインアウト
+/**
+ * サーバーにHttpOnlyのセッションクッキーを破棄させる。
+ *
+ * @throws {Error} セッションクッキーの破棄に失敗した場合
+ */
+const destroySession = async (): Promise<void> => {
+    const res = await fetch('/api/auth/session', { method: 'DELETE' })
+    if (!res.ok) {
+        throw new Error('セッションの破棄に失敗しました。')
+    }
+}
+
+/**
+ * サインアウト。
+ *
+ * クライアント側の`firebaseSignOut`だけではHttpOnlyのセッションクッキーが残り、
+ * proxy（src/proxy.ts）が保護ルートへのアクセスを通し続けてしまうため、
+ * 必ずサーバー側のセッション破棄とセットで行う（#80）。
+ *
+ * サーバー側を先に破棄するのは、通信に失敗したときの状態を一貫させるため。
+ * 逆順だと「画面上はログアウト済みなのに保護ルートには入れる」という、
+ * ユーザーからは気付けない状態になる。この順序なら失敗時はログイン状態のまま
+ * 変わらないので、呼び出し側でエラーを伝えて再試行してもらえる。
+ *
+ * @throws {Error} セッションクッキーの破棄に失敗した場合
+ */
 export const signOut = async (): Promise<void> => {
+    await destroySession()
     await firebaseSignOut(auth)
 }
