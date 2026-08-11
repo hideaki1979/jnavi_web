@@ -26,12 +26,14 @@ const api = ApiClient.getInstance()
 export const getImageById = async (storeId: string | number, imageId: string | number): Promise<ActionResult<StoreImageEditData>> => {
     "use cache"
     cacheTag(imageTag(storeId, imageId))
-    cacheLife("hours")
 
     try {
         const res = await api.get(`/stores/${storeId}/images/${imageId}`)
+        cacheLife("hours")
         return { success: true, data: res.data.data }
     } catch (error) {
+        // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
+        cacheLife("seconds")
         return {
             success: false,
             error: ApiClient.toActionError(

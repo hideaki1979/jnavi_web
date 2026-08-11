@@ -14,6 +14,14 @@
  *
  * いずれの関数もエラー時に例外を throw せず、`ActionResult` として結果を返す。
  * 受け取り側は `unwrapActionResult()` で値の取り出し／例外化を行う。
+ *
+ * この「失敗も戻り値」という方針のため、`cacheLife`は成功・失敗で必ず出し分ける。
+ * 失敗結果も`use cache`の戻り値としてキャッシュされるので、一律に長い寿命を
+ * 与えると一時的なAPI障害の結果が同じキャッシュキーで再利用されてしまう。
+ * とくに`unwrapActionResult()`が失敗時にthrowする呼び出し元
+ * （/stores/map など）では、バックエンド復旧後もページが落ち続けることになる。
+ * `cacheLife`は1回の呼び出しにつき1回だけ実行されればよく、
+ * 制御フローの分岐ごとに呼び分けてよい。
  */
 
 import ApiClient from "@/lib/ApiClient"
@@ -50,12 +58,14 @@ export const imageTag = (storeId: string | number, imageId: string | number) =>
 export const getMapAll = async (): Promise<ActionResult<MapData[]>> => {
     "use cache"
     cacheTag(STORES_TAG)
-    cacheLife("hours")
 
     try {
         const res = await api.get<MapApiResponse>('/maps')
+        cacheLife("hours")
         return { success: true, data: res.data.data }
     } catch (error) {
+        // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
+        cacheLife("seconds")
         return {
             success: false,
             error: ApiClient.toActionError(
@@ -74,12 +84,14 @@ export const getMapAll = async (): Promise<ActionResult<MapData[]>> => {
 export const getStoreImages = async (storeId: string): Promise<ActionResult<StoreImageDownloadData[]>> => {
     "use cache"
     cacheTag(storeImagesTag(storeId))
-    cacheLife("hours")
 
     try {
         const res = await api.get(`/stores/${storeId}/images`)
+        cacheLife("hours")
         return { success: true, data: res.data.data || [] }
     } catch (error) {
+        // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
+        cacheLife("seconds")
         return {
             success: false,
             error: ApiClient.toActionError(
@@ -97,12 +109,14 @@ export const getStoreImages = async (storeId: string): Promise<ActionResult<Stor
 export const getStoreAll = async (): Promise<ActionResult<SimulationSelectStoresData[]>> => {
     "use cache"
     cacheTag(STORES_TAG)
-    cacheLife("hours")
 
     try {
         const res = await api.get("/stores")
+        cacheLife("hours")
         return { success: true, data: res.data.data }
     } catch (error) {
+        // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
+        cacheLife("seconds")
         return {
             success: false,
             error: ApiClient.toActionError(
@@ -122,7 +136,6 @@ export const getStoreAll = async (): Promise<ActionResult<SimulationSelectStores
 export const getStoreToppingCalls = async (id: string, call_timing: string): Promise<ActionResult<SimulationSelectToppingCallsData>> => {
     "use cache"
     cacheTag(storeTag(id))
-    cacheLife("hours")
 
     try {
         const res = await api.get(`/stores/${id}/toppingCalls`, {
@@ -130,8 +143,11 @@ export const getStoreToppingCalls = async (id: string, call_timing: string): Pro
                 call_timing
             }
         })
+        cacheLife("hours")
         return { success: true, data: res.data.data }
     } catch (error) {
+        // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
+        cacheLife("seconds")
         return {
             success: false,
             error: ApiClient.toActionError(
@@ -150,12 +166,14 @@ export const getStoreToppingCalls = async (id: string, call_timing: string): Pro
 export const getStoreById = async (id: string): Promise<ActionResult<FormattedToppingOptionNameStoreData>> => {
     "use cache"
     cacheTag(storeTag(id))
-    cacheLife("hours")
 
     try {
         const res = await api.get(`/stores/${id}`)
+        cacheLife("hours")
         return { success: true, data: res.data.data }
     } catch (error) {
+        // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
+        cacheLife("seconds")
         return {
             success: false,
             error: ApiClient.toActionError(
