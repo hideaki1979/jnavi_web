@@ -1,7 +1,8 @@
 'use server'
 
 import { cert, getApps, initializeApp } from 'firebase-admin/app'
-import { DecodedIdToken, getAuth } from 'firebase-admin/auth'
+import { getAuth } from 'firebase-admin/auth'
+import type { DecodedIdToken } from 'firebase-admin/auth'
 
 // Firebase Admin SDKの初期化
 if (!getApps().length) {
