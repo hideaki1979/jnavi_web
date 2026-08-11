@@ -1,6 +1,14 @@
 import { Box, CircularProgress, Typography } from "@mui/material";
 
 /**
+ * スピナーとラベルを紐づけるためのid。
+ * `CircularProgress`は`role="progressbar"`を出力するため、
+ * アクセシブルな名前がないと支援技術が用途を判別できない。
+ * 文言の二重管理を避けるため、`aria-label`ではなく表示中のラベルを参照する。
+ */
+const LOADING_LABEL_ID = "stores-loading-label";
+
+/**
  * `/stores`配下のローディングUI。
  *
  * `loading.tsx`は`layout.tsx`の内側で`page.tsx`とその配下を`<Suspense>`で包む。
@@ -16,6 +24,7 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 export default function StoresLoading() {
     return (
         <Box
+            role="status"
             display="flex"
             flexDirection="column"
             justifyContent="center"
@@ -27,8 +36,8 @@ export default function StoresLoading() {
                 minHeight: { xs: "calc(100vh - 56px)", sm: "calc(100vh - 64px)" },
             }}
         >
-            <CircularProgress color="primary" />
-            <Typography variant="body2" sx={{ mt: 2, color: "text.secondary" }}>
+            <CircularProgress color="primary" aria-labelledby={LOADING_LABEL_ID} />
+            <Typography id={LOADING_LABEL_ID} variant="body2" sx={{ mt: 2, color: "text.secondary" }}>
                 読み込み中...
             </Typography>
         </Box>
