@@ -1,5 +1,10 @@
 /**
- * トッピングコールオプション関連のAPI通信を行う関数群。
+ * トッピングコールオプション関連の Server Action。
+ *
+ * 実データ取得は toppingCalls.queries.ts の`"use cache"`付き関数に委譲する。
+ * 1つのファイルに`"use server"`と`"use cache"`は同居できないため分離しており、
+ * ここはクライアント（react-query フック）からの入口を維持するためのラッパ。
+ * サーバーコンポーネントは queries 側を直接 import すればよい。
  *
  * エラー時に例外を throw せず、`ActionResult` として結果を返す。
  * Server Action 内で throw された例外は本番ビルドで Next.js にサニタイズされ、
@@ -8,27 +13,14 @@
  */
 "use server"
 
-import { API_ENDPOINTS } from "@/constants/apiEndpoints"
-import ApiClient from "@/lib/ApiClient"
+import { getToppingCallOptions as getToppingCallOptionsCached } from "@/app/api/toppingCalls.queries"
 import type { ActionResult } from "@/types/actionResult"
 import type { ToppingOptionMap } from "@/types/ToppingCall"
 
-const api = ApiClient.getInstance()
-
 /**
- * トッピングコールオプション取得API通信を行う関数。
- * - getToppingCallOptions: トッピングコールオプション一覧取得
+ * トッピングコールオプション一覧取得（クライアントからの入口）。
  * @returns トッピングコールオプション一覧を含む処理結果
  */
-
 export const getToppingCallOptions = async (): Promise<ActionResult<ToppingOptionMap>> => {
-    try {
-        const res = await api.get(API_ENDPOINTS.TOPPING_CALL_OPTIONS_FORMATTED)
-        return { success: true, data: res.data.data }
-    } catch (error) {
-        return {
-            success: false,
-            error: ApiClient.toActionError(error, "トッピング・コールオプション時にエラーが発生しました。")
-        }
-    }
+    return getToppingCallOptionsCached()
 }

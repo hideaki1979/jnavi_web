@@ -1,16 +1,15 @@
-import { getMapAll } from "@/app/api/stores";
+import { getMapAll } from "@/app/api/stores.queries";
 import { unwrapActionResult } from "@/lib/actionResult";
 import StoreMapClient from "@/components/Store/StoreMapClient";
 
-/**
- * ビルド時のプリレンダリングを行わず、リクエスト時にレンダリングする。
- *
- * このページはバックエンドAPIから店舗マップ情報を取得するため、
- * 静的生成のままだとビルドがAPIの稼働状況に依存し、
- * API側の一時的な障害でデプロイ自体が失敗してしまう。
- * また、店舗を登録・更新しても再デプロイするまで画面に反映されない。
+/*
+ * かつて `export const dynamic = 'force-dynamic'` を置いていたが、
+ * Cache Components とは併用できないため削除した。
+ * 元の意図（ビルドをAPIの稼働状況に依存させない／登録・更新を再デプロイ無しで反映する）は
+ * Cache Components 側で満たされる。ページは既定で dynamic であり、
+ * データ取得は getMapAll() の `use cache` が担当する。
+ * 反映は updateTag('stores')（自アプリからの更新）と cacheLife('hours')（外部からの更新）による。
  */
-export const dynamic = 'force-dynamic'
 
 /**
  * 店舗マップ画面コンポーネント

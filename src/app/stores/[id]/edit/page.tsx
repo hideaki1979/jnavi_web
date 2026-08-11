@@ -1,6 +1,6 @@
 import StoreForm from "@/components/Store/StoreForm"
-import { getStoreById } from "@/app/api/stores";
-import { getToppingCallOptions } from "@/app/api/toppingCalls";
+import { getStoreById } from "@/app/api/stores.queries";
+import { getToppingCallOptions } from "@/app/api/toppingCalls.queries";
 import { unwrapActionResult } from "@/lib/actionResult";
 
 interface StoreUpdatePageProps {
