@@ -7,8 +7,6 @@ import QueryClientProviders from "./queryClientProvider";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { NotificationController } from "@/components/feedback/NotificationController";
 import theme from "@/theme";
-import { Suspense } from 'react'
-import LoadingErrorContainer from '@/components/feedback/LoadingErrorContainer'
 import { Toaster } from 'react-hot-toast'
 
 const roboto = Roboto({
@@ -28,8 +26,13 @@ export const metadata: Metadata = {
  * 
  * - 日本語のフォントを適用したHTMLドキュメントを提供
  * - グローバルな状態管理や認証プロバイダを設定
- * - サスペンスを用いて非同期処理中のローディング状態を表示
- * 
+ *
+ * ここでは`<Suspense>`で`children`を包まない。
+ * ルートレイアウトの境界は「初回ロード時はページ全体をスピナーに置き換えてしまう」一方で、
+ * 「クライアント遷移では共有レイアウトより上にあるため発火しない」ため、
+ * どちらの経路でも遷移を速くする役に立たない。
+ * ローディング境界は各ルートセグメントの`loading.tsx`側に置く。
+ *
  * @param children - レイアウト内にレンダリングされる子要素
  * @returns JSX.Element
  */
@@ -49,9 +52,7 @@ export default function RootLayout({
               <AuthProvider>
                 <NotificationController />
                 <Toaster position="top-center" reverseOrder={false} />
-                <Suspense fallback={<LoadingErrorContainer loading={true} />}>
-                  {children}
-                </Suspense>
+                {children}
               </AuthProvider>
             </QueryClientProviders>
           </ThemeProvider>

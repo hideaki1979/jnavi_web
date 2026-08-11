@@ -1,5 +1,6 @@
 "use client"
 
+import LoadingAnnouncement from "@/components/feedback/LoadingAnnouncement";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { cleanupSpeechSynthesis } from "@/lib/speech-synthesis";
 import { QueryParams } from "@/types/ui";
@@ -64,10 +65,18 @@ export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultSc
     if (!isMounted) {
         return (
             <Box
+                role="status"
                 display="flex" flexDirection="column" alignItems="center"
                 justifyContent="center" minHeight="100vh"
             >
-                <CircularProgress />
+                {/*
+                  * 読み込み中であることは実テキストで伝え、スピナーは装飾として隠す。
+                  * ライブリージョンが読み上げるのは「名前」ではなく「内容」であり、
+                  * 内容が空のリージョンの扱いはスクリーンリーダーによって差があるため。
+                  * スピナーを隠すことで`role="progressbar"`の名前も不要になる。
+                  */}
+                <LoadingAnnouncement />
+                <CircularProgress aria-hidden />
             </Box>
         )
     }

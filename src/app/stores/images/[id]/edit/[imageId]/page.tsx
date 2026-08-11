@@ -1,5 +1,5 @@
-import { getImageById } from '@/app/api/images'
-import { getStoreToppingCalls } from '@/app/api/stores'
+import { getImageById } from '@/app/api/images.queries'
+import { getStoreToppingCalls } from '@/app/api/stores.queries'
 import { unwrapActionResult } from '@/lib/actionResult'
 import { SimulationToppingOption } from '@/types/ToppingCall'
 import StoreImageEditForm from '@/components/image/StoreImageEditForm'

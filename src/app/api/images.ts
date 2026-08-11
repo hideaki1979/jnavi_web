@@ -1,5 +1,10 @@
 /**
- * 店舗画像関連のAPI通信を行う関数群。
+ * 店舗画像関連の Server Action。
+ * - 画像のアップロード・更新・削除（書き込み）
+ * - 読み取りは images.queries.ts の`"use cache"`付き関数へ委譲するラッパ
+ *
+ * 分離の意図と全体構成は stores.ts / stores.queries.ts のコメントを参照。
+ * 書き込み後は`updateTag`で該当タグを無効化し、自アプリからの更新を即時反映させる。
  *
  * いずれの関数もエラー時に例外を throw せず、`ActionResult` として結果を返す。
  * Server Action 内で throw された例外は本番ビルドで Next.js にサニタイズされ、
@@ -8,9 +13,13 @@
  */
 "use server"
 
+import { getImageById as getImageByIdCached } from "@/app/api/images.queries";
+import { imageTag, storeImagesTag } from "@/app/api/stores.queries";
 import ApiClient from "@/lib/ApiClient";
 import type { ActionResult } from "@/types/actionResult";
 import type { StoreImageEditData, StoreImageUploadData } from "@/types/Image";
+import type { AxiosResponse } from "axios";
+import { updateTag } from "next/cache";
 
 const api = ApiClient.getInstance()
 
@@ -24,13 +33,13 @@ const api = ApiClient.getInstance()
  */
 
 export const uploadStoreImage = async (storeId: string | number, imageData: StoreImageUploadData, idToken: string) => {
+    let res: AxiosResponse
     try {
-        const res = await api.post(`/stores/${storeId}/images`, imageData, {
+        res = await api.post(`/stores/${storeId}/images`, imageData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        return { success: true as const, data: res.data }
     } catch (error) {
         return {
             success: false as const,
@@ -40,6 +49,12 @@ export const uploadStoreImage = async (storeId: string | number, imageData: Stor
             )
         }
     }
+
+    // 画像一覧に新しい画像を即時反映させる。
+    // try の外に置くのは、アップロード自体は成功しているのに updateTag の失敗を
+    // 「アップロード失敗」として返してしまうと、利用者が再送信して重複登録するため。
+    updateTag(storeImagesTag(storeId))
+    return { success: true as const, data: res.data }
 }
 
 /**
@@ -53,13 +68,13 @@ export const uploadStoreImage = async (storeId: string | number, imageData: Stor
  */
 
 export const updateStoreImage = async (storeId: string | number, imageId: string | number, imageData: StoreImageUploadData, idToken: string) => {
+    let res: AxiosResponse
     try {
-        const res = await api.put(`/stores/${storeId}/images/${imageId}`, imageData, {
+        res = await api.put(`/stores/${storeId}/images/${imageId}`, imageData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        return { success: true as const, data: res.data }
     } catch (error) {
         return {
             success: false as const,
@@ -69,6 +84,12 @@ export const updateStoreImage = async (storeId: string | number, imageId: string
             )
         }
     }
+
+    // 個別画像と、それを含む一覧の両方を無効化する。
+    // 更新が成功しているのに「更新失敗」と返すと、利用者が同じ操作を繰り返すため try の外に置く。
+    updateTag(imageTag(storeId, imageId))
+    updateTag(storeImagesTag(storeId))
+    return { success: true as const, data: res.data }
 }
 
 /**
@@ -81,13 +102,13 @@ export const updateStoreImage = async (storeId: string | number, imageId: string
  */
 
 export const deleteStoreImage = async (storeId: string | number, imageId: string | number, idToken: string) => {
+    let res: AxiosResponse
     try {
-        const res = await api.delete(`/stores/${storeId}/images/${imageId}`, {
+        res = await api.delete(`/stores/${storeId}/images/${imageId}`, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        return { success: true as const, data: res.data }
     } catch (error) {
         return {
             success: false as const,
@@ -97,29 +118,25 @@ export const deleteStoreImage = async (storeId: string | number, imageId: string
             )
         }
     }
+
+    // 削除された画像と、それを含む一覧の両方を無効化する。
+    // 削除が成功しているのに「削除失敗」と返すと、利用者が消えたはずの画像へ再操作するため try の外に置く。
+    updateTag(imageTag(storeId, imageId))
+    updateTag(storeImagesTag(storeId))
+    return { success: true as const, data: res.data }
 }
 
+/* ------------------------------------------------------------------
+ * 以下は読み取りのラッパ。
+ * 実体と`use cache`は images.queries.ts 側にある。
+ * ------------------------------------------------------------------ */
+
 /**
- * 店舗IDと画像IDを指定して画像情報を取得するAPI通信を行う関数。
- * - 画像情報取得APIにGETリクエストを送信
- * - 成功時にはAPIレスポンスの画像情報を返す
- * - エラー時にはエラー情報を持つ失敗結果を返す
+ * 店舗IDと画像IDを指定して画像情報を取得する（クライアントからの入口）。
  * @param storeId 店舗ID
  * @param imageId 画像ID
  * @returns 画像情報を含む処理結果
  */
-
 export const getImageById = async (storeId: string | number, imageId: string | number): Promise<ActionResult<StoreImageEditData>> => {
-    try {
-        const res = await api.get(`/stores/${storeId}/images/${imageId}`)
-        return { success: true, data: res.data.data }
-    } catch (error) {
-        return {
-            success: false,
-            error: ApiClient.toActionError(
-                error,
-                "画像取得（１件取得）処理でエラーが発生しました。"
-            )
-        }
-    }
+    return getImageByIdCached(storeId, imageId)
 }

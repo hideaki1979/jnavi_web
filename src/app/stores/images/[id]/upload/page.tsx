@@ -1,4 +1,4 @@
-import { getStoreToppingCalls } from "@/app/api/stores"
+import { getStoreToppingCalls } from "@/app/api/stores.queries"
 import { unwrapActionResult } from "@/lib/actionResult"
 import { SimulationToppingOption } from "@/types/ToppingCall"
 import StoreImageUploadForm from "@/components/image/StoreImageUploadForm"

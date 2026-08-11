@@ -1,5 +1,5 @@
 import { Warning } from "@mui/icons-material";
-import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
 
 /**
  * 店舗閉店確認ダイアログコンポーネント。
@@ -95,13 +95,14 @@ export function ConfirmDialog({
                 >
                     {cancelButtonText}
                 </Button>
+                {/* ローディング中もボタンのアクセシブルな名前を保つためMUIの`loading`propを使う */}
                 <Button
                     onClick={onConfirm}
-                    disabled={isLoading}
+                    loading={isLoading}
                     color={confirmButtonColor}
                     variant="contained"
                 >
-                    {isLoading ? <CircularProgress size={24} color="inherit" /> : confirmButtonText}
+                    {confirmButtonText}
                 </Button>
             </DialogActions>
         </Dialog>

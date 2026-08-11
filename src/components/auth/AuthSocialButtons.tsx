@@ -8,7 +8,7 @@ import { User } from "@/types/user";
 import { handleFirebaseError } from "@/utils/firebaseErrorMessages";
 import { DEFAULT_REDIRECT_PATH } from "@/utils/redirectPath";
 import { Facebook, GitHub, Google } from "@mui/icons-material"
-import { Box, Button, CircularProgress } from "@mui/material"
+import { Box, Button } from "@mui/material"
 import { useRouter } from "next/navigation"
 import { useState } from "react";
 
@@ -111,9 +111,13 @@ export function AuthSocialButtons({
                         color: '#4285f4', // Google blue for icon
                     }
                 }}
+                // 処理中のプロバイダに関わらず全ボタンを無効化する
                 disabled={loading !== null}
+                // スピナー表示は自分が処理中のときのみ。
+                // MUIの`loading`propによりローディング中もボタンのアクセシブルな名前が保たれる
+                loading={loading === 'google'}
             >
-                {loading === 'google' ? <CircularProgress size={24} sx={{ color: '#4285f4' }} /> : 'Googleでログイン'}
+                Googleでログイン
             </Button>
             <Button
                 variant="contained"
@@ -121,6 +125,7 @@ export function AuthSocialButtons({
                 startIcon={<Facebook />}
                 onClick={handleFacebookAuth}
                 disabled={loading !== null}
+                loading={loading === 'facebook'}
                 sx={{
                     py: 1.5,
                     backgroundColor: '#1877F2',
@@ -138,7 +143,7 @@ export function AuthSocialButtons({
                     }
                 }}
             >
-                {loading === 'facebook' ? <CircularProgress size={24} color="inherit" /> : 'Facebookでログイン'}
+                Facebookでログイン
             </Button>
             <Button
                 variant="contained"
@@ -146,6 +151,7 @@ export function AuthSocialButtons({
                 startIcon={<GitHub />}
                 onClick={handleGitHubAuth}
                 disabled={loading !== null}
+                loading={loading === 'github'}
                 sx={{
                     py: 1.5,
                     backgroundColor: '#24292e',
@@ -163,7 +169,7 @@ export function AuthSocialButtons({
                     }
                 }}
             >
-                {loading === 'github' ? <CircularProgress size={24} color="inherit" /> : 'Githubでログイン'}
+                Githubでログイン
             </Button>
         </Box>
     )

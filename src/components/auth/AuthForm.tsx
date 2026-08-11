@@ -7,7 +7,7 @@
 import { createSession, signInWithEmail, signUpWithEmail } from "@/lib/auth"
 import { LoginFormInput, loginSchema, SignupFormInput, signupSchema } from "@/validations/auth"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Alert, Box, Button, CircularProgress, Divider, IconButton, Typography } from "@mui/material"
+import { Alert, Box, Button, Divider, IconButton, Typography } from "@mui/material"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Control, useForm } from "react-hook-form"
@@ -257,10 +257,11 @@ export function AuthForm({ mode }: AuthFormProps) {
                 </Alert>
             )}
 
-            <Button type="submit" variant="contained" fullWidth disabled={loading}
+            {/* ローディング中もボタンのアクセシブルな名前を保つためMUIの`loading`propを使う */}
+            <Button type="submit" variant="contained" fullWidth loading={loading}
                 sx={{ mt: 2, mb: 2, py: 2, fontWeight: "bold" }}
             >
-                {loading ? <CircularProgress size={24} color="inherit" /> : (isSignup ? "アカウント作成" : "ログイン")}
+                {isSignup ? "アカウント作成" : "ログイン"}
             </Button>
             {/* ログイン⇔アカウント作成を行き来しても復帰先を失わないようredirect_toを引き継ぐ */}
             {isSignup

@@ -8,49 +8,20 @@ import { generateCallText } from "@/utils/toppingFormatter"
 import { ArrowForward, Block } from "@mui/icons-material"
 import { Alert, Box, Button, Card, CardMedia, Typography } from "@mui/material"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useMemo, useState } from "react"
+import { Suspense, useCallback, useMemo, useState } from "react"
 
 /**
  * 事前コールシミュレーション画面コンポーネント。
  * - 店舗IDをパラメータとして受け取り、店舗別のトッピングコール情報を取得。
  * - トッピングコール情報を選択できるインターフェースを提供。
  * - 選択されたトッピングコール情報をもとに、コールテキストを生成し、ResultPageに遷移。
+ *
+ * 見出し・イメージ・説明文は店舗IDにもAPIにも依存しないため、Suspense境界の外に置く。
+ * 以前はローディング中に`return <LoadingErrorContainer/>`で画面全体を差し替えており、
+ * これらの静的コンテンツまで隠れていた。境界の外に出すことで、
+ * プリレンダリングされた静的シェルに含まれ、遷移直後から表示される。
  */
 export default function PrecallPage() {
-    const router = useRouter()
-    const params = useSearchParams()
-    const id = params.get("id") ?? ""
-
-    const [selectedOptions, setSelectedOptions] = useState<SelectedSimulationOptions>({})
-    const [error, setError] = useState<string | null>(null)
-
-    // 店舗別コールトッピング情報取得
-    const { data, isLoading, isError, error: queryError } = useStoreToppingCalls(id, "pre_call")
-
-    const preCallOptions = useMemo(
-        () => data?.formattedToppingOptions?.map(([, toppingOption]) => toppingOption) ?? []
-        , [data])
-
-    const handleOptionChange = useCallback((toppingId: string, optionId: string) => {
-        setSelectedOptions(prev => ({
-            ...prev,
-            [toppingId]: optionId
-        }))
-    }, [])
-
-    const handleCallOption = useCallback(() => {
-        if (Object.keys(selectedOptions).length === 0) {
-            setError("オプションが選択されてません。")
-            return
-        }
-        const callText = generateCallText(selectedOptions, preCallOptions)
-        router.push(`/stores/simulation/precall-result?callText=${encodeURIComponent(callText)}&id=${id}`)
-    }, [selectedOptions, preCallOptions, id, router])
-
-    if (isLoading || isError) {
-        return <LoadingErrorContainer loading={isLoading} error={isError ? (queryError as Error).message : null} />
-    }
-
     return (
         <Box
             display="flex"
@@ -106,6 +77,64 @@ export default function PrecallPage() {
                 食券を見せると同時に、{"\n"}
                 事前コールしたいオプションを選択しましょう。
             </Typography>
+            {/*
+              * `useSearchParams()`はプリレンダリング時にsuspendするため、
+              * 読み取り箇所をこの境界の内側に閉じ込めて上のシェルを守る。
+              */}
+            <Suspense fallback={<LoadingErrorContainer loading minHeight="30vh" />}>
+                <PrecallOptions />
+            </Suspense>
+        </Box >
+    )
+}
+
+/**
+ * 店舗ID（`?id=`）に依存する選択UI。
+ * 店舗別のトッピングコール情報を取得し、選択内容から事前コールテキストを生成する。
+ */
+function PrecallOptions() {
+    const router = useRouter()
+    const params = useSearchParams()
+    const id = params.get("id") ?? ""
+
+    const [selectedOptions, setSelectedOptions] = useState<SelectedSimulationOptions>({})
+    const [error, setError] = useState<string | null>(null)
+
+    // 店舗別コールトッピング情報取得
+    const { data, isLoading, isError, error: queryError } = useStoreToppingCalls(id, "pre_call")
+
+    const preCallOptions = useMemo(
+        () => data?.formattedToppingOptions?.map(([, toppingOption]) => toppingOption) ?? []
+        , [data])
+
+    const handleOptionChange = useCallback((toppingId: string, optionId: string) => {
+        setSelectedOptions(prev => ({
+            ...prev,
+            [toppingId]: optionId
+        }))
+    }, [])
+
+    const handleCallOption = useCallback(() => {
+        if (Object.keys(selectedOptions).length === 0) {
+            setError("オプションが選択されてません。")
+            return
+        }
+        const callText = generateCallText(selectedOptions, preCallOptions)
+        router.push(`/stores/simulation/precall-result?callText=${encodeURIComponent(callText)}&id=${id}`)
+    }, [selectedOptions, preCallOptions, id, router])
+
+    if (isLoading || isError) {
+        return (
+            <LoadingErrorContainer
+                loading={isLoading}
+                error={isError ? (queryError as Error).message : null}
+                minHeight="30vh"
+            />
+        )
+    }
+
+    return (
+        <>
             <ToppingOptionSelector
                 options={preCallOptions}
                 selectedOptions={selectedOptions}
@@ -149,6 +178,6 @@ export default function PrecallPage() {
                     コール有り
                 </Button>
             </Box>
-        </Box >
+        </>
     )
 }

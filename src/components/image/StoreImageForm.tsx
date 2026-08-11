@@ -3,7 +3,7 @@
 import { SelectedToppingInfoMap, SimulationToppingOption } from "@/types/ToppingCall";
 import { ExpressValidationError } from "@/types/validation";
 import { ImageEditFormValues, ImageUploadFormValues } from "@/validations/image";
-import { Alert, Box, Button, CircularProgress, Divider, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Divider, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
 import Image from "next/image";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 import { ToppingOptionRadioSelector } from "../toppingCallOptions/ToppingOptionRadioSelector";
@@ -177,14 +177,15 @@ export function StoreImageForm({
 
             {/* アップロードボタン */}
             <Box display="flex" justifyContent="center" mt={6}>
+                {/* ローディング中もボタンのアクセシブルな名前を保つためMUIの`loading`propを使う */}
                 <Button
                     variant="contained"
                     color="primary"
                     type="submit"
-                    disabled={isSubmitting}
+                    loading={isSubmitting}
                     className="w-2/3 font-bold py-2"
                 >
-                    {isSubmitting ? <CircularProgress size={24} color="inherit" /> : submitButtonLabel}
+                    {submitButtonLabel}
                 </Button>
             </Box>
         </form>
