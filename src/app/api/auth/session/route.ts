@@ -73,6 +73,27 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * 「クッキーがすでに無効で、失効させる対象が存在しない」ことを示すFirebaseのエラーコード。
+ * これらは失効処理が不要なだけなので、ログアウトとしては成功として扱う。
+ *
+ * 逆に`auth/internal-error`・`auth/quota-exceeded`やネットワークエラーなど、
+ * ここに載っていないものは「失効できたか分からない」失敗として扱う。
+ */
+const ALREADY_INVALID_ERROR_CODES = new Set([
+    'auth/session-cookie-expired',  // 有効期限切れ
+    'auth/session-cookie-revoked',  // 失効済み
+    'auth/argument-error',          // 形式不正・署名不正・kid不一致（＝検証を通らないクッキー）
+    'auth/user-not-found'           // ユーザーが削除済み（revokeRefreshTokens）
+])
+
+/** FirebaseError（`code`を持つ）からエラーコードを取り出す。持たない場合はnull */
+function getFirebaseErrorCode(error: unknown): string | null {
+    if (typeof error !== 'object' || error === null || !('code' in error)) return null
+    const { code } = error as { code: unknown }
+    return typeof code === 'string' ? code : null
+}
+
+/**
  * ログアウト時にセッションクッキーを破棄する。
  *
  * クライアント側の`signOut`だけではHttpOnlyクッキーが残り、`src/proxy.ts`が
@@ -83,26 +104,33 @@ export async function POST(request: NextRequest) {
  * 有効なままだが、失効させると`tokensValidAfterTime`が更新され、
  * `verifySessionCookie(cookie, true)`（checkRevoked=true）が既存のクッキーを弾く。
  * 副作用として同一ユーザーの他端末のセッションも同時に無効になる。
+ *
+ * 失効に失敗したときはクッキーを削除せずエラーを返す。削除して成功を返すと
+ * 画面上はログアウトできたように見えるのに、盗まれたクッキーは有効期限まで
+ * 生き残るという、このIssueで直したはずの状態に戻ってしまうため。
+ * クッキーを残しておけばクライアントはログイン状態のまま再試行できる。
  */
 export async function DELETE(request: NextRequest) {
     const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value
 
-    // 失効処理の成否に関わらず、ブラウザからのクッキー削除は必ず指示する
-    const response = NextResponse.json({ status: 'success' }, { status: 200 })
-    response.cookies.set(buildSessionCookie('', 0))
-
-    if (!sessionCookie) return response
-
-    try {
-        // 失効済み・期限切れのクッキーはここで例外になるが、その場合は
-        // すでに無効なので追加の失効処理は不要
-        const decodedClaims = await getAuth().verifySessionCookie(sessionCookie)
-        await getAuth().revokeRefreshTokens(decodedClaims.sub)
-    } catch (error) {
-        // 失効に失敗してもクッキー削除は成立しており、ログアウトの主目的は達成できている。
-        // ここで500を返すとクライアントがログアウト失敗として扱ってしまうため、成功を返す。
-        console.error('Session revocation error:', error)
+    if (sessionCookie) {
+        try {
+            const decodedClaims = await getAuth().verifySessionCookie(sessionCookie)
+            await getAuth().revokeRefreshTokens(decodedClaims.sub)
+        } catch (error) {
+            const code = getFirebaseErrorCode(error)
+            if (!code || !ALREADY_INVALID_ERROR_CODES.has(code)) {
+                console.error('Session revocation error:', error)
+                return NextResponse.json(
+                    { error: 'ログアウトに失敗しました。', code: 'revocation_failed' },
+                    { status: 503 }
+                )
+            }
+            // すでに無効なクッキー＝失効させる対象が無い。クッキーの削除だけ行う
+        }
     }
 
+    const response = NextResponse.json({ status: 'success' }, { status: 200 })
+    response.cookies.set(buildSessionCookie('', 0))
     return response
 }
