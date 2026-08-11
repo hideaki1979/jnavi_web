@@ -17,7 +17,8 @@ export default function StoreMapLoading() {
                 height: { xs: "calc(100vh - 56px)", sm: "calc(100vh - 64px)" },
             }}
         >
-            <Skeleton variant="rectangular" width="100%" height="100%" />
+            {/* 矩形は装飾。読み込み中であることはコンテナのrole/ラベルが伝える */}
+            <Skeleton aria-hidden variant="rectangular" width="100%" height="100%" />
         </Box>
     );
 }

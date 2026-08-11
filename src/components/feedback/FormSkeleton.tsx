@@ -22,11 +22,11 @@ export default function FormSkeleton({ fields = 5 }: FormSkeletonProps) {
             aria-label="読み込み中"
             sx={{ maxWidth: "42rem", mx: "auto", px: { xs: 2, md: 4 }, py: { xs: 4, md: 6 }, width: "100%" }}
         >
-            <Skeleton variant="text" width="40%" sx={{ fontSize: "1.5rem", mb: 4 }} />
+            <Skeleton aria-hidden variant="text" width="40%" sx={{ fontSize: "1.5rem", mb: 4 }} />
             {Array.from({ length: fields }, (_, i) => (
-                <Skeleton key={i} variant="rounded" height={56} sx={{ mb: 3 }} />
+                <Skeleton aria-hidden key={i} variant="rounded" height={56} sx={{ mb: 3 }} />
             ))}
-            <Skeleton variant="rounded" height={48} sx={{ mt: 4 }} />
+            <Skeleton aria-hidden variant="rounded" height={48} sx={{ mt: 4 }} />
         </Box>
     );
 }

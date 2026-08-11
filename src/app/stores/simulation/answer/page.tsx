@@ -50,8 +50,19 @@ export default function AnswerPage() {
               * 読み取り箇所をこの境界の内側に閉じ込めて残りのシェルを守る。
               * fallbackは確定後のTypography(variant="h4")と同じ行高を占め、
               * 差し替え時のレイアウトシフトを避ける。
+              *
+              * MUIのSkeletonは素の<span>でrole/aria-*を一切出力しないため、
+              * そのままでは支援技術に読み込み中であることが伝わらない。
+              * FormSkeleton や map/loading.tsx と同じく、コンテナ側に
+              * role="status"とラベルを置き、矩形自体は装飾として隠す。
               */}
-            <Suspense fallback={<Skeleton variant="text" width="6rem" sx={{ fontSize: "2.125rem", mb: 8 }} />}>
+            <Suspense
+                fallback={
+                    <Box role="status" aria-label="読み込み中">
+                        <Skeleton aria-hidden variant="text" width="6rem" sx={{ fontSize: "2.125rem", mb: 8 }} />
+                    </Box>
+                }
+            >
                 <QuizResult />
             </Suspense>
             <Typography variant="body1" whiteSpace="pre-line" mb={8}>
