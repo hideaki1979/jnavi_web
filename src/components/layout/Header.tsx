@@ -1,7 +1,7 @@
 "use client"
 
 import { useResponsive } from "@/hooks/useResponsive";
-import { signOut } from "@/lib/auth";
+import { signOut, SignOutError } from "@/lib/auth";
 import { useAuthStore } from "@/lib/AuthStore";
 import { useNotification } from "@/lib/notification";
 import { AccountCircle, AddBusiness, Logout, Menu as MenuIcon, PersonAdd, School } from "@mui/icons-material";
@@ -66,10 +66,12 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
      *
      * サーバー側のセッションクッキー破棄とFirebaseのサインアウトを実行し、結果に応じて
      * - 成功時： `/auth/login` にルーターをプッシュし、メニューを閉じる
-     * - 失敗時： ログイン状態を維持したまま、再試行を促す通知を表示
-     *
-     * 失敗時に画面遷移しないのは、セッションクッキーが残ったまま「ログアウトできた」と
-     * 誤解させないため（#80）。
+     * - サーバー側の破棄に失敗（`stage: 'session'`）： ログイン状態を維持したまま、
+     *   再試行を促す通知を表示。セッションクッキーが残ったまま「ログアウトできた」と
+     *   誤解させないため、ここでは画面遷移しない（#80）
+     * - Firebaseのサインアウトに失敗（`stage: 'client'`）： サーバー側は破棄済みで
+     *   再試行しても状況は変わらないため、ログイン画面へ送ったうえで、ブラウザに
+     *   情報が残っていることを警告する
      */
     const handleSignOut = async () => {
         try {
@@ -78,6 +80,14 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
             handleMenuClose()
         } catch (error) {
             console.error(`ログアウト失敗： ${error}`)
+
+            if (error instanceof SignOutError && error.stage === 'client') {
+                showNotification('サーバー側のログアウトは完了しましたが、ブラウザに情報が残っています。共用端末の場合はブラウザを閉じてください。', 'error')
+                router.push(`/auth/login`)
+                handleMenuClose()
+                return
+            }
+
             showNotification('ログアウトに失敗しました。通信環境をご確認のうえ、もう一度お試しください。', 'error')
         }
     }
