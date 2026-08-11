@@ -18,6 +18,7 @@ import { imageTag, storeImagesTag } from "@/app/api/stores.queries";
 import ApiClient from "@/lib/ApiClient";
 import type { ActionResult } from "@/types/actionResult";
 import type { StoreImageEditData, StoreImageUploadData } from "@/types/Image";
+import type { AxiosResponse } from "axios";
 import { updateTag } from "next/cache";
 
 const api = ApiClient.getInstance()
@@ -32,15 +33,13 @@ const api = ApiClient.getInstance()
  */
 
 export const uploadStoreImage = async (storeId: string | number, imageData: StoreImageUploadData, idToken: string) => {
+    let res: AxiosResponse
     try {
-        const res = await api.post(`/stores/${storeId}/images`, imageData, {
+        res = await api.post(`/stores/${storeId}/images`, imageData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        // 画像一覧に新しい画像を即時反映させる
-        updateTag(storeImagesTag(storeId))
-        return { success: true as const, data: res.data }
     } catch (error) {
         return {
             success: false as const,
@@ -50,6 +49,12 @@ export const uploadStoreImage = async (storeId: string | number, imageData: Stor
             )
         }
     }
+
+    // 画像一覧に新しい画像を即時反映させる。
+    // try の外に置くのは、アップロード自体は成功しているのに updateTag の失敗を
+    // 「アップロード失敗」として返してしまうと、利用者が再送信して重複登録するため。
+    updateTag(storeImagesTag(storeId))
+    return { success: true as const, data: res.data }
 }
 
 /**
@@ -63,16 +68,13 @@ export const uploadStoreImage = async (storeId: string | number, imageData: Stor
  */
 
 export const updateStoreImage = async (storeId: string | number, imageId: string | number, imageData: StoreImageUploadData, idToken: string) => {
+    let res: AxiosResponse
     try {
-        const res = await api.put(`/stores/${storeId}/images/${imageId}`, imageData, {
+        res = await api.put(`/stores/${storeId}/images/${imageId}`, imageData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        // 個別画像と、それを含む一覧の両方を無効化する
-        updateTag(imageTag(storeId, imageId))
-        updateTag(storeImagesTag(storeId))
-        return { success: true as const, data: res.data }
     } catch (error) {
         return {
             success: false as const,
@@ -82,6 +84,12 @@ export const updateStoreImage = async (storeId: string | number, imageId: string
             )
         }
     }
+
+    // 個別画像と、それを含む一覧の両方を無効化する。
+    // 更新が成功しているのに「更新失敗」と返すと、利用者が同じ操作を繰り返すため try の外に置く。
+    updateTag(imageTag(storeId, imageId))
+    updateTag(storeImagesTag(storeId))
+    return { success: true as const, data: res.data }
 }
 
 /**
@@ -94,16 +102,13 @@ export const updateStoreImage = async (storeId: string | number, imageId: string
  */
 
 export const deleteStoreImage = async (storeId: string | number, imageId: string | number, idToken: string) => {
+    let res: AxiosResponse
     try {
-        const res = await api.delete(`/stores/${storeId}/images/${imageId}`, {
+        res = await api.delete(`/stores/${storeId}/images/${imageId}`, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        // 削除された画像と、それを含む一覧の両方を無効化する
-        updateTag(imageTag(storeId, imageId))
-        updateTag(storeImagesTag(storeId))
-        return { success: true as const, data: res.data }
     } catch (error) {
         return {
             success: false as const,
@@ -113,6 +118,12 @@ export const deleteStoreImage = async (storeId: string | number, imageId: string
             )
         }
     }
+
+    // 削除された画像と、それを含む一覧の両方を無効化する。
+    // 削除が成功しているのに「削除失敗」と返すと、利用者が消えたはずの画像へ再操作するため try の外に置く。
+    updateTag(imageTag(storeId, imageId))
+    updateTag(storeImagesTag(storeId))
+    return { success: true as const, data: res.data }
 }
 
 /* ------------------------------------------------------------------
