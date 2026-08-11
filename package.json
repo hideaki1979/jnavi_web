@@ -21,8 +21,8 @@
     "@vis.gl/react-google-maps": "^1.5.2",
     "axios": "^1.19.0",
     "browser-image-compression": "^2.0.2",
-    "firebase": "^11.8.1",
-    "firebase-admin": "^13.4.0",
+    "firebase": "^12.17.1",
+    "firebase-admin": "^14.2.0",
     "next": "16.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -33,13 +33,16 @@
     "zustand": "^5.0.4"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
+    "eslint": "^9.39.5",
     "eslint-config-next": "16.3.0",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   }
 }
