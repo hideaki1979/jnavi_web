@@ -12,8 +12,13 @@ interface LoadingErrorContainerProps {
 
 export default function LoadingErrorContainer({ loading, error }: LoadingErrorContainerProps) {
     if (loading) return (
-        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="100vh" >
-            <CircularProgress color="primary" />
+        <Box role="status" display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="100vh" >
+            {/*
+              * `CircularProgress`は`role="progressbar"`を出力するため、アクセシブルな名前が必須。
+              * このコンポーネントは1画面に複数描画されうる（例: 画像ギャラリーと店舗ドロワー）ので、
+              * id参照（`aria-labelledby`）はid重複を招く。ここでは`aria-label`で直接名前を与える。
+              */}
+            <CircularProgress color="primary" aria-label="Loading" />
             <Typography variant="body2" className="mt-4 text-gray-400">Loading...</Typography>
         </Box>
     )

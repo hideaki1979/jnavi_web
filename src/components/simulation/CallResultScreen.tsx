@@ -64,10 +64,15 @@ export function CallResultScreen({ callText, nextHref, nextQuery }: CallResultSc
     if (!isMounted) {
         return (
             <Box
+                role="status"
                 display="flex" flexDirection="column" alignItems="center"
                 justifyContent="center" minHeight="100vh"
             >
-                <CircularProgress />
+                {/*
+                  * 添えるテキストがないため、`role="progressbar"`の名前は
+                  * `aria-label`で直接与える必要がある。
+                  */}
+                <CircularProgress aria-label="読み込み中" />
             </Box>
         )
     }

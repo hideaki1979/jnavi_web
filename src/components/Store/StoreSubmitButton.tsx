@@ -1,4 +1,4 @@
-import { Button, CircularProgress } from "@mui/material";
+import { Button } from "@mui/material";
 
 interface StoreSubmitButtonProps {
     label: string;
@@ -19,12 +19,16 @@ interface StoreSubmitButtonProps {
  * @returns {JSX.Element} Send button component
  */
 export function StoreSubmitButton({ label, loading }: StoreSubmitButtonProps) {
+    // MUIの`loading`propを使う。自前で`{loading ? <CircularProgress/> : label}`と
+    // 差し替えるとローディング中にボタンのアクセシブルな名前まで失われるため。
+    // `loading`はボタンを自動でdisabledにし、内部のスピナーにボタン自身のidを
+    // `aria-labelledby`で参照させる（= ラベルがスピナーの名前になる）。
     return (
         <Button
             variant="contained" type="submit"
-            className="mt-4 w-full font-bold" disabled={loading}
+            className="mt-4 w-full font-bold" loading={loading}
         >
-            {loading ? <CircularProgress size={24} color="inherit" /> : label}
+            {label}
         </Button>
     )
 }
