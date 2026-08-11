@@ -19,6 +19,7 @@ J.Navi は、二郎系ラーメン愛好家のための専門的な店舗情報�
 - **ユーザー登録**: メールアドレスとパスワードによる新規アカウント作成
 - **ログイン**: Firebase Authentication によるセキュアな認証
 - **セッション管理**: HTTP Only クッキーによる永続的なセッション維持
+- **ログアウト**: セッションクッキーの削除とリフレッシュトークンの失効による確実なサインアウト
 - **認証ガード**: 未認証ユーザーの自動リダイレクト
 - **エラーハンドリング**: 認証エラーの適切な表示と処理
 
@@ -125,6 +126,13 @@ sequenceDiagram
     A->>API: POST /api/auth/session
     API-->>A: HTTP Only Cookie 設定
     A->>UI: マップページへリダイレクト
+
+    U->>A: ログアウト
+    A->>API: DELETE /api/auth/session
+    API->>F: リフレッシュトークン失効
+    API-->>A: HTTP Only Cookie 削除
+    A->>F: Firebase Auth サインアウト
+    A->>UI: ログインページへリダイレクト
 
     Note over U,RQ: 2. 店舗管理フロー
     UI->>RQ: useStores()

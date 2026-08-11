@@ -62,7 +62,72 @@ export const createSession = async (idToken: string): Promise<void> => {
     }
 }
 
-// サインアウト
+/** {@link SignOutError} が起きた段階。復帰方法が段階ごとに異なるため区別する */
+export type SignOutFailureStage =
+    /** サーバー側のセッション破棄に失敗。まだログイン状態なので、そのまま再試行できる */
+    | 'session'
+    /** サーバー側は破棄済みだが、Firebaseのサインアウトに失敗。認証の実体は既に失効している */
+    | 'client'
+
+/**
+ * サインアウトのどの段階で失敗したかを呼び出し側へ伝えるエラー。
+ *
+ * ログアウトは「サーバー側のセッション破棄」と「クライアント側のサインアウト」の
+ * 2段階からなり、どちらで失敗したかによって取るべき復帰方法が逆になる。
+ * これを区別しないと、サーバー側の破棄が済んでいるのに「再試行してください」と
+ * 案内してしまい、実態と食い違った説明になる。
+ */
+export class SignOutError extends Error {
+    readonly stage: SignOutFailureStage
+
+    constructor(stage: SignOutFailureStage, message: string, options?: { cause?: unknown }) {
+        super(message, options)
+        this.name = 'SignOutError'
+        this.stage = stage
+    }
+}
+
+/**
+ * サーバーにHttpOnlyのセッションクッキーを破棄させる。
+ *
+ * @throws {SignOutError} 破棄に失敗した場合（`stage: 'session'`）
+ */
+const destroySession = async (): Promise<void> => {
+    let res: Response
+    try {
+        res = await fetch('/api/auth/session', { method: 'DELETE' })
+    } catch (error) {
+        throw new SignOutError('session', 'セッションの破棄に失敗しました。', { cause: error })
+    }
+    if (!res.ok) {
+        throw new SignOutError('session', 'セッションの破棄に失敗しました。')
+    }
+}
+
+/**
+ * サインアウト。
+ *
+ * クライアント側の`firebaseSignOut`だけではHttpOnlyのセッションクッキーが残り、
+ * proxy（src/proxy.ts）が保護ルートへのアクセスを通し続けてしまうため、
+ * 必ずサーバー側のセッション破棄とセットで行う（#80）。
+ *
+ * サーバー側を先に破棄するのは、通信に失敗したときの状態を一貫させるため。
+ * 逆順だと「画面上はログアウト済みなのに保護ルートには入れる」という、
+ * ユーザーからは気付けない状態になる。
+ *
+ * ただし2段階ある以上、サーバー側だけが済んだ中間状態は避けられない。
+ * どちらで失敗したかは{@link SignOutError.stage}で判別できるので、
+ * 呼び出し側はそれに応じた案内を出すこと。
+ *
+ * @throws {SignOutError} いずれかの段階で失敗した場合
+ */
 export const signOut = async (): Promise<void> => {
-    await firebaseSignOut(auth)
+    await destroySession()
+    try {
+        await firebaseSignOut(auth)
+    } catch (error) {
+        // ここに来た時点でサーバー側のセッションは破棄済み。再試行しても
+        // 失効させる対象はもう無いため、呼び出し側には別の案内をさせる。
+        throw new SignOutError('client', 'ブラウザ側のサインアウトに失敗しました。', { cause: error })
+    }
 }

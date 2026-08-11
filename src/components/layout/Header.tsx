@@ -1,11 +1,11 @@
 "use client"
 
 import { useResponsive } from "@/hooks/useResponsive";
+import { signOut, SignOutError } from "@/lib/auth";
 import { useAuthStore } from "@/lib/AuthStore";
-import { auth } from "@/lib/firebase";
+import { useNotification } from "@/lib/notification";
 import { AccountCircle, AddBusiness, Logout, Menu as MenuIcon, PersonAdd, School } from "@mui/icons-material";
 import { AppBar, Box, Button, IconButton, Menu, MenuItem, Toolbar, Typography } from "@mui/material";
-import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
@@ -28,6 +28,7 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
 
     // Zustandから認証状態を取得
     const { isAuthenticated, isLoading } = useAuthStore()
+    const { showNotification } = useNotification()
 
     /**
      * ヘッダーメニューを開くハンドラ
@@ -63,17 +64,31 @@ export function Header({ title = "J-Navi" }: HeaderProps) {
     /**
      * サインアウトハンドラ
      *
-     * Firebase Authenticationのサインアウトを実行し、結果に応じて
+     * サーバー側のセッションクッキー破棄とFirebaseのサインアウトを実行し、結果に応じて
      * - 成功時： `/auth/login` にルーターをプッシュし、メニューを閉じる
-     * - 失敗時： エラーメッセージをコンソールに表示
+     * - サーバー側の破棄に失敗（`stage: 'session'`）： ログイン状態を維持したまま、
+     *   再試行を促す通知を表示。セッションクッキーが残ったまま「ログアウトできた」と
+     *   誤解させないため、ここでは画面遷移しない（#80）
+     * - Firebaseのサインアウトに失敗（`stage: 'client'`）： サーバー側は破棄済みで
+     *   再試行しても状況は変わらないため、ログイン画面へ送ったうえで、ブラウザに
+     *   情報が残っていることを警告する
      */
     const handleSignOut = async () => {
         try {
-            await signOut(auth)
+            await signOut()
             router.push(`/auth/login`)
             handleMenuClose()
         } catch (error) {
             console.error(`ログアウト失敗： ${error}`)
+
+            if (error instanceof SignOutError && error.stage === 'client') {
+                showNotification('サーバー側のログアウトは完了しましたが、ブラウザに情報が残っています。共用端末の場合はブラウザを閉じてください。', 'error')
+                router.push(`/auth/login`)
+                handleMenuClose()
+                return
+            }
+
+            showNotification('ログアウトに失敗しました。通信環境をご確認のうえ、もう一度お試しください。', 'error')
         }
     }
 
