@@ -21,6 +21,35 @@ function redirectToLogin(request: NextRequest, errorCode?: 'session_expired' | '
  * - なし：未ログイン（セッションCookieなし）。想定内のため理由を出しません
  *
  * これらのクエリパラメータは`useAuthRedirect`（src/hooks/useAuthRedirect.ts）で読み取られます。
+ *
+ * ## このゲートの位置づけ：UX上のリダイレクトであり、セキュリティ制御ではない
+ *
+ * ここでの認証チェックは「未ログインのまま保護ページを開かせない」ためのものであり、
+ * 書き込み操作に対する防御にはなっていない。下記`config.matcher`を増やしても変わらない。
+ *
+ * 書き込みは Server Action（src/app/api/stores.ts・images.ts・user.ts）経由で行われる。
+ * Server Action は公開POSTエンドポイントであり、そのアクションIDは
+ * StoreForm.tsx 等のクライアントコンポーネント → src/hooks/api/useStores.ts という
+ * import 経路でクライアントバンドルに載る。`matcher`はページパスのみを対象とするため、
+ * matcher 外のパスへ同じアクションIDをPOSTすれば、このゲートは素通りできる。
+ *
+ * それでも現状これが実害にならないのは、書き込みActionが受け取った idToken を
+ * バックエンドAPIへ転送し、バックエンド側の`authenticateUser`が
+ * Firebase Admin SDK の`auth.verifyIdToken()`で検証しているため
+ * （nodejsdeploytest: src/middlewares/authMiddleware.ts）。
+ * つまり認可の実体はバックエンドにあり、このリポジトリには無い。
+ *
+ * したがって、バックエンドAPIを経由せずデータに触る Server Action（DB直・Storage直など）を
+ * 新設した場合、それは初日から無認証になる。その種のActionを追加するときは、
+ * Action内で必ず自前の認証チェックを行うこと。
+ *
+ * なお`session`クッキーと idToken は互いに独立した資格情報であり、書き込みActionは
+ * `session`クッキーを一切参照していない。この非対称性は失効時にも現れる。
+ * ログアウト（DELETE /api/auth/session）は`revokeRefreshTokens`を呼び、
+ * `verifySessionCookie(cookie, true)`が失効を尊重する（#80）一方で、
+ * バックエンドの`verifyIdToken()`は`checkRevoked`を指定していないため、
+ * 発行済みIDトークンはログアウト後も最大1時間有効なまま
+ * （nodejsdeploytest#42 で追跡中）。
  */
 export async function proxy(request: NextRequest) {
     const session = request.cookies.get('session')?.value
