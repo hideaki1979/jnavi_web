@@ -1,11 +1,13 @@
 @layer theme, base, mui, components, utilities;
 
 @import "tailwindcss";
-@import '@fontsource/roboto/300.css';
-@import '@fontsource/roboto/400.css';
-@import '@fontsource/roboto/500.css';
-@import '@fontsource/roboto/700.css';
 
+/*
+ * Roboto は `next/font/google`（src/app/layout.tsx）で読み込む。
+ * 実効フォントは body の `roboto.className`（詳細度 0,1,0）で決まるため、
+ * @fontsource 版を併読しても下の `body` セレクタ（詳細度 0,0,1）には勝てず、
+ * CSS とフォントファイルを二重にロードするだけだった。
+ */
 
 :root {
   --background: #ffffff;

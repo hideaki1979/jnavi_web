@@ -268,7 +268,9 @@ graph TB
 
 ### 前提条件
 
-- Node.js (v22 以上 / firebase-admin 14 系の要件)
+- Node.js (v22 以上 / firebase-admin 14 系の要件。Next.js 16 自体の要件は v20.9 以上)
+  - リポジトリ直下の `.nvmrc` は `24` を指定しています。`nvm use` で切り替えられます
+  - `package.json` の `engines.node` は `>=22`
 - npm / yarn / pnpm
 - Firebase プロジェクトの設定
 
@@ -363,9 +365,15 @@ npm run build
 # 本番サーバー起動
 npm start
 
-# リンター実行
+# リンター実行（中身は eslint。Next.js 16 で `next lint` は削除された）
 npm run lint
+
+# 型チェック
+npx tsc --noEmit
 ```
+
+> Next.js 16 では `next build` が lint を実行しなくなりました。
+> ビルドが通っても lint エラーは検出されないため、`npm run lint` を明示的に実行してください。
 
 ## ディレクトリ構造
 
