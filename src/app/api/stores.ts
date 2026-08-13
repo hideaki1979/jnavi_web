@@ -35,7 +35,8 @@ import {
 } from "@/app/api/stores.queries";
 import ApiClient from "@/lib/ApiClient";
 import type { ActionResult } from "@/types/actionResult";
-import type { FormattedToppingOptionNameStoreData, SimulationSelectStoresData, SimulationSelectToppingCallsData, StoreCloseApiRes, StoreImageDownloadData, StoreInput } from "@/types/Store";
+import type { ApiMessageEnvelope } from "@/types/api";
+import type { FormattedToppingOptionNameStoreData, SimulationSelectStoresData, SimulationSelectToppingCallsData, StoreImageDownloadData, StoreInput } from "@/types/Store";
 import { updateTag } from "next/cache";
 
 const api = ApiClient.getInstance()
@@ -119,24 +120,35 @@ export const updateStore = async (
 }
 
 /**
- * 店舗の閉店処理を行うAPI関数
+ * 店舗の閉店処理を行うAPI関数。
+ * - 閉店APIにPATCHリクエストを送信
+ * - 成功時にはAPIレスポンスのメッセージを返す
+ * - エラー時にはエラー情報を持つ失敗結果を返す
+ *
+ * レスポンスの`data`には閉店後の店舗行（storesテーブルの全スカラーカラム）が
+ * 入るが、呼び出し側はメッセージしか使わないため`ApiMessageEnvelope`で受ける。
+ * バックエンドが`prisma.store.update()`の戻り値をselectなしで返す実装のため、
+ * 将来のカラム追加がそのままレスポンスに現れる。その形をフロント側の型として
+ * 固定すると内部カラムを引き込むことになるので、あえて`data`を見ない
+ * （形状は#86で確認済み。createStore・updateStoreとも同じ戻り値の形になる）。
+ *
  * @param id 閉店する店舗のID
  * @param storeName 閉店する店舗の店舗名（指定されていない場合は空文字列）
  * @param idToken 認証用IDトークン
- * @returns 閉店結果のAPIレスポンスを含む処理結果
+ * @returns APIレスポンスのメッセージを含む処理結果
  */
 
-export const storeClose = async (id: string, storeName: string, idToken: string): Promise<ActionResult<StoreCloseApiRes>> => {
-    let data: StoreCloseApiRes
+export const storeClose = async (id: string, storeName: string, idToken: string): Promise<ActionResult<string>> => {
+    let message: string
     try {
-        const res = await api.patch(`/stores/${id}/close`, {
+        const res = await api.patch<ApiMessageEnvelope>(`/stores/${id}/close`, {
             storeName: storeName
         }, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        data = res.data
+        message = res.data.message
     } catch (error) {
         return {
             success: false,
@@ -150,7 +162,7 @@ export const storeClose = async (id: string, storeName: string, idToken: string)
     // 閉店により一覧・マップから消えるため両方を無効化する
     updateTag(storeTag(id))
     updateTag(STORES_TAG)
-    return { success: true, data }
+    return { success: true, data: message }
 }
 
 /* ------------------------------------------------------------------

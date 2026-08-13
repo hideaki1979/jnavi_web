@@ -32,6 +32,11 @@
  *
  * 主な用途は書き込み系（登録・更新・削除）で、成功メッセージだけを
  * トースト表示に使うケース。
+ * `api.patch<ApiMessageEnvelope>(...)` として `res.data.message` を取り出す
+ * （実例は app/api/stores.ts の storeClose）。
+ *
+ * `data` の中身がバックエンドの内部表現に近い場合（Prismaの行をそのまま返す等）、
+ * 使わない本体をフロントの型として固定しないためにも有効。
  */
 export interface ApiMessageEnvelope {
     /** 成功時は必ず true。エラー時のボディはこの型では表現しない */
