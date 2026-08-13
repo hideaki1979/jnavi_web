@@ -94,6 +94,10 @@ export const getMapAll = async (): Promise<ActionResult<MapData[]>> => {
 
 /**
  * 店舗画像情報を取得する。
+ *
+ * 該当画像が0件のときも`data`には空配列が入り、`data`自体が欠けることはない
+ * （バックエンド実装で確認済み）。このためフォールバックは置いていない。
+ *
  * @param storeId 店舗ID
  * @returns 店舗画像情報を含む処理結果
  */
@@ -102,9 +106,9 @@ export const getStoreImages = async (storeId: string): Promise<ActionResult<Stor
     cacheTag(storeImagesTag(storeId))
 
     try {
-        const res = await api.get(`/stores/${storeId}/images`)
+        const res = await api.get<ApiEnvelope<StoreImageDownloadData[]>>(`/stores/${storeId}/images`)
         cacheLife("hours")
-        return { success: true, data: res.data.data || [] }
+        return { success: true, data: res.data.data }
     } catch (error) {
         // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
         cacheLife("seconds")
@@ -127,7 +131,7 @@ export const getStoreAll = async (): Promise<ActionResult<SimulationSelectStores
     cacheTag(STORES_TAG)
 
     try {
-        const res = await api.get("/stores")
+        const res = await api.get<ApiEnvelope<SimulationSelectStoresData[]>>("/stores")
         cacheLife("hours")
         return { success: true, data: res.data.data }
     } catch (error) {
@@ -154,7 +158,7 @@ export const getStoreToppingCalls = async (id: string, call_timing: string): Pro
     cacheTag(storeTag(id))
 
     try {
-        const res = await api.get(`/stores/${id}/toppingCalls`, {
+        const res = await api.get<ApiEnvelope<SimulationSelectToppingCallsData>>(`/stores/${id}/toppingCalls`, {
             params: {
                 call_timing
             }
@@ -184,7 +188,7 @@ export const getStoreById = async (id: string): Promise<ActionResult<FormattedTo
     cacheTag(storeTag(id))
 
     try {
-        const res = await api.get(`/stores/${id}`)
+        const res = await api.get<ApiEnvelope<FormattedToppingOptionNameStoreData>>(`/stores/${id}`)
         cacheLife("hours")
         return { success: true, data: res.data.data }
     } catch (error) {
