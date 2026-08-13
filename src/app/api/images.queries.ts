@@ -7,7 +7,11 @@
  *
  * エラー時に例外を throw せず、`ActionResult` として結果を返す。
  * 受け取り側は `unwrapActionResult()` で値の取り出し／例外化を行う。
+ *
+ * サーバー専用であることを`server-only`で明示する。
+ * 理由（穴を塞ぐためではなく意図の固定）は stores.queries.ts のコメントを参照（#94）。
  */
+import 'server-only'
 
 import { imageTag } from "@/app/api/stores.queries"
 import ApiClient from "@/lib/ApiClient"

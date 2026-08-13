@@ -22,7 +22,23 @@
  * （/stores/map など）では、バックエンド復旧後もページが落ち続けることになる。
  * `cacheLife`は1回の呼び出しにつき1回だけ実行されればよく、
  * 制御フローの分岐ごとに呼び分けてよい。
+ *
+ * このファイルはサーバー専用（サーバーコンポーネントからの直接 import 用）なので
+ * `import 'server-only'`で意図を固定する。
+ *
+ * ガードが無くてもクライアントからの import は現状すでにビルドが落ちる。
+ * 関数内に直接書いた`"use cache"`はクライアントコンポーネントで禁止されており、
+ * `cacheLife`/`cacheTag`の import も同様にエラーになるため（実測で確認）。
+ * それでも`server-only`を置くのは、
+ * 1. 「サーバー専用」という意図がファイル先頭で読み取れること
+ * 2. 最も分かりやすいエラーメッセージ（'server-only' cannot be imported from
+ *    a Client Component module）が出ること
+ * 3. 将来`"use cache"`をファイル先頭に移すと、クライアントからの import は
+ *    仕様上許されるようになる（Next.js の use-cache ドキュメント参照）。
+ *    そのときに守りが消えないようにするため
+ * が理由。#90 の firebaseAdmin.ts と違い、塞ぐべき穴があったわけではない。
  */
+import 'server-only'
 
 import ApiClient from "@/lib/ApiClient"
 import type { ActionResult } from "@/types/actionResult"

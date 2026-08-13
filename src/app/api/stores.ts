@@ -8,6 +8,10 @@
  * サーバーコンポーネントは stores.queries.ts を直接 import すればよい。
  * ラッパ経由でもキャッシュ済みの結果が返るため、両者は同じキャッシュを共有する。
  *
+ * ラッパは「クライアントから実際に呼ばれるもの」だけを置く。`"use server"`ファイルの
+ * export はクライアントから参照された時点で公開POSTエンドポイントとして登録されるため、
+ * 使われないラッパを置くと公開面が増えるだけになる（#94 で`getMapAll`を削除した）。
+ *
  * 書き込み後は`updateTag`で該当タグを無効化し、自アプリからの更新を即時反映させる
  * （read-your-own-writes）。`updateTag`は Server Action からのみ呼べるため、
  * 無効化の判断はこのファイルが担う。
@@ -23,7 +27,6 @@
 
 import {
     STORES_TAG,
-    getMapAll as getMapAllCached,
     getStoreAll as getStoreAllCached,
     getStoreById as getStoreByIdCached,
     getStoreImages as getStoreImagesCached,
@@ -32,7 +35,7 @@ import {
 } from "@/app/api/stores.queries";
 import ApiClient from "@/lib/ApiClient";
 import type { ActionResult } from "@/types/actionResult";
-import type { FormattedToppingOptionNameStoreData, MapData, SimulationSelectStoresData, SimulationSelectToppingCallsData, StoreCloseApiRes, StoreImageDownloadData, StoreInput } from "@/types/Store";
+import type { FormattedToppingOptionNameStoreData, SimulationSelectStoresData, SimulationSelectToppingCallsData, StoreCloseApiRes, StoreImageDownloadData, StoreInput } from "@/types/Store";
 import { updateTag } from "next/cache";
 
 const api = ApiClient.getInstance()
@@ -154,14 +157,6 @@ export const storeClose = async (id: string, storeName: string, idToken: string)
  * 以下は読み取りのラッパ。
  * 実体と`use cache`は stores.queries.ts 側にある。
  * ------------------------------------------------------------------ */
-
-/**
- * マップ情報を全て取得する（クライアントからの入口）。
- * @returns マップ情報を含む処理結果
- */
-export const getMapAll = async (): Promise<ActionResult<MapData[]>> => {
-    return getMapAllCached()
-}
 
 /**
  * 店舗画像情報を取得する（クライアントからの入口）。
