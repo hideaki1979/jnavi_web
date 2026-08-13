@@ -13,6 +13,7 @@ import 'server-only'
 import { API_ENDPOINTS } from "@/constants/apiEndpoints"
 import ApiClient from "@/lib/ApiClient"
 import type { ActionResult } from "@/types/actionResult"
+import type { ApiEnvelope } from "@/types/api"
 import type { ToppingOptionMap } from "@/types/ToppingCall"
 import { cacheLife, cacheTag } from "next/cache"
 
@@ -39,7 +40,7 @@ export const getToppingCallOptions = async (): Promise<ActionResult<ToppingOptio
     cacheTag(TOPPING_CALL_OPTIONS_TAG)
 
     try {
-        const res = await api.get(API_ENDPOINTS.TOPPING_CALL_OPTIONS_FORMATTED)
+        const res = await api.get<ApiEnvelope<ToppingOptionMap>>(API_ENDPOINTS.TOPPING_CALL_OPTIONS_FORMATTED)
         cacheLife("days")
         return { success: true, data: res.data.data }
     } catch (error) {
