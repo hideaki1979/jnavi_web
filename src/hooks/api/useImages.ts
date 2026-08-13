@@ -1,4 +1,4 @@
-import { deleteStoreImage, getImageById, updateStoreImage, uploadStoreImage } from "@/app/api/images"
+import { deleteStoreImage, updateStoreImage, uploadStoreImage } from "@/app/api/images"
 import { getStoreImages, getStoreToppingCalls } from "@/app/api/stores"
 import { useNotification } from "@/lib/notification"
 import { getCurrentUserIdToken } from "@/lib/authToken"
@@ -24,19 +24,6 @@ export const useStoreImages = (storeId: string, enabled: boolean = true) => {
         queryKey: imageKeys.store(storeId),
         queryFn: async () => unwrapActionResult(await getStoreImages(storeId)),
         enabled: !!storeId && enabled
-    })
-}
-
-/**
- * 指定された画像の詳細情報を取得する
- * @param storeId 店舗ID
- * @param imageId 画像ID
- */
-export const useStoreImage = (storeId: string, imageId: string) => {
-    return useQuery({
-        queryKey: imageKeys.detail(storeId, imageId),
-        queryFn: async () => unwrapActionResult(await getImageById(storeId, imageId)),
-        enabled: !!storeId && !!imageId
     })
 }
 

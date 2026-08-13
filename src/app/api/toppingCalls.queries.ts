@@ -1,13 +1,14 @@
 /**
  * トッピングコールオプションの読み取り。
  *
- * `"use server"`ファイル（toppingCalls.ts）とは分離している。
- * 1つのファイルに`"use server"`と`"use cache"`は同居できないため。
- * 書き込み・および従来通りクライアントから呼ばれる入口は toppingCalls.ts 側に残し、
- * そちらはこのファイルの関数を呼ぶ薄いラッパとする。
- * これによりサーバーコンポーネントも react-query 経由のクライアントも
- * 同じキャッシュを共有できる。
+ * 呼び出し元はサーバーコンポーネント（/stores/create、/stores/[id]/edit）のみ。
+ * かつては`"use server"`ラッパ（toppingCalls.ts）経由でクライアントからも
+ * 呼べるようにしていたが、そのフックが未使用だったためラッパごと削除した（#94）。
+ *
+ * サーバー専用であることを`server-only`で明示する。
+ * 理由（穴を塞ぐためではなく意図の固定）は stores.queries.ts のコメントを参照。
  */
+import 'server-only'
 
 import { API_ENDPOINTS } from "@/constants/apiEndpoints"
 import ApiClient from "@/lib/ApiClient"

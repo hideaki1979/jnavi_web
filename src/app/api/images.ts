@@ -1,7 +1,8 @@
 /**
  * 店舗画像関連の Server Action。
- * - 画像のアップロード・更新・削除（書き込み）
- * - 読み取りは images.queries.ts の`"use cache"`付き関数へ委譲するラッパ
+ * - 画像のアップロード・更新・削除（書き込み）のみを扱う
+ * - 読み取りは images.queries.ts の`"use cache"`付き関数を直接 import する
+ *   （サーバーコンポーネント専用。クライアント向けラッパは未使用のため #94 で削除した）
  *
  * 分離の意図と全体構成は stores.ts / stores.queries.ts のコメントを参照。
  * 書き込み後は`updateTag`で該当タグを無効化し、自アプリからの更新を即時反映させる。
@@ -13,11 +14,9 @@
  */
 "use server"
 
-import { getImageById as getImageByIdCached } from "@/app/api/images.queries";
 import { imageTag, storeImagesTag } from "@/app/api/stores.queries";
 import ApiClient from "@/lib/ApiClient";
-import type { ActionResult } from "@/types/actionResult";
-import type { StoreImageEditData, StoreImageUploadData } from "@/types/Image";
+import type { StoreImageUploadData } from "@/types/Image";
 import type { AxiosResponse } from "axios";
 import { updateTag } from "next/cache";
 
@@ -126,17 +125,3 @@ export const deleteStoreImage = async (storeId: string | number, imageId: string
     return { success: true as const, data: res.data }
 }
 
-/* ------------------------------------------------------------------
- * 以下は読み取りのラッパ。
- * 実体と`use cache`は images.queries.ts 側にある。
- * ------------------------------------------------------------------ */
-
-/**
- * 店舗IDと画像IDを指定して画像情報を取得する（クライアントからの入口）。
- * @param storeId 店舗ID
- * @param imageId 画像ID
- * @returns 画像情報を含む処理結果
- */
-export const getImageById = async (storeId: string | number, imageId: string | number): Promise<ActionResult<StoreImageEditData>> => {
-    return getImageByIdCached(storeId, imageId)
-}

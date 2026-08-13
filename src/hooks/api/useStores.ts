@@ -1,4 +1,4 @@
-import { createStore, getMapAll, getStoreAll, getStoreById, storeClose, updateStore } from "@/app/api/stores"
+import { createStore, getStoreAll, getStoreById, storeClose, updateStore } from "@/app/api/stores"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { StoreInput } from "@/types/Store"
 import { useNotification } from "@/lib/notification"
@@ -24,16 +24,6 @@ export const useAllStores = () => {
     return useQuery({
         queryKey: storeKeys.list,
         queryFn: async () => unwrapActionResult(await getStoreAll())
-    })
-}
-
-/**
- * マップに表示する全店舗情報を取得する
- */
-export const useStoresForMap = () => {
-    return useQuery({
-        queryKey: storeKeys.maps,
-        queryFn: async () => unwrapActionResult(await getMapAll())
     })
 }
 
