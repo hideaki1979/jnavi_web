@@ -143,7 +143,8 @@ export const useCloseStore = () => {
             const idToken = await getCurrentUserIdToken()
             return unwrapActionResult(await storeClose(id, storeName, idToken))
         },
-        onSuccess: async (data, { id }) => {
+        // 成功メッセージは呼び出し側（StoreCloseActionsPanel）が独自に組み立てるため使わない
+        onSuccess: async (_, { id }) => {
             // 店舗関連のキャッシュをすべて無効化
             await queryClient.invalidateQueries({ queryKey: storeKeys.detail(id) })
             await queryClient.invalidateQueries({ queryKey: storeKeys.all })

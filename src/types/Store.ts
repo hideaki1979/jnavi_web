@@ -104,8 +104,4 @@ export interface FormattedToppingOptionNameStoreData {
     postCallFormattedIds: FormattedToppingOptionIds;
 }
 
-// 閉店処理（PATCH /stores/:id/close）のレスポンス型はここに置かない。
-// 呼び出し側（app/api/stores.ts の storeClose）が `message` しか使わないため、
-// `ApiMessageEnvelope`（@/types/api）で受けている。詳細はそちらのJSDocを参照。
-
 export type ResultDialogType = "success" | "error" | "warning"

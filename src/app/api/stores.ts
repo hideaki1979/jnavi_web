@@ -122,15 +122,8 @@ export const updateStore = async (
 /**
  * 店舗の閉店処理を行うAPI関数。
  * - 閉店APIにPATCHリクエストを送信
- * - 成功時にはAPIレスポンスのメッセージを返す
+ * - レスポンス本体（`data`）は使わず、APIレスポンスのメッセージのみを返す
  * - エラー時にはエラー情報を持つ失敗結果を返す
- *
- * レスポンスの`data`には閉店後の店舗行（storesテーブルの全スカラーカラム）が
- * 入るが、呼び出し側はメッセージしか使わないため`ApiMessageEnvelope`で受ける。
- * バックエンドが`prisma.store.update()`の戻り値をselectなしで返す実装のため、
- * 将来のカラム追加がそのままレスポンスに現れる。その形をフロント側の型として
- * 固定すると内部カラムを引き込むことになるので、あえて`data`を見ない
- * （形状は#86で確認済み。createStore・updateStoreとも同じ戻り値の形になる）。
  *
  * @param id 閉店する店舗のID
  * @param storeName 閉店する店舗の店舗名（指定されていない場合は空文字列）
@@ -142,7 +135,7 @@ export const storeClose = async (id: string, storeName: string, idToken: string)
     let message: string
     try {
         const res = await api.patch<ApiMessageEnvelope>(`/stores/${id}/close`, {
-            storeName: storeName
+            storeName
         }, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
