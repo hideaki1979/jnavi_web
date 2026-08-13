@@ -18,67 +18,6 @@ export interface StoreInput {
     topping_calls: BaseToppingCall[]
 }
 
-/**
- * 店舗登録画面の型定義（店舗情報+店舗別トッピングコール情報）
- */
-export interface ApiStoreData {
-    id: string | number;
-    store_name: string;
-    branch_name?: string;
-    address: string;
-    business_hours: string;
-    regular_holidays: string;
-    prior_meal_voucher: boolean;
-    is_all_increased: boolean;
-    is_lot: boolean;
-    topping_detail?: string;
-    call_details?: string;
-    lot_details?: string;
-    created_at?: string;
-    updated_at?: string;
-    store_topping_calls?: StoreToppingCall[];
-    is_close?: boolean;
-}
-
-/**
- * 店舗登録画面APIレスポンスの型定義
- * （サーバから正式に返ってくる値（maps、ステータス、メッセージ））
- */
-export interface StoreApiResponse {
-    data: {
-        store: ApiStoreData;
-        map: {
-            id: string | number;
-            store_id: string | number;
-            latitude: string;
-            longitude: string;
-            created_at: string;
-            updated_at: string;
-        }
-    };
-    message: string;
-    status: string;
-}
-
-// トッピング情報の型定義
-export interface StoreToppingCall extends BaseToppingCall {
-    store_id: string | number;
-    topping: {
-        id: string | number;
-        topping_category: number;
-        topping_name: string;
-    };
-    call_option: {
-        id: string | number;
-        call_category: number;
-        call_option_name: string;
-    };
-    noodle_type: {
-        id: string | number;
-        noodle_type_name: string;
-    };
-}
-
 // マップデータの型定義
 // 店舗情報
 export interface MapStore {
@@ -97,12 +36,9 @@ export interface MapData {
     store: MapStore;
 }
 
-// MAP情報取得APIレスポンスの型定義
-export interface MapApiResponse {
-    status: string;
-    message: string;
-    data: MapData[];
-}
+// MAP情報取得APIレスポンスの型は ApiEnvelope<MapData[]>（@/types/api）に統合した。
+// 旧 MapApiResponse は `status: string` を宣言していたが、バックエンドが返すのは
+// `success: true` であり、実装と一致していなかったため削除している。
 
 // 画像ダウンロード用の画像情報データ型
 export interface StoreImageDownloadData {
@@ -166,13 +102,6 @@ export interface FormattedToppingOptionNameStoreData {
     // （トッピング・オプション）整形済IDリスト
     preCallFormattedIds: FormattedToppingOptionIds;
     postCallFormattedIds: FormattedToppingOptionIds;
-}
-
-// 閉店処理APIレスポンス情報
-export interface StoreCloseApiRes {
-    data: boolean;
-    status: string;
-    message: string;
 }
 
 export type ResultDialogType = "success" | "error" | "warning"

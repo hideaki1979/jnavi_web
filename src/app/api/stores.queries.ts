@@ -42,9 +42,9 @@ import 'server-only'
 
 import ApiClient from "@/lib/ApiClient"
 import type { ActionResult } from "@/types/actionResult"
+import type { ApiEnvelope } from "@/types/api"
 import type {
     FormattedToppingOptionNameStoreData,
-    MapApiResponse,
     MapData,
     SimulationSelectStoresData,
     SimulationSelectToppingCallsData,
@@ -76,7 +76,7 @@ export const getMapAll = async (): Promise<ActionResult<MapData[]>> => {
     cacheTag(STORES_TAG)
 
     try {
-        const res = await api.get<MapApiResponse>('/maps')
+        const res = await api.get<ApiEnvelope<MapData[]>>('/maps')
         cacheLife("hours")
         return { success: true, data: res.data.data }
     } catch (error) {
