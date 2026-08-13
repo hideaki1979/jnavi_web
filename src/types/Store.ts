@@ -1,3 +1,4 @@
+import { ApiEnvelope } from "./api";
 import { BaseToppingCall, FormattedToppingOptionIds, FormattedToppingOptionNames, SimulationToppingOption } from "./ToppingCall";
 
 // 店舗登録フォーム画面用の型
@@ -97,12 +98,9 @@ export interface MapData {
     store: MapStore;
 }
 
-// MAP情報取得APIレスポンスの型定義
-export interface MapApiResponse {
-    status: string;
-    message: string;
-    data: MapData[];
-}
+// MAP情報取得APIレスポンスの型は ApiEnvelope<MapData[]>（@/types/api）に統合した。
+// 旧 MapApiResponse は `status: string` を宣言していたが、バックエンドが返すのは
+// `success: true` であり、実装と一致していなかったため削除している。
 
 // 画像ダウンロード用の画像情報データ型
 export interface StoreImageDownloadData {
@@ -168,11 +166,41 @@ export interface FormattedToppingOptionNameStoreData {
     postCallFormattedIds: FormattedToppingOptionIds;
 }
 
-// 閉店処理APIレスポンス情報
-export interface StoreCloseApiRes {
-    data: boolean;
-    status: string;
-    message: string;
+/**
+ * 閉店処理（PATCH /stores/:id/close）が返す店舗情報。
+ *
+ * バックエンドは `prisma.store.update()` の戻り値を select なしでそのまま返すため、
+ * 中身は stores テーブルの全スカラーカラムになる（リレーションは含まれない）。
+ * `id` は BigInt だが `BigInt.prototype.toJSON` の拡張によりJSON上は文字列で届く。
+ */
+export interface ClosedStoreData {
+    id: string;
+    /** 閉店処理により「【閉店】」が前置された店舗名 */
+    store_name: string;
+    branch_name: string | null;
+    address: string;
+    business_hours: string;
+    regular_holidays: string;
+    prior_meal_voucher: boolean;
+    topping_details: string | null;
+    call_details: string | null;
+    is_all_increased: boolean;
+    is_lot: boolean;
+    lot_detail: string | null;
+    /** 閉店処理後は常に true */
+    is_close: boolean;
+    created_at: string;
+    updated_at: string;
 }
+
+/**
+ * 閉店処理APIレスポンス情報。
+ *
+ * 旧定義は `{ data: boolean; status: string; message: string }` だったが、
+ * 実際のレスポンスは `status` を持たず、`data` も boolean ではなく
+ * 閉店後の店舗行そのものだったため、確認した形状に合わせて再定義している。
+ * （Issue #86 が想定した `ApiEnvelope<boolean>` への置き換えは成立しない）
+ */
+export type StoreCloseApiRes = ApiEnvelope<ClosedStoreData>
 
 export type ResultDialogType = "success" | "error" | "warning"
