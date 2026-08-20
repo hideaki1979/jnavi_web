@@ -13,6 +13,7 @@
     "test:e2e": "npm run test:e2e:dev && npm run test:e2e:prod",
     "test:e2e:dev": "E2E_MODE=dev playwright test",
     "test:e2e:prod": "E2E_MODE=prod playwright test",
+    "test:e2e:mock": "E2E_USE_MOCK_API=1 npm run test:e2e",
     "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
@@ -38,6 +39,7 @@
     "zustand": "^5.0.4"
   },
   "devDependencies": {
+    "@next/env": "^16.3.0",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24.13.3",

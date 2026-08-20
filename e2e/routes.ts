@@ -21,6 +21,15 @@ export interface SmokeRoute {
     description: string
 }
 
+/**
+ * 店舗IDに依存するルートで使うID。
+ *
+ * 実バックエンドのDBに何が入っているかは環境によって違うため、
+ * e2e/global-setup.ts が `GET /stores` の先頭の店舗IDをここへ渡す。
+ * 決め打ちにすると「APIが404を返す状態」を検証してしまい、意味を成さない。
+ */
+const storeId = process.env.E2E_STORE_ID ?? '1'
+
 export const SMOKE_ROUTES: SmokeRoute[] = [
     {
         name: 'top',
@@ -51,18 +60,18 @@ export const SMOKE_ROUTES: SmokeRoute[] = [
         // `?id=` が無いと `useStoreToppingCalls` の `enabled` が false になり
         // API を呼ばないまま空の選択UIになるため、店舗IDを与えて実際に叩かせる
         name: 'simulation-precall',
-        path: '/stores/simulation/precall?id=1',
-        description: '事前コール。GET /stores/1/toppingCalls?call_timing=pre_call を呼ぶ'
+        path: `/stores/simulation/precall?id=${storeId}`,
+        description: '事前コール。GET /stores/{id}/toppingCalls?call_timing=pre_call を呼ぶ'
     },
     {
         name: 'simulation-precall-result',
-        path: '/stores/simulation/precall-result?callText=%E3%83%A4%E3%82%B5%E3%82%A4%E3%83%9E%E3%82%B7&id=1',
+        path: `/stores/simulation/precall-result?callText=%E3%83%A4%E3%82%B5%E3%82%A4%E3%83%9E%E3%82%B7&id=${storeId}`,
         description: '事前コール結果。`callText` の表示と音声合成UIの初期表示'
     },
     {
         name: 'simulation-postcall',
-        path: '/stores/simulation/postcall?id=1',
-        description: '着丼前コール。GET /stores/1/toppingCalls?call_timing=post_call を呼ぶ'
+        path: `/stores/simulation/postcall?id=${storeId}`,
+        description: '着丼前コール。GET /stores/{id}/toppingCalls?call_timing=post_call を呼ぶ'
     },
     {
         name: 'simulation-postcall-result',
