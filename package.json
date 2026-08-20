@@ -9,7 +9,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:e2e": "npm run test:e2e:dev && npm run test:e2e:prod",
+    "test:e2e:dev": "E2E_MODE=dev playwright test",
+    "test:e2e:prod": "E2E_MODE=prod playwright test",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -34,6 +38,7 @@
     "zustand": "^5.0.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",

@@ -370,10 +370,88 @@ npm run lint
 
 # 型チェック
 npx tsc --noEmit
+
+# スモークテスト（dev と本番ビルドの両構成を順に実行）
+npm run test:e2e
 ```
 
 > Next.js 16 では `next build` が lint を実行しなくなりました。
 > ビルドが通っても lint エラーは検出されないため、`npm run lint` を明示的に実行してください。
+
+## スモークテスト（Playwright）
+
+主要ページが開いて、コンソールにエラーが出ないことを機械的に確認するテストです。
+E2E の網羅ではなく、**Next.js / React / MUI のような描画の根幹に関わる依存を更新したときに、
+ビルドと型チェックが通っても実行時に壊れていないか**を確かめるのが目的です。
+
+### 実行方法
+
+初回のみ、Playwright が使うブラウザを取得します。
+
+```bash
+npx playwright install chromium
+```
+
+```bash
+# dev（Turbopack）構成で実行
+npm run test:e2e:dev
+
+# 本番ビルド（next build + next start）構成で実行
+npm run test:e2e:prod
+
+# 両構成を順に実行
+npm run test:e2e
+
+# 直近の実行結果を HTML レポートで見る（スクリーンショット付き）
+npm run test:e2e:report
+```
+
+**dev と本番ビルドは別実装なので、両方で回してください。** 片方だけでは不十分です。
+実際に dev では素通りする hydration 不一致が、本番ビルドでのみ
+`Minified React error #418` として現れるケースがあります（逆も同様）。
+
+Next.js サーバーとスタブ API は Playwright が自動で起動・停止するため、
+事前に `npm run dev` を立ち上げておく必要はありません。
+使用ポートは dev が `3100`、本番ビルドが `3200`、スタブ API が `3300` です
+（`E2E_APP_PORT` / `E2E_MOCK_API_PORT` で変更可能）。
+
+### 何を検出するか
+
+| 種別 | 扱い |
+| --- | --- |
+| hydration 不一致 | 常に失敗。許容リストの対象外 |
+| `console.error` / `console.warn` | 許容リストに無ければ失敗 |
+| 未捕捉例外（`pageerror`） | 許容リストに無ければ失敗 |
+| HTTP ステータス 400 以上 | 失敗。真っ白なエラーページを見逃さないため |
+
+許容リストは `e2e/console-guard.ts` の `IGNORE_RULES` にあります。
+**追加するときは必ず理由をコメントで書いてください。**
+広いパターンを置くと、検出したい退行まで一緒に隠れます。
+許容したものは黙って捨てず、テストレポートに理由つきで添付されます。
+
+本番ビルドのテストが落ちたときは、まず `npm run test:e2e:dev` で同じルートを開いてください。
+本番ビルドではメッセージが `Minified React error #NNN` に置き換わり内容が読めませんが、
+dev では実メッセージが読めます。
+
+### バックエンド API の扱い
+
+このアプリはバックエンド API をブラウザから直接叩かず、
+読み取りはサーバーコンポーネント、書き込みは Server Action が呼びます。
+通信は「Next.js サーバー → バックエンド」の Node 間で完結するため、
+ブラウザ側で網を張る Playwright の `page.route()` では捕まえられません。
+
+そこで `e2e/mock-api/server.mjs` にスタブ API を用意し、
+テスト実行時だけ `NEXT_PUBLIC_API_URL` をそこへ向けています。
+バックエンドや DB を起動しなくても `/` と `/stores/map` を含む全ルートを検証できます。
+返す固定データは `e2e/mock-api/fixtures.mjs` にあります。
+
+### 対象ルート
+
+対象は認証なしで開ける公開ルートのみです（`e2e/routes.ts`）。
+`src/proxy.ts` の matcher 対象（`/stores/create`、`/stores/{id}/edit`、
+`/stores/images/{id}/upload`、`/stores/images/{id}/edit/{imageId}`）は
+セッション Cookie が無いとログイン画面へリダイレクトされるため含めていません。
+カバーするには `storageState` によるログイン状態の使い回しとテスト用 Firebase アカウントが必要です。
 
 ## ディレクトリ構造
 
@@ -425,6 +503,14 @@ src/
     ├── firebaseErrorMessages.ts # Firebase エラーメッセージ
     ├── storeUtils.ts      # 店舗関連ユーティリティ
     └── toppingFormatter.ts # トッピングフォーマッター
+
+e2e/                       # Playwright スモークテスト
+├── mock-api/              # スタブバックエンド API
+│   ├── server.mjs         # スタブサーバー本体
+│   └── fixtures.mjs       # スタブが返す固定データ
+├── console-guard.ts       # コンソール出力の収集・判定・許容リスト
+├── routes.ts              # 対象ルート定義
+└── smoke.spec.ts          # テスト本体
 ```
 
 ## セキュリティ機能
