@@ -101,7 +101,11 @@ export const IGNORE_RULES: IgnoreRule[] = [
         // 出しているのは `@vis.gl/react-google-maps` の `<Pin>` の内部実装であり、
         // このリポジトリのコードからは制御できない。
         // ライブラリ側の追随待ちなので、更新時にこの行が不要になっていないか見直すこと。
-        pattern: /^<gmp-[a-z-]+>:/,
+        //
+        // `deprecat` を必須にしているのは、これらのコンポーネントが非推奨警告以外に
+        // 属性の指定ミスなどの実エラーも同じ `<gmp-...>:` 接頭辞で出すため。
+        // 接頭辞だけで許容すると、こちらの使い方の誤りまで一緒に握り潰してしまう。
+        pattern: /^<gmp-[a-z-]+>:[\s\S]*deprecat/i,
         reason: '@vis.gl/react-google-maps が使う Google Maps Web Components の非推奨警告。ライブラリ側の追随待ち',
         routes: ['top', 'stores-map']
     },

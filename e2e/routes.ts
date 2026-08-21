@@ -9,7 +9,8 @@
  * 別issueとして切り出す想定（#67 参照）。
  *
  * 逆に `/stores/map` は保護ルートに見えるが matcher に含まれていないため、
- * 未認証でもアクセスできる。バックエンドAPIはスタブ（e2e/mock-api）が返すので対象に含む。
+ * 未認証でもアクセスできる。バックエンドAPIは実バックエンド
+ * （`E2E_USE_MOCK_API=1` のときは e2e/mock-api のスタブ）が返すので対象に含む。
  */
 
 export interface SmokeRoute {
@@ -27,8 +28,18 @@ export interface SmokeRoute {
  * 実バックエンドのDBに何が入っているかは環境によって違うため、
  * e2e/global-setup.ts が `GET /stores` の先頭の店舗IDをここへ渡す。
  * 決め打ちにすると「APIが404を返す状態」を検証してしまい、意味を成さない。
+ *
+ * 既定値を置かないのは、実在しないIDを掴んだまま走ると事前コール／着丼前コールが
+ * `[ActionError] ... status:404` で落ち、環境の問題がアプリの退行に見えてしまうから。
+ * 取得できなかった場合は global-setup 側で理由を示して実行を止めている。
  */
-const storeId = process.env.E2E_STORE_ID ?? '1'
+const storeId = process.env.E2E_STORE_ID
+
+if (!storeId) {
+    throw new Error(
+        'E2E_STORE_ID が未設定です。e2e/global-setup.ts が実行されていない可能性があります。'
+    )
+}
 
 export const SMOKE_ROUTES: SmokeRoute[] = [
     {
