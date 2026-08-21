@@ -18,6 +18,19 @@ export interface SmokeRoute {
     name: string
     /** 遷移先のパス（クエリ文字列を含む） */
     path: string
+    /**
+     * 最終的に到達しているべきパス名。省略時は {@link path} のパス名。
+     *
+     * `page.goto()` はリダイレクトを追跡し、返すのは着地先のレスポンスなので、
+     * 意図しないリダイレクトが起きてもステータスは 200 のままになる。
+     * たとえば `src/proxy.ts` の matcher が広がってこれらが保護ルート扱いになると、
+     * 全ルートが `/auth/login` に着地する。ログイン画面はコンソールにも何も出さないため、
+     * 「ログイン画面を11回開いただけ」で全部緑になってしまう。
+     *
+     * クエリ文字列までは見ない。ここで捕まえたいのは着地先が変わったことであり、
+     * リダイレクトは必ずパス名を変える（`redirectToLogin` も `/auth/login` へ送る）。
+     */
+    expectedPathname?: string
     /** そのルートを対象にしている理由・確認したい内容 */
     description: string
 }
@@ -45,6 +58,8 @@ export const SMOKE_ROUTES: SmokeRoute[] = [
     {
         name: 'top',
         path: '/',
+        // src/app/page.tsx が `redirect('/stores/map')` するので着地先は自分自身ではない
+        expectedPathname: '/stores/map',
         description: 'トップ。/stores/map へリダイレクトされる'
     },
     {

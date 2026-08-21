@@ -23,6 +23,12 @@ const HYDRATION_SETTLE_MS = 3_000
 
 const mode = process.env.E2E_MODE === 'prod' ? '本番ビルド' : 'dev'
 
+/**
+ * `route.path` は相対パスなので、`new URL()` でパス名を取り出すための基準。
+ * 比較に使うのはパス名だけなので、実際の baseURL と一致している必要はない。
+ */
+const baseOrigin = 'http://localhost'
+
 test.describe(`スモークテスト（${mode}）`, () => {
     for (const route of SMOKE_ROUTES) {
         test(`${route.name}: ${route.path}`, async ({ page }, testInfo) => {
@@ -48,6 +54,20 @@ test.describe(`スモークテスト（${mode}）`, () => {
                 response!.status(),
                 `${route.path} が HTTP ${response!.status()} を返しました`
             ).toBeLessThan(400)
+
+            // 着地先が想定どおりであること。
+            // `page.goto()` はリダイレクトを追跡するため、別のページへ飛ばされていても
+            // ステータスは 200 になる。保護ルート化などで `/auth/login` に着地すると、
+            // そのページ自体は正常に開くのでコンソール判定も素通りしてしまう。
+            // hydration の待ち時間を挟んだ後に見ているので、遷移後のクライアント側の
+            // リダイレクトも対象に入る
+            const expectedPathname =
+                route.expectedPathname ?? new URL(route.path, baseOrigin).pathname
+            expect(
+                new URL(page.url()).pathname,
+                `${route.path} を開いたつもりが ${page.url()} に着地しました。` +
+                'リダイレクトが増えていないか（src/proxy.ts の matcher など）確認してください'
+            ).toBe(expectedPathname)
 
             const { hydration, failures, ignored } = classifyRecords(records, route.name)
 
