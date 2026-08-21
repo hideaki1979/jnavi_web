@@ -189,7 +189,7 @@ describe('DELETE /api/auth/session', () => {
         expect(response.cookies.get('session')).toMatchObject({ value: '', maxAge: 0 })
     })
 
-    it('失効できたか分からない失敗ではクッキーを消さずに 503 を返す', async () => {
+    it('クッキーの検証が想定外の理由で失敗したら、クッキーを消さずに 503 を返す', async () => {
         // クッキーを消して成功を返すと、画面上はログアウトできたように見えるのに
         // 盗まれたクッキーは有効期限まで生き残る（#80 で直したはずの状態に戻る）
         verifySessionCookie.mockRejectedValue(
@@ -201,6 +201,34 @@ describe('DELETE /api/auth/session', () => {
         expect(response.status).toBe(503)
         await expect(response.json()).resolves.toMatchObject({ code: 'revocation_failed' })
         expect(response.headers.get('set-cookie')).toBeNull()
+    })
+
+    it('失効そのものが失敗したら、クッキーを消さずに 503 を返す', async () => {
+        // 検証（ほぼローカル）と違い、失効は Firebase への通信を伴うため実際に失敗しうる。
+        // ここが握り潰されると、失効できていないのにログアウト成功として返してしまう。
+        // `code` を持たないエラー（通信断など）も想定外の失敗として扱う
+        verifySessionCookie.mockResolvedValue({ sub: 'test-uid' })
+        revokeRefreshTokens.mockRejectedValue(new Error('network error'))
+
+        const response = await DELETE(deleteRequest('valid-session-cookie'))
+
+        expect(response.status).toBe(503)
+        await expect(response.json()).resolves.toMatchObject({ code: 'revocation_failed' })
+        expect(response.headers.get('set-cookie')).toBeNull()
+    })
+
+    it('ユーザーが削除済みなら、失効させる対象が無いものとして成功を返す', async () => {
+        // `auth/user-not-found` は失効の側から返る。
+        // 失効させる相手がもう居ないので、クッキーの削除だけ行えばよい
+        verifySessionCookie.mockResolvedValue({ sub: 'deleted-uid' })
+        revokeRefreshTokens.mockRejectedValue(
+            Object.assign(new Error('user not found'), { code: 'auth/user-not-found' })
+        )
+
+        const response = await DELETE(deleteRequest('valid-session-cookie'))
+
+        expect(response.status).toBe(200)
+        expect(response.cookies.get('session')).toMatchObject({ value: '', maxAge: 0 })
     })
 
     it('クッキーが無ければ失効処理は行わず、削除だけ返す', async () => {
