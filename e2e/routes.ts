@@ -36,23 +36,23 @@ export interface SmokeRoute {
 }
 
 /**
- * 店舗IDに依存するルートで使うID。
+ * {@link SmokeRoute.path} の中で、実行時に店舗IDへ差し替える目印。
  *
  * 実バックエンドのDBに何が入っているかは環境によって違うため、
- * e2e/global-setup.ts が `GET /stores` の先頭の店舗IDをここへ渡す。
+ * e2e/global-setup.ts が `GET /stores` の先頭の店舗IDを `E2E_STORE_ID` に入れる。
  * 決め打ちにすると「APIが404を返す状態」を検証してしまい、意味を成さない。
  *
- * 既定値を置かないのは、実在しないIDを掴んだまま走ると事前コール／着丼前コールが
- * `[ActionError] ... status:404` で落ち、環境の問題がアプリの退行に見えてしまうから。
- * 取得できなかった場合は global-setup 側で理由を示して実行を止めている。
+ * ここで `process.env.E2E_STORE_ID` を直接読まないのは、このモジュールが
+ * テスト一覧の作成時にも読み込まれるため。一覧の作成は globalSetup より先に走るので、
+ * 読んだ時点ではまだ値が入っておらず、`npx playwright test --list` や
+ * エディタのテスト一覧が「テスト0件」になってしまう（実際に踏んだ）。
+ *
+ * 差し替えは e2e/smoke.spec.ts がテスト実行時に行う。
+ * 副産物として、テスト名が環境のDBの中身に左右されなくなる
+ * （先頭の店舗が変わるたびにテスト名が変わると、`-g` での絞り込みや
+ * レポートの履歴比較が効かなくなる）。
  */
-const storeId = process.env.E2E_STORE_ID
-
-if (!storeId) {
-    throw new Error(
-        'E2E_STORE_ID が未設定です。e2e/global-setup.ts が実行されていない可能性があります。'
-    )
-}
+export const STORE_ID_PLACEHOLDER = '{storeId}'
 
 export const SMOKE_ROUTES: SmokeRoute[] = [
     {
@@ -86,17 +86,17 @@ export const SMOKE_ROUTES: SmokeRoute[] = [
         // `?id=` が無いと `useStoreToppingCalls` の `enabled` が false になり
         // API を呼ばないまま空の選択UIになるため、店舗IDを与えて実際に叩かせる
         name: 'simulation-precall',
-        path: `/stores/simulation/precall?id=${storeId}`,
+        path: `/stores/simulation/precall?id=${STORE_ID_PLACEHOLDER}`,
         description: '事前コール。GET /stores/{id}/toppingCalls?call_timing=pre_call を呼ぶ'
     },
     {
         name: 'simulation-precall-result',
-        path: `/stores/simulation/precall-result?callText=%E3%83%A4%E3%82%B5%E3%82%A4%E3%83%9E%E3%82%B7&id=${storeId}`,
+        path: `/stores/simulation/precall-result?callText=%E3%83%A4%E3%82%B5%E3%82%A4%E3%83%9E%E3%82%B7&id=${STORE_ID_PLACEHOLDER}`,
         description: '事前コール結果。`callText` の表示と音声合成UIの初期表示'
     },
     {
         name: 'simulation-postcall',
-        path: `/stores/simulation/postcall?id=${storeId}`,
+        path: `/stores/simulation/postcall?id=${STORE_ID_PLACEHOLDER}`,
         description: '着丼前コール。GET /stores/{id}/toppingCalls?call_timing=post_call を呼ぶ'
     },
     {

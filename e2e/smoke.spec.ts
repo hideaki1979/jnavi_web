@@ -11,7 +11,7 @@
 import { expect, test } from '@playwright/test'
 
 import { classifyRecords, collectConsoleRecords, formatRecords } from './console-guard'
-import { SMOKE_ROUTES } from './routes'
+import { SMOKE_ROUTES, STORE_ID_PLACEHOLDER } from './routes'
 
 /**
  * `load` 完了後に hydration が走り切るのを待つ時間。
@@ -29,13 +29,39 @@ const mode = process.env.E2E_MODE === 'prod' ? '本番ビルド' : 'dev'
  */
 const baseOrigin = 'http://localhost'
 
+/**
+ * `route.path` の目印を、global-setup が取得した実在の店舗IDへ差し替える。
+ *
+ * 参照をここまで遅らせているのは、routes.ts がテスト一覧の作成時にも読み込まれ、
+ * その時点ではまだ `E2E_STORE_ID` が入っていないため
+ * （globalSetup は一覧の作成より後に走る）。
+ * モジュールの読み込み時に読むと `npx playwright test --list` や
+ * エディタのテスト一覧が「テスト0件」になる。
+ */
+function resolveStoreId(path: string): string {
+    if (!path.includes(STORE_ID_PLACEHOLDER)) return path
+
+    const storeId = process.env.E2E_STORE_ID
+    if (!storeId) {
+        throw new Error(
+            'E2E_STORE_ID が未設定です。e2e/global-setup.ts が実行されていない可能性があります。'
+        )
+    }
+
+    return path.replaceAll(STORE_ID_PLACEHOLDER, storeId)
+}
+
 test.describe(`スモークテスト（${mode}）`, () => {
     for (const route of SMOKE_ROUTES) {
         test(`${route.name}: ${route.path}`, async ({ page }, testInfo) => {
+            // テスト名には目印のまま残し、実際に開くURLだけ差し替える。
+            // 名前が環境のDBの中身で変わると `-g` での絞り込みや履歴比較が効かなくなる
+            const path = resolveStoreId(route.path)
+
             // goto より前に張ること。張る前に出た分は記録されない
             const records = collectConsoleRecords(page)
 
-            const response = await page.goto(route.path, { waitUntil: 'load' })
+            const response = await page.goto(path, { waitUntil: 'load' })
 
             // hydration の完了を待ってから判定する
             await page.waitForTimeout(HYDRATION_SETTLE_MS)
@@ -49,10 +75,10 @@ test.describe(`スモークテスト（${mode}）`, () => {
 
             // レスポンス自体が失敗していないこと。
             // コンソール判定だけだと、真っ白なエラーページでも通ってしまう
-            expect(response, `${route.path} のレスポンスを取得できませんでした`).not.toBeNull()
+            expect(response, `${path} のレスポンスを取得できませんでした`).not.toBeNull()
             expect(
                 response!.status(),
-                `${route.path} が HTTP ${response!.status()} を返しました`
+                `${path} が HTTP ${response!.status()} を返しました`
             ).toBeLessThan(400)
 
             // 着地先が想定どおりであること。
@@ -62,10 +88,10 @@ test.describe(`スモークテスト（${mode}）`, () => {
             // hydration の待ち時間を挟んだ後に見ているので、遷移後のクライアント側の
             // リダイレクトも対象に入る
             const expectedPathname =
-                route.expectedPathname ?? new URL(route.path, baseOrigin).pathname
+                route.expectedPathname ?? new URL(path, baseOrigin).pathname
             expect(
                 new URL(page.url()).pathname,
-                `${route.path} を開いたつもりが ${page.url()} に着地しました。` +
+                `${path} を開いたつもりが ${page.url()} に着地しました。` +
                 'リダイレクトが増えていないか（src/proxy.ts の matcher など）確認してください'
             ).toBe(expectedPathname)
 
@@ -90,12 +116,12 @@ test.describe(`スモークテスト（${mode}）`, () => {
 
             expect(
                 hydration,
-                `hydration 不一致を検出しました（${route.path}）:\n${formatRecords(hydration)}\n${readInDevHint}`
+                `hydration 不一致を検出しました（${path}）:\n${formatRecords(hydration)}\n${readInDevHint}`
             ).toHaveLength(0)
 
             expect(
                 failures,
-                `コンソールにエラー／警告が出ました（${route.path}）:\n${formatRecords(failures)}\n${readInDevHint}`
+                `コンソールにエラー／警告が出ました（${path}）:\n${formatRecords(failures)}\n${readInDevHint}`
             ).toHaveLength(0)
         })
     }
