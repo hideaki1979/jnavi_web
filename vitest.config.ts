@@ -10,7 +10,7 @@
  *
  * ## 環境
  *
- * 現状の対象は Route Handler と proxy、つまりサーバー側のコードだけなので
+ * 現状の対象は Route Handler・proxy・純粋な関数だけで、DOM に触らないので
  * `node` 環境で回す。コンポーネントのテストを足すときは `jsdom` が要るが、
  * 使わないうちから jsdom や Testing Library を入れても無駄なので、
  * そのとき `test.projects` で環境ごとに分ける（#81）。
