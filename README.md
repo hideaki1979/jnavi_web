@@ -368,8 +368,11 @@ npm start
 # リンター実行（中身は eslint。Next.js 16 で `next lint` は削除された）
 npm run lint
 
-# 型チェック
-npx tsc --noEmit
+# 型チェック（中身は tsc --noEmit）
+npm run typecheck
+
+# 単体テスト（Vitest）
+npm test
 
 # スモークテスト（dev と本番ビルドの両構成を順に実行）
 npm run test:e2e
@@ -377,6 +380,51 @@ npm run test:e2e
 
 > Next.js 16 では `next build` が lint を実行しなくなりました。
 > ビルドが通っても lint エラーは検出されないため、`npm run lint` を明示的に実行してください。
+
+## 単体テスト（Vitest）
+
+サーバー側の分岐を、外部サービス無しに確定的に検証するテストです。
+現在の対象は認証まわりの3ファイルで、テストは対象ファイルの隣に `*.test.ts` として置いています。
+
+| 対象 | 主に見ているもの |
+| --- | --- |
+| `src/app/api/auth/session/route.ts` | `auth_time` の境界（直近5分以内のサインインのみクッキーへ引き換える）、失効に失敗したらクッキーを消さないこと |
+| `src/proxy.ts` | どの失敗をどの理由コード（`session_expired` / `auth_failed`）で案内するか、はっきり認証できたときだけ通すこと |
+| `src/lib/server/firebaseAdmin.ts` | 環境変数が欠けていたら初期化時に落ちること、失効チェック付きでセッションクッキーを検証すること |
+
+```bash
+# 一度だけ実行する（CI と同じ）
+npm test
+
+# 変更を監視しながら実行する
+npm run test:watch
+
+# ファイルを絞る
+npm test -- src/proxy.test.ts
+```
+
+`firebase-admin/auth` と `fetch` はモックに差し替えているため、Firebase の資格情報も
+バックエンドも要りません。実トークンで `auth_time` の境界を測る方法もありますが、
+使い捨ての Firebase ユーザーを作って経過秒を測りながら投げる形になり、
+1回の実行に約5分かかって CI で回せません（#81）。
+
+テストの置き場所と環境は `vitest.config.ts` にあります。
+`e2e/` は Playwright の担当なので Vitest の対象に含めていません。
+現状はサーバー側のコードだけなので `node` 環境で実行します。
+コンポーネントのテストを足すときは `jsdom` が要るので、そのとき環境ごとに分けてください。
+
+## CI（GitHub Actions）
+
+PR と `main` への push で `.github/workflows/ci.yml` が動き、
+`lint` / `typecheck` / `test` / `build` を順に実行します。
+
+`next build` は Route Handler の設定収集の過程で Firebase Admin SDK を初期化するため、
+形式の正しい秘密鍵が必要です（ダミー文字列だと `ERR_OSSL_UNSUPPORTED` で落ちます）。
+初期化はネットワークに出ないので、CI では使い捨ての鍵をその場で生成しています。
+実在のサービスアカウントは不要で、リポジトリにもシークレットにも鍵は置いていません。
+
+E2E（Playwright）は CI に載せていません。スタブ API を使えば依存は Node だけになりますが、
+ブラウザの取得と dev・本番ビルドの2回実行で時間がかかるためです。
 
 ## スモークテスト（Playwright）
 

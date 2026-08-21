@@ -1,0 +1,85 @@
+# PR と main への push で、lint・型チェック・単体テスト・本番ビルドを回す（#81）。
+#
+# ここに並べているのは「壊れていたらマージしてはいけない」もののうち、
+# 追加の資格情報や外部サービス無しに実行できるものだけ。
+#
+# E2E（Playwright / e2e/）は含めていない。スタブAPI（E2E_USE_MOCK_API=1）を使えば
+# 依存は Node だけになるが、ブラウザの取得と dev・本番ビルドの2回実行で時間がかかるため、
+# 常時実行に載せるかは別途判断する。
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# GITHUB_TOKEN に渡す権限は checkout が要る読み取りだけに絞る。
+# リポジトリ既定（現在は read）は管理設定でいつでも write に変えられるため、
+# 変わっても影響が出ないようワークフロー側で固定する。
+permissions:
+  contents: read
+
+# 同じブランチに続けて push したとき、古い実行は打ち切る
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: lint / typecheck / test / build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # 既定では GITHUB_TOKEN が .git/config に書き込まれ、後続のステップから
+          # 読めてしまう。このジョブは `npm ci`（依存のライフサイクルスクリプト）と
+          # `next build` で第三者のコードを実行するので、資格情報は残さない。
+          # checkout 後に git を使うステップは無いため、無効化して困らない
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          # Node のバージョンは .nvmrc に一本化する（package.json の engines は下限）
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run typecheck
+
+      - run: npm test
+
+      # `next build` は Route Handler の設定収集の過程で
+      # src/lib/server/firebaseAdmin.ts を読み込み、その場で Admin SDK を初期化する。
+      # `cert()` は秘密鍵をその場で復号するため、形式が正しい鍵が要る
+      # （ダミー文字列だと ERR_OSSL_UNSUPPORTED でビルドが落ちる）。
+      #
+      # 初期化はローカル完結でネットワークに出ないので、実在のサービスアカウントである
+      # 必要は無い。使い捨ての鍵をその場で作り、リポジトリにもシークレットにも置かない。
+      - name: ビルド用の使い捨て秘密鍵を用意する
+        run: |
+          {
+            echo 'FIREBASE_PRIVATE_KEY<<PRIVATE_KEY_EOF'
+            openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048
+            echo 'PRIVATE_KEY_EOF'
+          } >> "$GITHUB_ENV"
+
+      # ビルドの検証が目的なので、値は形式が通ればよい。
+      # `NEXT_PUBLIC_*` はバンドルに埋め込まれるが、この成果物はデプロイしない。
+      - name: ビルド
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:3000
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ci-dummy
+          NEXT_PUBLIC_GOOGLE_MAPS_ID: ci-dummy
+          NEXT_PUBLIC_FIREBASE_API_KEY: ci-dummy
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-dummy.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-dummy
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '000000000000'
+          NEXT_PUBLIC_FIREBASE_APP_ID: '1:000000000000:web:0000000000000000000000'
+          FIREBASE_PROJECT_ID: ci-dummy
+          FIREBASE_CLIENT_EMAIL: ci-dummy@ci-dummy.iam.gserviceaccount.com
+          # FIREBASE_PRIVATE_KEY は直前のステップが $GITHUB_ENV 経由で渡す

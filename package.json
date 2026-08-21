@@ -10,6 +10,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:e2e": "npm run test:e2e:dev && npm run test:e2e:prod",
     "test:e2e:dev": "E2E_MODE=dev playwright test",
     "test:e2e:prod": "E2E_MODE=prod playwright test",
@@ -48,7 +51,8 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   },
   "overrides": {
     "uuid": "^11.1.1"
