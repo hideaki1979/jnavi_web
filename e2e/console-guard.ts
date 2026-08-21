@@ -91,7 +91,21 @@ export const IGNORE_RULES: IgnoreRule[] = [
         // 鍵を持たない環境（CI や clone 直後）では必ず出るうえ、これは外部SDKの応答であって
         // このアプリの描画の問題ではないため、マップを表示するルートに限って許容する。
         // 鍵が有効な環境では単に一致しないだけなので、判定が緩むことはない。
-        pattern: /maps\.googleapis\.com|Google Maps JavaScript API|[A-Za-z]+MapError|InvalidKey|RefererNotAllowed|BillingNotEnabled|ApiNotActivated|ApiTargetBlocked/,
+        //
+        // エラーコード名（`InvalidKeyMapError` など）は列挙せず、
+        // Google が必ず付ける接頭辞だけで識別する。理由は2つ。
+        //  - 列挙では網羅できない。鍵に無効な値を入れると `InvalidKeyMapError`、
+        //    空文字にすると `ApiProjectMapError` が出る（どちらも実測）。
+        //    後者は列挙に含めていなかったもので、この方式はコード名を足し続けることになる。
+        //  - コード名の部分一致は広すぎる。`[A-Za-z]+MapError` や `InvalidKey` は
+        //    アプリ側が出したエラー文にも当たり得るため、何を握り潰しているのか読めない。
+        // 接頭辞は `Google Maps JavaScript API error: <コード名>` と
+        // 同 `warning: <コード名>` の2種類（Maps の error-messages ドキュメント）。
+        //
+        // `maps.googleapis.com` を別の選択肢として残しているのは、SDKのスクリプト自体の
+        // 読み込みに失敗した場合は上記の接頭辞が付かないため。
+        // `^` が掛かるのは最初の選択肢だけ（こちらは文中に現れるので先頭固定にしない）。
+        pattern: /^Google Maps JavaScript API (?:error|warning): |maps\.googleapis\.com/,
         reason: 'Google Maps JS API の鍵に起因する外部SDKのエラー。アプリ側の描画とは無関係',
         routes: ['top', 'stores-map']
     },
