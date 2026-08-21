@@ -74,7 +74,19 @@ test.describe(`スモークテスト（${mode}）`, () => {
             })
 
             // レスポンス自体が失敗していないこと。
-            // コンソール判定だけだと、真っ白なエラーページでも通ってしまう
+            // コンソール判定だけだと、真っ白なエラーページでも通ってしまう。
+            //
+            // ここで見ているのはドキュメント（リダイレクト後の最終応答）だけだが、
+            // チャンク・CSS・フォント・同一オリジンの fetch や Server Action が
+            // 4xx/5xx を返した場合は、Chromium が
+            // `Failed to load resource: the server responded with a status of NNN` を
+            // コンソールに出し、それを collectConsoleRecords が拾って失敗にする。
+            // dev・本番ビルドの両方で、JSチャンク404・CSS404・フォント404・
+            // Server Action の500 を仕込んで、いずれも失敗することを確認済み。
+            // そのため page.on('response') による二重チェックは置いていない。
+            //
+            // ただしこれは Chromium が失敗した読み込みをコンソールに出す挙動に依存している。
+            // `projects` に他のブラウザを足すときは、同じ取りこぼしが起きないか確かめること。
             expect(response, `${path} のレスポンスを取得できませんでした`).not.toBeNull()
             expect(
                 response!.status(),
