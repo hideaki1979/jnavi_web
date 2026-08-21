@@ -370,10 +370,123 @@ npm run lint
 
 # 型チェック
 npx tsc --noEmit
+
+# スモークテスト（dev と本番ビルドの両構成を順に実行）
+npm run test:e2e
 ```
 
 > Next.js 16 では `next build` が lint を実行しなくなりました。
 > ビルドが通っても lint エラーは検出されないため、`npm run lint` を明示的に実行してください。
+
+## スモークテスト（Playwright）
+
+主要ページが開いて、コンソールにエラーが出ないことを機械的に確認するテストです。
+E2E の網羅ではなく、**Next.js / React / MUI のような描画の根幹に関わる依存を更新したときに、
+ビルドと型チェックが通っても実行時に壊れていないか**を確かめるのが目的です。
+
+### 前提：バックエンドを起動しておくこと
+
+このテストは**実バックエンド（nodedeploytest）に対して実行します。**
+実行前に、バックエンドと PostgreSQL（docker-compose の `jnavi-postgres` / `localhost:5433`）を
+起動しておいてください。Docker が落ちているとバックエンドのプロセスが生きていても
+API は全て 500 を返します。
+
+接続先は `.env` の `NEXT_PUBLIC_API_URL` がそのまま使われます（既定 `http://localhost:3000`）。
+バックエンドに接続できない場合は、テスト開始前に案内を出して停止します。
+
+**店舗が1件以上登録されている必要があります。**
+事前コール・着丼前コールのルートは店舗IDを指定して開くため、
+`GET /stores` の先頭の店舗IDを実行前に取得しています（`e2e/global-setup.ts`）。
+取得できない場合は固定IDで続行せず、理由を示して停止します。
+固定IDで続行すると、そのIDが実在しない環境では該当ルートが
+`[ActionError] ... status:404` で落ち、環境の問題がアプリの退行に見えてしまうためです。
+
+### 実行方法
+
+初回のみ、Playwright が使うブラウザを取得します。
+
+```bash
+npx playwright install chromium
+```
+
+```bash
+# dev（Turbopack）構成で実行
+npm run test:e2e:dev
+
+# 本番ビルド（next build + next start）構成で実行
+npm run test:e2e:prod
+
+# 両構成を順に実行
+npm run test:e2e
+
+# 直近の実行結果を HTML レポートで見る（スクリーンショット付き）
+npm run test:e2e:report
+```
+
+**dev と本番ビルドは別実装なので、両方で回してください。** 片方だけでは不十分です。
+実際に dev では素通りする hydration 不一致が、本番ビルドでのみ
+`Minified React error #418` として現れるケースがあります（逆も同様）。
+
+Next.js サーバーは Playwright が自動で起動・停止するため、
+事前に `npm run dev` を立ち上げておく必要はありません。
+使用ポートは dev が `3100`、本番ビルドが `3200` です（`E2E_APP_PORT` で変更可能）。
+`:3000` はバックエンドが占有しているため使いません。
+
+### バックエンド無しで回す（スタブAPI）
+
+バックエンドや DB を用意できない場合は、スタブ API に切り替えられます。
+依存が Node だけになるので、将来 CI に載せるならこちらを使います。
+
+```bash
+# 両構成をスタブAPIで実行
+npm run test:e2e:mock
+
+# 個別に切り替える場合
+E2E_USE_MOCK_API=1 npm run test:e2e:dev
+```
+
+スタブは `e2e/mock-api/server.mjs`（既定ポート `3300`、`E2E_MOCK_API_PORT` で変更可能）で、
+返す固定データは `e2e/mock-api/fixtures.mjs` にあります。
+**スタブが実バックエンドに追随しているかは自動では検証されません。**
+レスポンス形が変わったときにスタブが古いままだと、スタブ経由のテストだけが通り続けます。
+日常の確認は実バックエンドで回すことを前提にしてください。
+
+なお、このアプリはバックエンド API をブラウザから直接叩かず、
+読み取りはサーバーコンポーネント、書き込みは Server Action が呼びます。
+通信は「Next.js サーバー → バックエンド」の Node 間で完結するため、
+ブラウザ側で網を張る Playwright の `page.route()` では差し替えられません。
+スタブをプロセスとして別に立てているのはこのためです。
+
+### 何を検出するか
+
+| 種別 | 扱い |
+| --- | --- |
+| hydration 不一致 | 常に失敗。許容リストの対象外 |
+| `console.error` / `console.warn` | 許容リストに無ければ失敗 |
+| 未捕捉例外（`pageerror`） | 許容リストに無ければ失敗 |
+| HTTP ステータス 400 以上 | 失敗。真っ白なエラーページを見逃さないため |
+
+許容リストは `e2e/console-guard.ts` の `IGNORE_RULES` にあります。
+**追加するときは必ず理由をコメントで書いてください。**
+広いパターンを置くと、検出したい退行まで一緒に隠れます。
+許容したものは黙って捨てず、テストレポートに理由つきで添付されます。
+
+本番ビルドのテストが落ちたときは、まず `npm run test:e2e:dev` で同じルートを開いてください。
+本番ビルドではメッセージが `Minified React error #NNN` に置き換わり内容が読めませんが、
+dev では実メッセージが読めます。
+
+### 対象ルート
+
+対象は認証なしで開ける公開ルートのみです（`e2e/routes.ts`）。
+`src/proxy.ts` の matcher 対象（`/stores/create`、`/stores/{id}/edit`、
+`/stores/images/{id}/upload`、`/stores/images/{id}/edit/{imageId}`）は
+セッション Cookie が無いとログイン画面へリダイレクトされるため含めていません。
+カバーするには `storageState` によるログイン状態の使い回しとテスト用 Firebase アカウントが必要です。
+
+店舗 ID を必要とするルート（事前コール・着丼前コール）で使う ID は、
+`e2e/global-setup.ts` が `GET /stores` の先頭の店舗から取得します。
+ID を決め打ちにすると、DB の中身が違う環境で
+「API が 404 を返す状態」を検証することになってしまうためです。
 
 ## ディレクトリ構造
 
@@ -425,6 +538,16 @@ src/
     ├── firebaseErrorMessages.ts # Firebase エラーメッセージ
     ├── storeUtils.ts      # 店舗関連ユーティリティ
     └── toppingFormatter.ts # トッピングフォーマッター
+
+e2e/                       # Playwright スモークテスト
+├── mock-api/              # スタブバックエンド API（E2E_USE_MOCK_API=1 のときのみ）
+│   ├── server.mjs         # スタブサーバー本体
+│   └── fixtures.mjs       # スタブが返す固定データ
+├── console-guard.ts       # コンソール出力の収集・判定・許容リスト
+├── global-setup.ts        # 実在する店舗IDの取得
+├── require-backend.mjs    # バックエンド未起動時に案内を出して停止
+├── routes.ts              # 対象ルート定義
+└── smoke.spec.ts          # テスト本体
 ```
 
 ## セキュリティ機能
