@@ -12,7 +12,7 @@
  * 時刻も固定して、299秒・300秒・301秒を確定的に検証する。
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 // 下の `vi.mock` はファイル先頭へ巻き上げられるため、この import より先に効く
 import { DELETE, POST } from '@/app/api/auth/session/route'
@@ -175,33 +175,49 @@ describe('DELETE /api/auth/session', () => {
         expect(response.cookies.get('session')).toMatchObject({ value: '', maxAge: 0 })
     })
 
-    it('失効させる対象が無いクッキー（期限切れ等）は成功として扱う', async () => {
-        verifySessionCookie.mockRejectedValue(
-            Object.assign(new Error('session cookie expired'), {
-                code: 'auth/session-cookie-expired'
-            })
-        )
+    it.each([
+        ['有効期限切れ', 'auth/session-cookie-expired'],
+        ['失効済み', 'auth/session-cookie-revoked'],
+        ['形式不正・署名不正（＝検証を通らないクッキー）', 'auth/argument-error']
+    ])('失効させる対象が無いクッキーは成功として扱う：%s（%s）', async (_name, code) => {
+        verifySessionCookie.mockRejectedValue(Object.assign(new Error(code), { code }))
 
-        const response = await DELETE(deleteRequest('expired-session-cookie'))
+        const response = await DELETE(deleteRequest('already-invalid-session-cookie'))
 
         expect(response.status).toBe(200)
+        // 失効させる相手（uid）が分からないので、呼びにいかないこと自体も見る
         expect(revokeRefreshTokens).not.toHaveBeenCalled()
         expect(response.cookies.get('session')).toMatchObject({ value: '', maxAge: 0 })
     })
 
-    it('クッキーの検証が想定外の理由で失敗したら、クッキーを消さずに 503 を返す', async () => {
-        // クッキーを消して成功を返すと、画面上はログアウトできたように見えるのに
-        // 盗まれたクッキーは有効期限まで生き残る（#80 で直したはずの状態に戻る）
-        verifySessionCookie.mockRejectedValue(
-            Object.assign(new Error('internal error'), { code: 'auth/internal-error' })
-        )
+    it.each([
+        [
+            'Firebase 側の一時障害',
+            () => Object.assign(new Error('internal error'), { code: 'auth/internal-error' })
+        ],
+        [
+            '呼び出し上限',
+            () => Object.assign(new Error('quota exceeded'), { code: 'auth/quota-exceeded' })
+        ],
+        ['code を持たないエラー（通信断など）', () => new Error('fetch failed')],
+        [
+            'code が文字列でない（想定していない形のエラー）',
+            () => Object.assign(new Error('unexpected'), { code: 500 })
+        ]
+    ])(
+        'クッキーの検証が想定外の理由で失敗したら、クッキーを消さずに 503 を返す：%s',
+        async (_name, buildError) => {
+            // クッキーを消して成功を返すと、画面上はログアウトできたように見えるのに
+            // 盗まれたクッキーは有効期限まで生き残る（#80 で直したはずの状態に戻る）
+            verifySessionCookie.mockRejectedValue(buildError())
 
-        const response = await DELETE(deleteRequest('valid-session-cookie'))
+            const response = await DELETE(deleteRequest('valid-session-cookie'))
 
-        expect(response.status).toBe(503)
-        await expect(response.json()).resolves.toMatchObject({ code: 'revocation_failed' })
-        expect(response.headers.get('set-cookie')).toBeNull()
-    })
+            expect(response.status).toBe(503)
+            await expect(response.json()).resolves.toMatchObject({ code: 'revocation_failed' })
+            expect(response.headers.get('set-cookie')).toBeNull()
+        }
+    )
 
     it('失効そのものが失敗したら、クッキーを消さずに 503 を返す', async () => {
         // 検証（ほぼローカル）と違い、失効は Firebase への通信を伴うため実際に失敗しうる。
@@ -238,5 +254,46 @@ describe('DELETE /api/auth/session', () => {
         expect(verifySessionCookie).not.toHaveBeenCalled()
         expect(revokeRefreshTokens).not.toHaveBeenCalled()
         expect(response.cookies.get('session')).toMatchObject({ value: '', maxAge: 0 })
+    })
+})
+
+/**
+ * 発行（POST）と削除（DELETE）でクッキーの属性が1つでも食い違うと、
+ * ブラウザは別のクッキーとみなし、削除の `Set-Cookie` を受け取っても元のクッキーが残る。
+ * 画面上はログアウトできたように見えて、実際にはセッションが生き続ける（#80）。
+ *
+ * ルート側は `buildSessionCookie` に属性を一元化して食い違いを防いでいるが、
+ * その一元化が崩れたら気付けるよう、両者の属性が一致することを直接見る。
+ */
+describe('セッションクッキーの属性', () => {
+    /**
+     * クッキーの同一性を決める属性だけを取り出す。
+     * 値と有効期限（maxAge）は発行と削除で意図的に異なるので比べない。
+     */
+    function cookieIdentityOf(response: NextResponse) {
+        const cookie = response.cookies.get('session')
+        expect(cookie).toBeDefined()
+        return {
+            name: cookie?.name,
+            path: cookie?.path,
+            domain: cookie?.domain,
+            httpOnly: cookie?.httpOnly,
+            secure: cookie?.secure,
+            sameSite: cookie?.sameSite
+        }
+    }
+
+    it('発行（POST）と削除（DELETE）で name / path / domain / httpOnly / secure / sameSite が一致する', async () => {
+        verifyIdToken.mockResolvedValue(decodedTokenWithAuthTime(0))
+        createSessionCookie.mockResolvedValue('created-session-cookie')
+        const issued = cookieIdentityOf(await POST(postRequest('Bearer valid-id-token')))
+
+        verifySessionCookie.mockResolvedValue({ sub: 'test-uid' })
+        revokeRefreshTokens.mockResolvedValue(undefined)
+        const deleted = cookieIdentityOf(await DELETE(deleteRequest('valid-session-cookie')))
+
+        expect(deleted).toEqual(issued)
+        // 属性が両方とも欠けているだけの「一致」を通さないよう、実際の値も押さえる
+        expect(issued).toMatchObject({ name: 'session', path: '/', httpOnly: true, sameSite: 'lax' })
     })
 })
