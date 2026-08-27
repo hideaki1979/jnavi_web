@@ -10,7 +10,7 @@
 
 ## 概要
 
-J.Navi は、二郎系ラーメン愛好家のための専門的な店舗情報共有プラットフォームです。Next.js 15 の App Router と React 19 を使用し、Material UI と Tailwind CSS でスタイリングされています。Google Maps との連携によるインタラクティブな店舗マップ、画像管理機能、そして初心者でも安心して注文できるコールシミュレーション機能を提供し、二郎系ラーメンの文化を広めることを目指しています。
+J.Navi は、二郎系ラーメン愛好家のための専門的な店舗情報共有プラットフォームです。Next.js 16 の App Router と React 19 を使用し、Material UI と Tailwind CSS でスタイリングされています。Google Maps との連携によるインタラクティブな店舗マップ、画像管理機能、そして初心者でも安心して注文できるコールシミュレーション機能を提供し、二郎系ラーメンの文化を広めることを目指しています。
 
 ## 機能
 
@@ -73,16 +73,16 @@ J.Navi は、二郎系ラーメン愛好家のための専門的な店舗情報�
 | カテゴリ               | 技術・ライブラリ                                                                                                                         | バージョン | 用途                                   |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------- |
 | **言語**               | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" width="20" height="20" alt="TypeScript Logo"/> TypeScript     | 5.x        | 型安全性の確保                         |
-| **フレームワーク**     | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg" width="20" height="20" alt="Nextjs Logo"/> Next.js                | 15.3.2     | React ベースのフルスタックフレーム     |
+| **フレームワーク**     | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg" width="20" height="20" alt="Nextjs Logo"/> Next.js                | 16.3.3     | React ベースのフルスタックフレーム     |
 | **ライブラリ**         | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="20" height="20" alt="React Logo"/> React                    | 19.x       | ユーザーインターフェース構築           |
-| **UI フレームワーク**  | <img src="https://mui.com/static/logo.svg" width="20" height="20" alt="MUI Logo"/> Material UI                                                          | 7.1.1      | モダンな UI コンポーネント             |
+| **UI フレームワーク**  | <img src="https://mui.com/static/logo.svg" width="20" height="20" alt="MUI Logo"/> Material UI                                                          | 7.1.0      | モダンな UI コンポーネント             |
 | **CSS フレームワーク** | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" width="20" height="20" alt="tailwindCSS Logo"/> Tailwind CSS | 4.x        | ユーティリティファーストのスタイリング |
 | **状態管理**           | Zustand                                                                                                                                  | 5.0.4      | 軽量な状態管理                         |
 | **データフェッチング** | <img src="https://tanstack.com/favicon-32x32.png" width="20" height="20" alt="Tanstack React Query Logo"/> TanStack React Query                                          | 5.76.1     | サーバー状態管理・キャッシュ           |
-| **HTTP クライアント**  | <img src="https://axios-http.com/assets/favicon.ico" width="20" height="20" alt="Axios Logo"/> Axios                                                      | 1.9.0      | API 通信                               |
+| **HTTP クライアント**  | <img src="https://axios-http.com/assets/favicon.ico" width="20" height="20" alt="Axios Logo"/> Axios                                                      | 1.19.0     | API 通信                               |
 | **フォーム管理**       | React Hook Form                                                                                                                          | 7.56.4     | フォームバリデーション・状態管理       |
 | **バリデーション**     | Zod                                                                                                                                      | 3.25.7     | スキーマバリデーション                 |
-| **認証・ストレージ**   | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg" width="20" height="20" alt="Firebase Logo"/> Firebase              | 11.8.1     | 認証・ファイルストレージ               |
+| **認証・ストレージ**   | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg" width="20" height="20" alt="Firebase Logo"/> Firebase              | 12.17.1    | 認証・ファイルストレージ               |
 | **マップ**             | @vis.gl/react-google-maps                                                                                                                | 1.5.2      | Google Maps 連携                       |
 | **音声合成**           | Web Speech API                                                                                                                           | -          | ブラウザ音声合成                       |
 
@@ -610,7 +610,7 @@ e2e/                       # Playwright スモークテスト
 
 ## パフォーマンス最適化
 
-- ⚡ **App Router**: Next.js 15 の最新機能活用
+- ⚡ **App Router**: Next.js 16 の最新機能活用
 - 🔄 **React Query**: インテリジェントなキャッシング
 - 🎯 **Optimistic Updates**: UI の即座な反映
 - 📦 **コード分割**: 動的インポートによる遅延読み込み
