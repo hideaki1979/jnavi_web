@@ -12,19 +12,27 @@
 
 import ApiClient from "@/lib/ApiClient";
 import type { ActionResult } from "@/types/actionResult";
-import type { User } from "@/types/user";
+import type { ApiEnvelope, ApiMessageEnvelope } from "@/types/api";
+import type { ApiUser, CreateUserInput } from "@/types/user";
 
 const api = ApiClient.getInstance()
 
 /**
  * ユーザー新規登録API呼び出しを行う関数。
- * @param user 登録するユーザー情報
+ *
+ * `uid`は受け取らない。バックエンドが検証済みトークンから取り直すため、
+ * リクエストボディに入れても無視される（{@link CreateUserInput} 参照）。
+ *
+ * @param user 登録するユーザー情報。値が無い項目は null ではなくキーごと省略すること
  * @param idToken 認証トークン
  * @returns 登録処理の結果
  */
-export const createUser = async (user: User, idToken: string): Promise<ActionResult<void>> => {
+export const createUser = async (user: CreateUserInput, idToken: string): Promise<ActionResult<void>> => {
     try {
-        await api.post('/users', user, {
+        // 登録されたユーザー行（`data`）は使わないため message だけを型に取る。
+        // `data`を読もうとするとコンパイルエラーになり、
+        // 「中身を使うなら形を確認して型を定義する」ことが強制される。
+        await api.post<ApiMessageEnvelope>('/users', user, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${idToken}`
@@ -44,18 +52,29 @@ export const createUser = async (user: User, idToken: string): Promise<ActionRes
 
 /**
  * UIDによるユーザー情報取得API呼び出しを行う関数。
+ *
+ * 戻り値がリクエスト用の`User`ではなく`ApiUser`なのは、バックエンドが
+ * Prismaの行をそのまま返しており、キー名がスネークケースで別物のため
+ * （`uid`→`id`、`displayName`→`display_name`、`authProvider`→`provider`）。
+ *
+ * 成功時に`null`は返らない。該当ユーザーが存在しない場合バックエンドは404を返し、
+ * axios が reject するため catch 側の失敗結果に倒れる。
+ *
  * @param uid ユーザーのUID
  * @param idToken 認証トークン
  * @returns ユーザー情報を含む処理結果
  */
-export const getUserByUid = async (uid: string, idToken: string): Promise<ActionResult<User | null>> => {
+export const getUserByUid = async (uid: string, idToken: string): Promise<ActionResult<ApiUser>> => {
     try {
-        const res = await api.get(`/users/${uid}`, {
+        const res = await api.get<ApiEnvelope<ApiUser>>(`/users/${uid}`, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        return { success: true, data: res.data }
+        // エンベロープの殻を剥がして本体を返す（他の読み取り関数と同じ扱い）。
+        // 以前は`res.data`とエンベロープを丸ごと返しており、
+        // `res.data`が any だったため型注釈との食い違いが検出されていなかった。
+        return { success: true, data: res.data.data }
     } catch (error) {
         return {
             success: false,

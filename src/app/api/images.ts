@@ -16,7 +16,9 @@
 
 import { imageTag, storeImagesTag } from "@/app/api/stores.queries";
 import ApiClient from "@/lib/ApiClient";
-import type { StoreImageUploadData } from "@/types/Image";
+import type { ActionResult } from "@/types/actionResult";
+import type { ApiEnvelope } from "@/types/api";
+import type { StoreImageDeleteResult, StoreImageUpdateResult, StoreImageUploadData, StoreImageWriteResult } from "@/types/Image";
 import type { AxiosResponse } from "axios";
 import { updateTag } from "next/cache";
 
@@ -28,20 +30,24 @@ const api = ApiClient.getInstance()
  * @param storeId 店舗ID
  * @param imageData アップロードする画像データ
  * @param idToken 認証用IDトークン
- * @returns APIレスポンスを含む処理結果
+ * @returns 登録された画像IDとURLを含む処理結果
  */
 
-export const uploadStoreImage = async (storeId: string | number, imageData: StoreImageUploadData, idToken: string) => {
-    let res: AxiosResponse
+export const uploadStoreImage = async (
+    storeId: string | number,
+    imageData: StoreImageUploadData,
+    idToken: string
+): Promise<ActionResult<StoreImageWriteResult>> => {
+    let res: AxiosResponse<ApiEnvelope<StoreImageWriteResult>>
     try {
-        res = await api.post(`/stores/${storeId}/images`, imageData, {
+        res = await api.post<ApiEnvelope<StoreImageWriteResult>>(`/stores/${storeId}/images`, imageData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
     } catch (error) {
         return {
-            success: false as const,
+            success: false,
             error: ApiClient.toActionError(
                 error,
                 "画像アップロード処理でエラーが発生しました。"
@@ -53,7 +59,7 @@ export const uploadStoreImage = async (storeId: string | number, imageData: Stor
     // try の外に置くのは、アップロード自体は成功しているのに updateTag の失敗を
     // 「アップロード失敗」として返してしまうと、利用者が再送信して重複登録するため。
     updateTag(storeImagesTag(storeId))
-    return { success: true as const, data: res.data }
+    return { success: true, data: res.data.data }
 }
 
 /**
@@ -63,20 +69,25 @@ export const uploadStoreImage = async (storeId: string | number, imageData: Stor
  * @param imageId 画像ID
  * @param imageData 更新する画像データ
  * @param idToken 認証用IDトークン
- * @returns APIレスポンスを含む処理結果
+ * @returns 更新後の画像IDとURL、画像を差し替えたかどうかを含む処理結果
  */
 
-export const updateStoreImage = async (storeId: string | number, imageId: string | number, imageData: StoreImageUploadData, idToken: string) => {
-    let res: AxiosResponse
+export const updateStoreImage = async (
+    storeId: string | number,
+    imageId: string | number,
+    imageData: StoreImageUploadData,
+    idToken: string
+): Promise<ActionResult<StoreImageUpdateResult>> => {
+    let res: AxiosResponse<ApiEnvelope<StoreImageUpdateResult>>
     try {
-        res = await api.put(`/stores/${storeId}/images/${imageId}`, imageData, {
+        res = await api.put<ApiEnvelope<StoreImageUpdateResult>>(`/stores/${storeId}/images/${imageId}`, imageData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
     } catch (error) {
         return {
-            success: false as const,
+            success: false,
             error: ApiClient.toActionError(
                 error,
                 "店舗画像更新処理でエラーが発生しました。"
@@ -88,7 +99,7 @@ export const updateStoreImage = async (storeId: string | number, imageId: string
     // 更新が成功しているのに「更新失敗」と返すと、利用者が同じ操作を繰り返すため try の外に置く。
     updateTag(imageTag(storeId, imageId))
     updateTag(storeImagesTag(storeId))
-    return { success: true as const, data: res.data }
+    return { success: true, data: res.data.data }
 }
 
 /**
@@ -97,20 +108,24 @@ export const updateStoreImage = async (storeId: string | number, imageId: string
  * @param storeId 店舗ID
  * @param imageId 画像ID
  * @param idToken 認証用IDトークン
- * @returns APIレスポンスを含む処理結果
+ * @returns 削除した画像IDと削除結果を含む処理結果
  */
 
-export const deleteStoreImage = async (storeId: string | number, imageId: string | number, idToken: string) => {
-    let res: AxiosResponse
+export const deleteStoreImage = async (
+    storeId: string | number,
+    imageId: string | number,
+    idToken: string
+): Promise<ActionResult<StoreImageDeleteResult>> => {
+    let res: AxiosResponse<ApiEnvelope<StoreImageDeleteResult>>
     try {
-        res = await api.delete(`/stores/${storeId}/images/${imageId}`, {
+        res = await api.delete<ApiEnvelope<StoreImageDeleteResult>>(`/stores/${storeId}/images/${imageId}`, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
     } catch (error) {
         return {
-            success: false as const,
+            success: false,
             error: ApiClient.toActionError(
                 error,
                 "画像削除処理でエラーが発生しました。"
@@ -122,6 +137,6 @@ export const deleteStoreImage = async (storeId: string | number, imageId: string
     // 削除が成功しているのに「削除失敗」と返すと、利用者が消えたはずの画像へ再操作するため try の外に置く。
     updateTag(imageTag(storeId, imageId))
     updateTag(storeImagesTag(storeId))
-    return { success: true as const, data: res.data }
+    return { success: true, data: res.data.data }
 }
 
