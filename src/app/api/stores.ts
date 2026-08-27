@@ -56,7 +56,10 @@ export const createStore = async (
 ): Promise<ActionResult<string>> => {
     let message: string
     try {
-        const res = await api.post('/stores', storeData, {
+        // 登録された店舗の本体（`data`）は使わないため、`message`だけを持つ
+        // エンベロープ型を当てる。`data`を読もうとするとコンパイルエラーになり、
+        // 「中身を使うなら形を確認して型を定義する」ことが強制される。
+        const res = await api.post<ApiMessageEnvelope>('/stores', storeData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
@@ -97,7 +100,8 @@ export const updateStore = async (
 ): Promise<ActionResult<string>> => {
     let message: string
     try {
-        const res = await api.put(`/stores/${storeId}`, storeData, {
+        // createStore と同様、更新後の本体は使わないため message だけを型に取る
+        const res = await api.put<ApiMessageEnvelope>(`/stores/${storeId}`, storeData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
