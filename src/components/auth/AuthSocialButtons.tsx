@@ -52,11 +52,15 @@ export function AuthSocialButtons({
             const userData = userResult.success ? userResult.data : null
 
             if (!userData) {
+                // 値が無い項目は空文字で埋めずキーごと省略する。
+                // 登録APIは全項目が任意だが null も空文字も許さず、とくに email は
+                // 空文字だとメールアドレス形式の検証に落ちて 400 になる
+                // （GitHub でメール非公開の場合など、実際に null で届きうる）。
+                //
                 // Server Actionは失敗時も結果オブジェクトを返すため、ここで例外化する
                 unwrapActionResult(await createUser({
-                    uid: user.uid,
-                    email: user.email ?? '',
-                    displayName: user.displayName ?? '',
+                    email: user.email ?? undefined,
+                    displayName: user.displayName ?? undefined,
                     authProvider: provider
                 }, idToken))
             }

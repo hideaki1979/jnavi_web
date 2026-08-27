@@ -84,13 +84,14 @@ export function AuthForm({ mode }: AuthFormProps) {
             await executeAuth(async () => {
                 if (isSignup) {
                     const signUpData = data as SignupFormInput
-                    const user = await signUpWithEmail(signUpData.name, signUpData.email, signUpData.password)
+                    // 戻り値のユーザーは使わない。登録APIに渡すUIDは
+                    // バックエンドが検証済みトークンから取り直すため送る必要がない
+                    await signUpWithEmail(signUpData.name, signUpData.email, signUpData.password)
                     const idToken = await auth.currentUser?.getIdToken()
                     if (!idToken) throw new Error('認証トークンの取得に失敗しました。')
 
                     // Server Actionは失敗時も結果オブジェクトを返すため、ここで例外化する
                     unwrapActionResult(await createUser({
-                        uid: user.uid,
                         email: signUpData.email,
                         displayName: signUpData.name,
                         authProvider: 'email'
