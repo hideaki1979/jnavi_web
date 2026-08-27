@@ -129,6 +129,24 @@ export const IGNORE_RULES: IgnoreRule[] = [
         pattern: /Attempted to load a Vector Map, but failed\. Falling back to Raster/,
         reason: 'ヘッドレス環境に WebGL が無いことによるラスターマップへのフォールバック',
         routes: ['top', 'stores-map']
+    },
+    {
+        // `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` が空文字の環境で、Maps SDK が
+        // 未捕捉例外として出す（#102）。鍵に無効な値を入れた場合は
+        // `InvalidKeyMapError` が出るだけで発生せず、空文字のときだけ
+        // `ApiProjectMapError` と同時に必ず3件出る（決定的、実測）。
+        // 認証で止まりきらずマップの初期化まで進み、そこで 3D コンテキストの
+        // 生成に失敗している。鍵が有効な環境では発生しないため、
+        // これを許容してもアプリ側の退行が隠れることはない。
+        //
+        // 上のラスターフォールバックと同じ「ヘッドレスに WebGL が無いから」ではない。
+        // Chromium に `--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader`
+        // を渡して WebGL を用意すると、ラスターフォールバックの方は消えるのに
+        // こちらは残り、代わりに GPU の性能警告が増える（#102 で実測）。
+        // 起動フラグでの根本対応は成立しないので、ここで許容する。
+        pattern: /^Could not find a 3d context\b/,
+        reason: 'Google Maps の鍵が空文字の環境で Maps SDK が出す 3D コンテキスト生成失敗。鍵が有効なら発生しない',
+        routes: ['top', 'stores-map']
     }
 ]
 
