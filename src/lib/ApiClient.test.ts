@@ -378,6 +378,65 @@ describe('toActionError のレスポンス由来の値の扱い', () => {
         expect(payload.errors).toEqual([{ msg: '必須です', path: 'email' }])
     })
 
+    // 元オブジェクトを素通しすると、msg を確かめただけで ExpressValidationError と
+    // 名乗ることになる。宣言していないキーが画面にもログにも流れていく
+    it('契約にないプロパティは画面表示用の戻り値から取り除く', () => {
+        const error = axiosErrorWith({
+            success: false,
+            error: 'エラー',
+            details: [{ msg: '必須です', path: 'email', token: 'secret-token' }]
+        }, 400)
+
+        const payload = ApiClient.toActionError(error, 'テスト')
+
+        expect(payload.errors).toEqual([{ msg: '必須です', path: 'email' }])
+    })
+
+    // redactValidationErrors が落とすのは value だけなので、
+    // 契約外のキーは組み直しの段階で除いておく必要がある
+    it('契約にないプロパティはログにも残さない', () => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => { })
+        const error = axiosErrorWith({
+            success: false,
+            error: 'エラー',
+            details: [{ msg: '必須です', path: 'email', token: 'secret-token' }]
+        }, 400)
+
+        ApiClient.toActionError(error, 'テスト')
+
+        expect(spy.mock.calls[0]?.[1] as string).not.toContain('secret-token')
+    })
+
+    // 宣言と違う型の値を通すと `[${fieldName}]` が "[object Object]" になる。
+    // クラッシュはしないが、意味の無い文字列が利用者に見える
+    it('宣言と型が違う項目は落とす', () => {
+        const error = axiosErrorWith({
+            success: false,
+            error: 'エラー',
+            details: [{ msg: '必須です', path: {}, location: 42 }]
+        }, 400)
+
+        const payload = ApiClient.toActionError(error, 'テスト')
+
+        expect(payload.errors).toEqual([{ msg: '必須です' }])
+    })
+
+    it('契約どおりの項目はすべて残す', () => {
+        const detail = {
+            type: 'field',
+            msg: '有効なメールアドレスを入力してください',
+            path: 'email',
+            param: 'email',
+            location: 'body',
+            value: 'not-an-email'
+        }
+        const error = axiosErrorWith({ success: false, error: 'エラー', details: [detail] }, 400)
+
+        const payload = ApiClient.toActionError(error, 'テスト')
+
+        expect(payload.errors).toEqual([detail])
+    })
+
     // `||` で繋いだままだと文字列以外もテンプレートリテラルに入り、
     // `[object Object]` が画面に出る
     it('error が文字列でなければ画面表示に混ぜない', () => {
