@@ -42,7 +42,10 @@ export const createUser = async (user: CreateUserInput, idToken: string): Promis
     } catch (error) {
         return {
             success: false,
-            error: ApiClient.toActionError(
+            // 2xx を受けたうえでの契約違反は登録が成立している可能性が高い。
+            // 再送信させるとメール重複で 500 になり、原因が分からない失敗に化けるため、
+            // 「確認してほしい」と伝わる文言に寄せる（無効化すべきキャッシュは無い）。
+            error: ApiClient.toWriteActionError(
                 error,
                 "ユーザー情報登録時にエラーが発生しました。"
             )

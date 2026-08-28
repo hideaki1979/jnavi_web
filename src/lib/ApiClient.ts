@@ -41,6 +41,13 @@ class ApiClient {
     private static readonly BODY_PREVIEW_LIMIT = 200
 
     /**
+     * 書き込み呼び出しが契約違反を受けたときに画面へ添える一文。
+     * 再送信して重複登録させないことが目的なので、原因ではなく次の行動を伝える。
+     */
+    private static readonly WRITE_UNCERTAIN_NOTICE =
+        "ただし処理は完了している可能性があります。再実行の前に結果を確認してください。"
+
+    /**
      * APIクライアントのシングルトンインスタンスを取得
      */
     public static getInstance(): AxiosInstance {
@@ -121,6 +128,33 @@ class ApiClient {
             payload
         }))
         return payload
+    }
+
+    /**
+     * 書き込み呼び出し（登録・更新・削除）の失敗結果を組み立てる。
+     *
+     * 2xx を受け取ったうえでの契約違反（{@link ApiContractError}）は、
+     * 読み取りと意味が違う。**サーバー側の書き込みは成立している可能性が高い**ため、
+     * 通常の失敗と同じ文言で返すと利用者が再送信し、重複登録に繋がる
+     * （app/api/images.ts の updateTag の配置も同じ理由で決まっている）。
+     *
+     * かといって成功とも言えない。プロキシが 200 でHTMLを返してバックエンドへ
+     * 届いていない可能性も同じ経路に含まれるためである。
+     * どちらとも断定できないので、「結果を確認してほしい」と伝わる文言にする。
+     *
+     * @param error 発生した例外
+     * @param defaultMessage 契約違反以外で使用するメッセージ
+     * @returns Server Action の戻り値に載せるエラー情報
+     */
+    public static toWriteActionError(error: unknown, defaultMessage: string): ActionErrorPayload {
+        if (!(error instanceof ApiContractError)) {
+            return ApiClient.toActionError(error, defaultMessage)
+        }
+
+        // 契約違反の詳細（ボディの型・キー・冒頭）は contractError が既にログへ出している。
+        // ここで toActionError を通すと同じ事象で2行出るだけなので、画面用の文言だけを組み立てる
+        const head = defaultMessage.endsWith("。") ? defaultMessage : `${defaultMessage}。`
+        return { message: `${head}${ApiClient.WRITE_UNCERTAIN_NOTICE}` }
     }
 
     /* ------------------------------------------------------------------

@@ -170,3 +170,36 @@ describe('契約違反の伝え方', () => {
         }
     })
 })
+
+describe('toWriteActionError', () => {
+    // 書き込みは 2xx を受けた時点でサーバー側の処理が成立している可能性が高い。
+    // 通常の失敗と同じ見え方にすると再送信 → 重複登録を招く
+    it('契約違反には確認を促す文言を付ける', () => {
+        const error = new ApiContractError('POST /stores', '`data` が含まれていません')
+
+        const payload = ApiClient.toWriteActionError(error, '店舗情報登録時にエラーが発生しました。')
+
+        expect(payload.message).toContain('店舗情報登録時にエラーが発生しました。')
+        expect(payload.message).toContain('処理は完了している可能性があります')
+    })
+
+    // storeClose の既定文言のように「。」で終わらないものがあるため、
+    // そのまま連結すると文が繋がってしまう
+    it('句点で終わらない文言でも文が繋がらない', () => {
+        const error = new ApiContractError('PATCH /stores/1/close', '`message` が文字列ではありません')
+
+        const payload = ApiClient.toWriteActionError(error, '店舗閉店処理時に予期せぬエラーが発生しました')
+
+        expect(payload.message).toContain('発生しました。ただし')
+    })
+
+    it('契約違反以外は通常の失敗として扱う', () => {
+        const payload = ApiClient.toWriteActionError(
+            new Error('socket hang up'),
+            '店舗情報登録時にエラーが発生しました。'
+        )
+
+        expect(payload.message).toContain('socket hang up')
+        expect(payload.message).not.toContain('処理は完了している可能性があります')
+    })
+})
