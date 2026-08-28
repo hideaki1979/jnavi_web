@@ -24,14 +24,11 @@ export interface ResultToppingCall {
     call_options: CallOptionData[];
 }
 
-/**
- * トッピング＋コールオプション取得APIのレスポンス型定義
- */
-export interface ResultToppingCallApiRes {
-    data: ResultToppingCall[];
-    status: string;
-    message: string;
-}
+// 旧 ResultToppingCallApiRes（`{ data, status, message }`）は削除した。
+// 参照元が0件のデッド型だったうえ、バックエンドが返す第1キーは `status: string` ではなく
+// `success: true` であり、実装と一致していなかったため。
+// 実際のトッピング＋コールオプション取得は getToppingCallOptions が
+// `ApiEnvelope<ToppingOptionMap>`（@/types/api）で受けている。
 
 // トッピング・コールID（店舗登録・更新・詳細画面用）
 export interface FormattedToppingOptionIds {
