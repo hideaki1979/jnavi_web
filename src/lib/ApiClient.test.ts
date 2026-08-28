@@ -13,6 +13,7 @@
  * 通し過ぎれば元の穴が残り、弾き過ぎれば正常なレスポンスで画面が落ちる。
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { AxiosError, AxiosHeaders, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 
 import ApiClient, { ApiContractError } from '@/lib/ApiClient'
 
@@ -229,5 +230,84 @@ describe('toWriteActionError', () => {
 
         expect(payload.message).toContain('socket hang up')
         expect(payload.message).not.toContain('処理は完了している可能性があります')
+    })
+})
+
+describe('toActionError のログ', () => {
+    const config: InternalAxiosRequestConfig = {
+        headers: new AxiosHeaders(),
+        method: 'post',
+        url: '/users'
+    }
+
+    /** 指定したボディを返す非2xx を、axios が reject するのと同じ形で作る */
+    function axiosErrorWith(data: unknown, status: number): AxiosError {
+        const response: AxiosResponse = { data, status, statusText: '', headers: {}, config }
+        return new AxiosError('Request failed', AxiosError.ERR_BAD_RESPONSE, config, undefined, response)
+    }
+
+    // エラーボディも外部（プロキシ等）が組み立てたものであり得るため、
+    // 契約違反時のボディと同じ扱いにする
+    it('エラーボディの中身は残さず、型と見た目だけを残す', () => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => { })
+        const error = axiosErrorWith('<html><body>upstream 10.0.0.1 / at handler (/srv/app.js:42)</body></html>', 502)
+
+        ApiClient.toActionError(error, 'テスト')
+
+        const logged = spy.mock.calls[0]?.[1] as string
+        expect(logged).toContain('html-like')
+        expect(logged).not.toContain('10.0.0.1')
+        expect(logged).not.toContain('/srv/app.js')
+    })
+
+    // 同じ 401 でも TokenExpired / InvalidToken / Unauthorized で対応が変わる。
+    // payload には載らないため、列挙値であるこれだけは明示的に残す
+    it('認証エラーの種別は残す', () => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => { })
+        const error = axiosErrorWith({ status: 'TokenExpired', message: 'トークンの有効期限が切れています' }, 401)
+
+        ApiClient.toActionError(error, 'テスト')
+
+        expect(spy.mock.calls[0]?.[1] as string).toContain('TokenExpired')
+    })
+
+    // バックエンドは自身のログから value を落としている（zodValidation.ts）。
+    // レスポンスには残るため、フロントがそれをそのまま出力すると
+    // 落としたはずの値をこちら側で復活させてしまう
+    it('バリデーション詳細の value はログに残さない', () => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => { })
+        const error = axiosErrorWith({
+            success: false,
+            error: 'バリデーションエラー発生：入力値に誤りがあります。',
+            details: [{
+                type: 'field',
+                msg: '有効なメールアドレスを入力してください',
+                path: 'email',
+                location: 'body',
+                value: 'user@example.com'
+            }]
+        }, 400)
+
+        ApiClient.toActionError(error, 'テスト')
+
+        const logged = spy.mock.calls[0]?.[1] as string
+        expect(logged).not.toContain('user@example.com')
+        // どの項目がどのルールで落ちたかは追える
+        expect(logged).toContain('email')
+        expect(logged).toContain('有効なメールアドレスを入力してください')
+    })
+
+    it('画面表示用の戻り値からは value を落とさない', () => {
+        vi.spyOn(console, 'error').mockImplementation(() => { })
+        const error = axiosErrorWith({
+            success: false,
+            error: 'バリデーションエラー発生：入力値に誤りがあります。',
+            details: [{ msg: '不正な値です', path: 'email', value: 'user@example.com' }]
+        }, 400)
+
+        const payload = ApiClient.toActionError(error, 'テスト')
+
+        // 変更したのはログだけで、クライアントへ返す内容は従来どおり
+        expect(payload.errors?.[0]?.value).toBe('user@example.com')
     })
 })

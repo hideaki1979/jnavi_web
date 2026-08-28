@@ -1,6 +1,6 @@
 import { ActionErrorPayload } from "@/types/actionResult"
 import { ApiEnvelope, ApiMessageEnvelope } from "@/types/api"
-import { ApiErrorResponse } from "@/types/validation"
+import { ApiErrorResponse, ExpressValidationError } from "@/types/validation"
 import axios, { AxiosError, AxiosInstance } from "axios"
 
 /**
@@ -57,6 +57,88 @@ class ApiClient {
         return ApiClient.instance
     }
 
+    /* ------------------------------------------------------------------
+     * ログ出力の共通方針
+     *
+     * 外部から受け取った値の「中身」はログに残さない。
+     * ここでいう外部にはバックエンドだけでなく、その手前に入りうる
+     * プロキシやCDNも含まれるため、何が入っているかを列挙できない。
+     * 長さで切り詰めても「何を出さないか」を決めたことにはならないので、
+     * 内容そのものを持ち出さず、型・構造・列挙値だけを残す。
+     *
+     * 認証トークンを残さないため AxiosError を出力しない既存の判断
+     * （{@link toActionError} 内のコメント）と同じ考え方を、
+     * レスポンスボディとバリデーション詳細にも広げたもの。
+     * ------------------------------------------------------------------ */
+
+    /**
+     * 受信ボディの素性をログ用に短く表す。
+     *
+     * **中身は一切出さない。** 型・長さ・（オブジェクトなら）キー名だけにする。
+     * 契約違反時のボディは外部（バックエンドの手前にあるプロキシ等）が組み立てた
+     * ものでもあり得るため、何が入っているかを列挙できない。
+     * 長さで切り詰めても「何を出さないか」を決めたことにはならないので、
+     * 内容そのものを持ち出さない方針で揃える。
+     * リクエストヘッダーの認証トークンを残さないため AxiosError を出力しない
+     * {@link toActionError} と同じ考え方。
+     *
+     * 切り分けに要るのは「どのキーが欠けたか」「JSONですらないのか」までで、
+     * それは値を出さなくても分かる。
+     */
+    private static describeBody(body: unknown): string {
+        if (body === null) return "null"
+        if (Array.isArray(body)) return `array(length=${body.length})`
+        if (typeof body === "object") {
+            // キー名は構造であって値ではない。どのキーが欠けているかが
+            // 契約違反の原因そのものなので、ここだけは残す
+            const keys = Object.keys(body)
+            const shown = keys.slice(0, 10).join(", ")
+            return `object(keys=[${shown}${keys.length > 10 ? ", …" : ""}])`
+        }
+        if (typeof body === "string") {
+            return `string(length=${body.length}, shape=${ApiClient.describeStringShape(body)})`
+        }
+        return typeof body
+    }
+
+    /**
+     * 文字列ボディの「見た目」だけを分類する。中身は出さない。
+     *
+     * 文字列で届くのは axios がJSONとしてパースできなかった場合で、
+     * 切り分けたいのは次の2つ。どちらも先頭1文字で判別でき、内容は要らない。
+     * - `html-like`：プロキシやCDNが 200 でエラーページを返した
+     * - `json-like`：JSONなのに Content-Type が違ってパースされなかった
+     */
+    private static describeStringShape(body: string): string {
+        const head = body.trimStart().charAt(0)
+        if (head === "<") return "html-like"
+        if (head === "{" || head === "[") return "json-like"
+        return "text"
+    }
+
+    /**
+     * バリデーション詳細から `value`（利用者が入力した値）を落とす。
+     *
+     * バックエンドは既に同じ判断を下している（nodedeploytest の zodValidation.ts）。
+     * レスポンスの `details` は移行前の形を保つため `value` を含めるが、
+     * バックエンド自身のログでは落としている——メールアドレスやプロフィールが
+     * そのままログに残るのを避けるため。
+     * その `details` をフロントがログへそのまま出すと、
+     * バックエンドが意図して落とした値をこちら側で復活させてしまう。
+     *
+     * どの項目がどのルールで落ちたかは `path` / `msg` / `location` で追えるため、
+     * `value` が無くても調査はできる。
+     * 画面表示用に返す {@link ActionErrorPayload} は変更しない（ログだけの措置）。
+     */
+    private static redactValidationErrors(
+        errors: ExpressValidationError[] | undefined
+    ): Omit<ExpressValidationError, "value">[] | undefined {
+        return errors?.map(({ value, ...rest }) => {
+            void value
+            return rest
+        })
+    }
+
     /**
      * エラーハンドラー - express-validationのエラー情報に対応
      *
@@ -93,14 +175,20 @@ class ApiClient {
                 status
             }
 
-            // 画面には message のみ表示するため、原因調査に必要な全情報はここでログに残す。
+            // 画面には message のみ表示するため、原因調査に必要な情報はここでログに残す。
             // ※ AxiosError そのものは出力しない（リクエストヘッダーの認証トークンまでログに残るため）
+            // ※ エラーボディも全量は出力しない。プロキシが返したHTML等が丸ごと残りうるうえ、
+            //    バックエンドの既知形式から読める内容は payload に入っている
             console.error(`[ApiClient] ${defaultMessage}`, JSON.stringify({
                 method: axiosError.config?.method,
                 url: axiosError.config?.url,
                 status,
-                response: responseData,
-                payload
+                responseType: ApiClient.describeBody(responseData),
+                // authMiddleware の 401 だけ種別がここに入る（TokenExpired / InvalidToken /
+                // Unauthorized）。列挙値であり payload には載らないが、
+                // 再ログイン導線の要否を判断するのに要るため残す
+                authStatus: responseData?.status,
+                payload: { ...payload, errors: ApiClient.redactValidationErrors(payload.errors) }
             }))
 
             return payload
@@ -169,51 +257,6 @@ class ApiClient {
      * catch → toActionError → cacheLife("seconds") の経路にそのまま乗るため、
      * 呼び出し側に足す記述が最小で済む。
      * ------------------------------------------------------------------ */
-
-    /**
-     * 受信ボディの素性をログ用に短く表す。
-     *
-     * **中身は一切出さない。** 型・長さ・（オブジェクトなら）キー名だけにする。
-     * 契約違反時のボディは外部（バックエンドの手前にあるプロキシ等）が組み立てた
-     * ものでもあり得るため、何が入っているかを列挙できない。
-     * 長さで切り詰めても「何を出さないか」を決めたことにはならないので、
-     * 内容そのものを持ち出さない方針で揃える。
-     * リクエストヘッダーの認証トークンを残さないため AxiosError を出力しない
-     * {@link toActionError} と同じ考え方。
-     *
-     * 切り分けに要るのは「どのキーが欠けたか」「JSONですらないのか」までで、
-     * それは値を出さなくても分かる。
-     */
-    private static describeBody(body: unknown): string {
-        if (body === null) return "null"
-        if (Array.isArray(body)) return `array(length=${body.length})`
-        if (typeof body === "object") {
-            // キー名は構造であって値ではない。どのキーが欠けているかが
-            // 契約違反の原因そのものなので、ここだけは残す
-            const keys = Object.keys(body)
-            const shown = keys.slice(0, 10).join(", ")
-            return `object(keys=[${shown}${keys.length > 10 ? ", …" : ""}])`
-        }
-        if (typeof body === "string") {
-            return `string(length=${body.length}, shape=${ApiClient.describeStringShape(body)})`
-        }
-        return typeof body
-    }
-
-    /**
-     * 文字列ボディの「見た目」だけを分類する。中身は出さない。
-     *
-     * 文字列で届くのは axios がJSONとしてパースできなかった場合で、
-     * 切り分けたいのは次の2つ。どちらも先頭1文字で判別でき、内容は要らない。
-     * - `html-like`：プロキシやCDNが 200 でエラーページを返した
-     * - `json-like`：JSONなのに Content-Type が違ってパースされなかった
-     */
-    private static describeStringShape(body: string): string {
-        const head = body.trimStart().charAt(0)
-        if (head === "<") return "html-like"
-        if (head === "{" || head === "[") return "json-like"
-        return "text"
-    }
 
     /**
      * 契約違反をログに残したうえで例外を組み立てる。
