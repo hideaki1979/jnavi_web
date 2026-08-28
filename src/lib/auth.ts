@@ -80,7 +80,7 @@ export type SignOutFailureStage =
 export class SignOutError extends Error {
     readonly stage: SignOutFailureStage
 
-    constructor(stage: SignOutFailureStage, message: string, options?: { cause?: unknown }) {
+    constructor(stage: SignOutFailureStage, message: string, options?: ErrorOptions) {
         super(message, options)
         this.name = 'SignOutError'
         this.stage = stage

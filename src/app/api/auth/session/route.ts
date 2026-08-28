@@ -89,7 +89,7 @@ const ALREADY_INVALID_ERROR_CODES = new Set([
 /** FirebaseError（`code`を持つ）からエラーコードを取り出す。持たない場合はnull */
 function getFirebaseErrorCode(error: unknown): string | null {
     if (typeof error !== 'object' || error === null || !('code' in error)) return null
-    const { code } = error as { code: unknown }
+    const { code } = error
     return typeof code === 'string' ? code : null
 }
 
