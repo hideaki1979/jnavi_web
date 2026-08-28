@@ -127,26 +127,41 @@ describe('契約違反の伝え方', () => {
             .not.toThrow(/internal stack trace/)
     })
 
-    it('診断情報はログに残す（ボディの型と冒頭）', () => {
+    it('診断情報はログに残す（呼び出し・ボディの型と長さ）', () => {
         const spy = vi.spyOn(console, 'error').mockImplementation(() => { })
 
         expect(() => ApiClient.assertEnvelope('<!doctype html>', 'GET /maps')).toThrow()
 
         const logged = spy.mock.calls[0]?.[1] as string
         expect(logged).toContain('GET /maps')
-        expect(logged).toContain('string(length=15)')
-        expect(logged).toContain('<!doctype html>')
+        expect(logged).toContain('string(length=15,')
+        // 中身を出さずとも「プロキシがエラーページを返した」までは分かるようにする
+        expect(logged).toContain('html-like')
     })
 
-    it('長い文字列ボディはログでも切り詰める', () => {
+    // 契約違反時のボディはバックエンドの手前にあるプロキシ等が組み立てたものでもあり得る。
+    // 何が入っているかを列挙できない以上、長さで切り詰めるのではなく中身を持ち出さない
+    it('受信ボディの中身はログに残さない', () => {
         const spy = vi.spyOn(console, 'error').mockImplementation(() => { })
+        const body = '<html><body>upstream 10.0.0.1 / at Object.handler (/srv/app.js:42)</body></html>'
 
-        expect(() => ApiClient.assertEnvelope('x'.repeat(5000), 'GET /maps')).toThrow()
+        expect(() => ApiClient.assertEnvelope(body, 'GET /maps')).toThrow()
 
         const logged = spy.mock.calls[0]?.[1] as string
-        // 200文字 + 省略記号。JSON.stringify 済みの文字列に対する素朴な長さ確認で足りる
-        expect(logged).toContain(`${'x'.repeat(200)}…`)
-        expect(logged).not.toContain('x'.repeat(201))
+        expect(logged).not.toContain('10.0.0.1')
+        expect(logged).not.toContain('/srv/app.js')
+        expect(logged).not.toContain('<html>')
+    })
+
+    // Content-Type が JSON でないだけでボディはJSON、という切り分けができるようにする
+    it('JSONに見える文字列ボディは中身を出さずに区別できる', () => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => { })
+
+        expect(() => ApiClient.assertEnvelope('{"success":true,"secret":"xxx"}', 'GET /maps')).toThrow()
+
+        const logged = spy.mock.calls[0]?.[1] as string
+        expect(logged).toContain('json-like')
+        expect(logged).not.toContain('secret')
     })
 
     it('オブジェクトボディはキー名だけをログに残す', () => {
@@ -155,7 +170,20 @@ describe('契約違反の伝え方', () => {
         expect(() => ApiClient.assertEnvelope({ success: true, message: 'ok' }, 'GET /maps')).toThrow()
 
         const logged = spy.mock.calls[0]?.[1] as string
+        // どのキーが欠けているかが契約違反の原因そのものなので、キー名は残す。
+        // ただし値は出さない
         expect(logged).toContain('object(keys=[success, message])')
+    })
+
+    it('オブジェクトボディの値はログに残さない', () => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => { })
+        const body = { success: true, message: 'ok', email: 'user@example.com' }
+
+        expect(() => ApiClient.assertEnvelope(body, 'GET /maps')).toThrow()
+
+        const logged = spy.mock.calls[0]?.[1] as string
+        expect(logged).toContain('email')
+        expect(logged).not.toContain('user@example.com')
     })
 
     // toActionError は Error インスタンスとして扱えることを前提に message を組み立てる

@@ -12,7 +12,8 @@ import axios, { AxiosError, AxiosInstance } from "axios"
  *
  * `message` は画面にも出るため、受信したボディそのものは載せない
  * （プロキシが返したHTML全文などがそのまま表示されるのを避ける）。
- * 診断に要る情報は {@link ApiClient.assertMessageEnvelope} 側でログに出す。
+ * 診断に要る情報は ApiClient 側でログに出すが、そちらにも中身は残さず
+ * 型・長さ・キー名だけにしている。
  */
 export class ApiContractError extends Error {
     /** 契約違反が起きた呼び出し（例：`GET /maps`） */
@@ -33,12 +34,6 @@ export class ApiContractError extends Error {
  */
 class ApiClient {
     private static instance: AxiosInstance
-
-    /**
-     * 契約違反のログに載せる文字列ボディの最大長。
-     * プロキシがHTMLを返した場合、全文を残すとログが1ページ分で埋まるため先頭だけにする。
-     */
-    private static readonly BODY_PREVIEW_LIMIT = 200
 
     /**
      * 書き込み呼び出しが契約違反を受けたときに画面へ添える一文。
@@ -178,51 +173,63 @@ class ApiClient {
     /**
      * 受信ボディの素性をログ用に短く表す。
      *
-     * 値そのものは出さず、型と（オブジェクトなら）キー名だけにする。
-     * どのキーが欠けているかが分かれば原因は追えるうえ、
-     * 中身を丸ごと出すとログに不要な情報まで残るため。
+     * **中身は一切出さない。** 型・長さ・（オブジェクトなら）キー名だけにする。
+     * 契約違反時のボディは外部（バックエンドの手前にあるプロキシ等）が組み立てた
+     * ものでもあり得るため、何が入っているかを列挙できない。
+     * 長さで切り詰めても「何を出さないか」を決めたことにはならないので、
+     * 内容そのものを持ち出さない方針で揃える。
+     * リクエストヘッダーの認証トークンを残さないため AxiosError を出力しない
+     * {@link toActionError} と同じ考え方。
+     *
+     * 切り分けに要るのは「どのキーが欠けたか」「JSONですらないのか」までで、
+     * それは値を出さなくても分かる。
      */
     private static describeBody(body: unknown): string {
         if (body === null) return "null"
         if (Array.isArray(body)) return `array(length=${body.length})`
         if (typeof body === "object") {
+            // キー名は構造であって値ではない。どのキーが欠けているかが
+            // 契約違反の原因そのものなので、ここだけは残す
             const keys = Object.keys(body)
             const shown = keys.slice(0, 10).join(", ")
             return `object(keys=[${shown}${keys.length > 10 ? ", …" : ""}])`
         }
-        if (typeof body === "string") return `string(length=${body.length})`
+        if (typeof body === "string") {
+            return `string(length=${body.length}, shape=${ApiClient.describeStringShape(body)})`
+        }
         return typeof body
     }
 
     /**
-     * 文字列ボディの先頭だけを返す。
+     * 文字列ボディの「見た目」だけを分類する。中身は出さない。
      *
-     * 想定する主な契約違反は「プロキシやCDNが 200 でHTMLを返す」ケースで、
-     * このとき axios はJSONパースに失敗してボディを文字列のまま渡す。
-     * 何が返ってきたかは冒頭を見れば判断できるため、全文は残さない。
-     * オブジェクトの場合は {@link describeBody} のキー一覧で足りるので undefined を返す。
+     * 文字列で届くのは axios がJSONとしてパースできなかった場合で、
+     * 切り分けたいのは次の2つ。どちらも先頭1文字で判別でき、内容は要らない。
+     * - `html-like`：プロキシやCDNが 200 でエラーページを返した
+     * - `json-like`：JSONなのに Content-Type が違ってパースされなかった
      */
-    private static previewBody(body: unknown): string | undefined {
-        if (typeof body !== "string") return undefined
-        return body.length > ApiClient.BODY_PREVIEW_LIMIT
-            ? `${body.slice(0, ApiClient.BODY_PREVIEW_LIMIT)}…`
-            : body
+    private static describeStringShape(body: string): string {
+        const head = body.trimStart().charAt(0)
+        if (head === "<") return "html-like"
+        if (head === "{" || head === "[") return "json-like"
+        return "text"
     }
 
     /**
      * 契約違反をログに残したうえで例外を組み立てる。
      *
-     * 例外の `message` には載せられない診断情報（ボディの型・キー・冒頭）を
+     * 例外の `message` には載せられない診断情報（ボディの型・長さ・キー名）を
      * ここで出力する。解釈地点でログを出すのは {@link toActionError} と同じ方針。
      * この例外は最終的に `toActionError` にも渡るため出力は2行になるが、
      * それぞれ「何が返ってきたか」と「利用者に何を見せたか」で内容が異なる。
+     *
+     * 受信ボディの中身は画面にもログにも出さない（{@link describeBody} 参照）。
      */
     private static contractError(context: string, reason: string, body: unknown): ApiContractError {
         console.error("[ApiClient] APIレスポンスの契約違反", JSON.stringify({
             context,
             reason,
-            bodyType: ApiClient.describeBody(body),
-            bodyPreview: ApiClient.previewBody(body)
+            bodyType: ApiClient.describeBody(body)
         }))
         return new ApiContractError(context, reason)
     }
