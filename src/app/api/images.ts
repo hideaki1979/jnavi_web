@@ -17,9 +17,7 @@
 import { imageTag, storeImagesTag } from "@/app/api/stores.queries";
 import ApiClient from "@/lib/ApiClient";
 import type { ActionResult } from "@/types/actionResult";
-import type { ApiEnvelope } from "@/types/api";
 import type { StoreImageDeleteResult, StoreImageUpdateResult, StoreImageUploadData, StoreImageWriteResult } from "@/types/Image";
-import type { AxiosResponse } from "axios";
 import { updateTag } from "next/cache";
 
 const api = ApiClient.getInstance()
@@ -38,13 +36,19 @@ export const uploadStoreImage = async (
     imageData: StoreImageUploadData,
     idToken: string
 ): Promise<ActionResult<StoreImageWriteResult>> => {
-    let res: AxiosResponse<ApiEnvelope<StoreImageWriteResult>>
+    let uploaded: StoreImageWriteResult
     try {
-        res = await api.post<ApiEnvelope<StoreImageWriteResult>>(`/stores/${storeId}/images`, imageData, {
+        const res = await api.post<unknown>(`/stores/${storeId}/images`, imageData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
+        // 殻が契約どおりかを検証してから成功として扱う。
+        // 契約違反なら throw され、下の updateTag には進まず catch 側の失敗結果になる
+        uploaded = ApiClient.assertEnvelope<StoreImageWriteResult>(
+            res.data,
+            `POST /stores/${storeId}/images`
+        ).data
     } catch (error) {
         return {
             success: false,
@@ -59,7 +63,7 @@ export const uploadStoreImage = async (
     // try の外に置くのは、アップロード自体は成功しているのに updateTag の失敗を
     // 「アップロード失敗」として返してしまうと、利用者が再送信して重複登録するため。
     updateTag(storeImagesTag(storeId))
-    return { success: true, data: res.data.data }
+    return { success: true, data: uploaded }
 }
 
 /**
@@ -78,13 +82,18 @@ export const updateStoreImage = async (
     imageData: StoreImageUploadData,
     idToken: string
 ): Promise<ActionResult<StoreImageUpdateResult>> => {
-    let res: AxiosResponse<ApiEnvelope<StoreImageUpdateResult>>
+    let updated: StoreImageUpdateResult
     try {
-        res = await api.put<ApiEnvelope<StoreImageUpdateResult>>(`/stores/${storeId}/images/${imageId}`, imageData, {
+        const res = await api.put<unknown>(`/stores/${storeId}/images/${imageId}`, imageData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
+        // 殻が契約どおりかを検証してから成功として扱う（uploadStoreImage と同様）
+        updated = ApiClient.assertEnvelope<StoreImageUpdateResult>(
+            res.data,
+            `PUT /stores/${storeId}/images/${imageId}`
+        ).data
     } catch (error) {
         return {
             success: false,
@@ -99,7 +108,7 @@ export const updateStoreImage = async (
     // 更新が成功しているのに「更新失敗」と返すと、利用者が同じ操作を繰り返すため try の外に置く。
     updateTag(imageTag(storeId, imageId))
     updateTag(storeImagesTag(storeId))
-    return { success: true, data: res.data.data }
+    return { success: true, data: updated }
 }
 
 /**
@@ -116,13 +125,18 @@ export const deleteStoreImage = async (
     imageId: string | number,
     idToken: string
 ): Promise<ActionResult<StoreImageDeleteResult>> => {
-    let res: AxiosResponse<ApiEnvelope<StoreImageDeleteResult>>
+    let deleted: StoreImageDeleteResult
     try {
-        res = await api.delete<ApiEnvelope<StoreImageDeleteResult>>(`/stores/${storeId}/images/${imageId}`, {
+        const res = await api.delete<unknown>(`/stores/${storeId}/images/${imageId}`, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
+        // 殻が契約どおりかを検証してから成功として扱う（uploadStoreImage と同様）
+        deleted = ApiClient.assertEnvelope<StoreImageDeleteResult>(
+            res.data,
+            `DELETE /stores/${storeId}/images/${imageId}`
+        ).data
     } catch (error) {
         return {
             success: false,
@@ -137,6 +151,6 @@ export const deleteStoreImage = async (
     // 削除が成功しているのに「削除失敗」と返すと、利用者が消えたはずの画像へ再操作するため try の外に置く。
     updateTag(imageTag(storeId, imageId))
     updateTag(storeImagesTag(storeId))
-    return { success: true, data: res.data.data }
+    return { success: true, data: deleted }
 }
 

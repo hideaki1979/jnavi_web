@@ -13,7 +13,6 @@ import 'server-only'
 import { API_ENDPOINTS } from "@/constants/apiEndpoints"
 import ApiClient from "@/lib/ApiClient"
 import type { ActionResult } from "@/types/actionResult"
-import type { ApiEnvelope } from "@/types/api"
 import type { ToppingOptionMap } from "@/types/ToppingCall"
 import { cacheLife, cacheTag } from "next/cache"
 
@@ -40,9 +39,16 @@ export const getToppingCallOptions = async (): Promise<ActionResult<ToppingOptio
     cacheTag(TOPPING_CALL_OPTIONS_TAG)
 
     try {
-        const res = await api.get<ApiEnvelope<ToppingOptionMap>>(API_ENDPOINTS.TOPPING_CALL_OPTIONS_FORMATTED)
+        const res = await api.get<unknown>(API_ENDPOINTS.TOPPING_CALL_OPTIONS_FORMATTED)
+        // 殻が契約どおりかを検証してから成功として扱う。
+        // `cacheLife` の指定より前に置くのは、契約違反を長寿命キャッシュに載せないため
+        // （throw して catch 側の `cacheLife("seconds")` に倒す）。
+        const envelope = ApiClient.assertEnvelope<ToppingOptionMap>(
+            res.data,
+            `GET ${API_ENDPOINTS.TOPPING_CALL_OPTIONS_FORMATTED}`
+        )
         cacheLife("days")
-        return { success: true, data: res.data.data }
+        return { success: true, data: envelope.data }
     } catch (error) {
         // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
         cacheLife("seconds")

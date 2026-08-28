@@ -12,7 +12,6 @@
 
 import ApiClient from "@/lib/ApiClient";
 import type { ActionResult } from "@/types/actionResult";
-import type { ApiEnvelope, ApiMessageEnvelope } from "@/types/api";
 import type { ApiUser, CreateUserInput } from "@/types/user";
 
 const api = ApiClient.getInstance()
@@ -29,15 +28,16 @@ const api = ApiClient.getInstance()
  */
 export const createUser = async (user: CreateUserInput, idToken: string): Promise<ActionResult<void>> => {
     try {
-        // 登録されたユーザー行（`data`）は使わないため message だけを型に取る。
-        // `data`を読もうとするとコンパイルエラーになり、
-        // 「中身を使うなら形を確認して型を定義する」ことが強制される。
-        await api.post<ApiMessageEnvelope>('/users', user, {
+        // 登録されたユーザー行（`data`）も message も使わないが、殻の検証は通す。
+        // 検証を省くと「2xx なのに契約と違うボディ」が登録成功として扱われるため、
+        // 戻り値を使わなくても呼び出す（契約違反なら throw されて catch に落ちる）。
+        const res = await api.post<unknown>('/users', user, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${idToken}`
             }
         })
+        ApiClient.assertMessageEnvelope(res.data, "POST /users")
         return { success: true, data: undefined }
     } catch (error) {
         return {
@@ -66,15 +66,16 @@ export const createUser = async (user: CreateUserInput, idToken: string): Promis
  */
 export const getUserByUid = async (uid: string, idToken: string): Promise<ActionResult<ApiUser>> => {
     try {
-        const res = await api.get<ApiEnvelope<ApiUser>>(`/users/${uid}`, {
+        const res = await api.get<unknown>(`/users/${uid}`, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        // エンベロープの殻を剥がして本体を返す（他の読み取り関数と同じ扱い）。
+        // エンベロープの殻を検証してから本体を返す（他の読み取り関数と同じ扱い）。
         // 以前は`res.data`とエンベロープを丸ごと返しており、
         // `res.data`が any だったため型注釈との食い違いが検出されていなかった。
-        return { success: true, data: res.data.data }
+        const envelope = ApiClient.assertEnvelope<ApiUser>(res.data, `GET /users/${uid}`)
+        return { success: true, data: envelope.data }
     } catch (error) {
         return {
             success: false,

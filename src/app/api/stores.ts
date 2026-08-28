@@ -35,7 +35,6 @@ import {
 } from "@/app/api/stores.queries";
 import ApiClient from "@/lib/ApiClient";
 import type { ActionResult } from "@/types/actionResult";
-import type { ApiMessageEnvelope } from "@/types/api";
 import type { FormattedToppingOptionNameStoreData, SimulationSelectStoresData, SimulationSelectToppingCallsData, StoreImageDownloadData, StoreInput } from "@/types/Store";
 import { updateTag } from "next/cache";
 
@@ -57,14 +56,14 @@ export const createStore = async (
     let message: string
     try {
         // 登録された店舗の本体（`data`）は使わないため、`message`だけを持つ
-        // エンベロープ型を当てる。`data`を読もうとするとコンパイルエラーになり、
+        // エンベロープとして検証する。`data`を読もうとするとコンパイルエラーになり、
         // 「中身を使うなら形を確認して型を定義する」ことが強制される。
-        const res = await api.post<ApiMessageEnvelope>('/stores', storeData, {
+        const res = await api.post<unknown>('/stores', storeData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        message = res.data.message
+        message = ApiClient.assertMessageEnvelope(res.data, "POST /stores").message
     } catch (error) {
         return {
             success: false,
@@ -100,13 +99,13 @@ export const updateStore = async (
 ): Promise<ActionResult<string>> => {
     let message: string
     try {
-        // createStore と同様、更新後の本体は使わないため message だけを型に取る
-        const res = await api.put<ApiMessageEnvelope>(`/stores/${storeId}`, storeData, {
+        // createStore と同様、更新後の本体は使わないため message だけを取り出す
+        const res = await api.put<unknown>(`/stores/${storeId}`, storeData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        message = res.data.message
+        message = ApiClient.assertMessageEnvelope(res.data, `PUT /stores/${storeId}`).message
     } catch (error) {
         return {
             success: false,
@@ -138,14 +137,14 @@ export const updateStore = async (
 export const storeClose = async (id: string, storeName: string, idToken: string): Promise<ActionResult<string>> => {
     let message: string
     try {
-        const res = await api.patch<ApiMessageEnvelope>(`/stores/${id}/close`, {
+        const res = await api.patch<unknown>(`/stores/${id}/close`, {
             storeName
         }, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        message = res.data.message
+        message = ApiClient.assertMessageEnvelope(res.data, `PATCH /stores/${id}/close`).message
     } catch (error) {
         return {
             success: false,
