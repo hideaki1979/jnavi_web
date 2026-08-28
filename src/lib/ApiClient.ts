@@ -163,19 +163,47 @@ class ApiClient {
      * Next.js にサニタイズされた汎用エラーへ化ける。
      *
      * 併せて `ActionErrorPayload.errors` の型（`ExpressValidationError[]`）を
-     * 実態と一致させる意味もある。`msg` は必須項目なので、
-     * それが文字列である要素だけを通す。
+     * 実態と一致させる意味もある。要素は素通しせず、
+     * {@link toValidationError} で契約どおりの項目だけに組み直す。
      */
     private static toValidationErrors(details: unknown): ExpressValidationError[] | undefined {
         // 配列でなければ詳細なしとして扱う（空配列はそのまま空配列で返す）
         if (!Array.isArray(details)) return undefined
-        return details.filter(ApiClient.isValidationError)
+        return details
+            .map(ApiClient.toValidationError)
+            .filter((detail): detail is ExpressValidationError => detail !== undefined)
     }
 
-    private static isValidationError(detail: unknown): detail is ExpressValidationError {
-        if (typeof detail !== "object" || detail === null) return false
+    /**
+     * 詳細1件を、契約で宣言している項目だけで組み直す。
+     *
+     * 元のオブジェクトを素通しすると、`msg` を確かめただけで
+     * `ExpressValidationError` と名乗ることになる。宣言していない項目も、
+     * 宣言と違う型の値も、そのまま画面とサーバーログへ流れていく
+     * （{@link redactValidationErrors} が落とすのは `value` だけなので、
+     * 契約外のキーに機微な値が入っていても残ってしまう）。
+     *
+     * エンベロープ側の {@link assertMessageEnvelope} と同じで、
+     * 検証済みの値だけで組み直せば、返す型と実際に確かめた内容が一致する。
+     *
+     * `value` は型どおり任意の値を取るためキーの有無だけを見る。
+     * 画面表示用には残し、ログからは {@link redactValidationErrors} で落とす。
+     */
+    private static toValidationError(detail: unknown): ExpressValidationError | undefined {
+        if (typeof detail !== "object" || detail === null) return undefined
+
         const record = detail as Record<string, unknown>
-        return typeof record.msg === "string"
+        // `msg` は必須項目。これが無ければ詳細として扱えない
+        if (typeof record.msg !== "string") return undefined
+
+        return {
+            msg: record.msg,
+            ...(typeof record.type === "string" && { type: record.type }),
+            ...(typeof record.path === "string" && { path: record.path }),
+            ...(typeof record.param === "string" && { param: record.param }),
+            ...(typeof record.location === "string" && { location: record.location }),
+            ...("value" in record && { value: record.value })
+        }
     }
 
     /**
