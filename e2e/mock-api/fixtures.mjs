@@ -120,7 +120,9 @@ export function toppingCalls(storeId, callTiming) {
     }
 
     return {
-        store_id: store.id,
+        // 実バックエンドが返すキーは `store_id` ではなく `id`。
+        // かつ `Number()` 変換済みのため、ここも文字列ではなく数値で返す。
+        id: Number(store.id),
         store_name: store.store_name,
         branch_name: store.branch_name,
         formattedToppingOptions
