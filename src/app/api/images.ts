@@ -15,11 +15,9 @@
 "use server"
 
 import { imageTag, storeImagesTag } from "@/app/api/stores.queries";
-import ApiClient from "@/lib/ApiClient";
+import ApiClient, { ApiContractError } from "@/lib/ApiClient";
 import type { ActionResult } from "@/types/actionResult";
-import type { ApiEnvelope } from "@/types/api";
 import type { StoreImageDeleteResult, StoreImageUpdateResult, StoreImageUploadData, StoreImageWriteResult } from "@/types/Image";
-import type { AxiosResponse } from "axios";
 import { updateTag } from "next/cache";
 
 const api = ApiClient.getInstance()
@@ -38,17 +36,37 @@ export const uploadStoreImage = async (
     imageData: StoreImageUploadData,
     idToken: string
 ): Promise<ActionResult<StoreImageWriteResult>> => {
-    let res: AxiosResponse<ApiEnvelope<StoreImageWriteResult>>
+    // 成功時と「2xx を受けたが本体が読めなかった」時で同じタグを無効化する。
+    // 2箇所に書き下すと片方だけ増減して静かにずれるため、ここでまとめる
+    const invalidateCaches = () => {
+        updateTag(storeImagesTag(storeId))
+    }
+
+    let uploaded: StoreImageWriteResult
     try {
-        res = await api.post<ApiEnvelope<StoreImageWriteResult>>(`/stores/${storeId}/images`, imageData, {
+        const res = await api.post<unknown>(`/stores/${storeId}/images`, imageData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
+        // 殻が契約どおりかを検証してから成功として扱う。
+        // 契約違反なら throw され、下の updateTag には進まず catch 側の失敗結果になる
+        uploaded = ApiClient.assertEnvelope<StoreImageWriteResult>(
+            res.data,
+            `POST /stores/${storeId}/images`
+        ).data
     } catch (error) {
+        // 2xx を受け取ったうえでの契約違反は、サーバー側の処理自体は成立している
+        // 可能性が高い。キャッシュを古いまま残すと画面が実態を映さず、
+        // 「失敗した」と受け取った利用者の再送信 → 重複登録に繋がるため、
+        // この場合は成功時と同じタグを無効化してから失敗を返す。
+        // axios が reject した 4xx / 5xx は書き込みが成立していないので対象外。
+        if (error instanceof ApiContractError) {
+            invalidateCaches()
+        }
         return {
             success: false,
-            error: ApiClient.toActionError(
+            error: ApiClient.toWriteActionError(
                 error,
                 "画像アップロード処理でエラーが発生しました。"
             )
@@ -58,8 +76,8 @@ export const uploadStoreImage = async (
     // 画像一覧に新しい画像を即時反映させる。
     // try の外に置くのは、アップロード自体は成功しているのに updateTag の失敗を
     // 「アップロード失敗」として返してしまうと、利用者が再送信して重複登録するため。
-    updateTag(storeImagesTag(storeId))
-    return { success: true, data: res.data.data }
+    invalidateCaches()
+    return { success: true, data: uploaded }
 }
 
 /**
@@ -78,28 +96,45 @@ export const updateStoreImage = async (
     imageData: StoreImageUploadData,
     idToken: string
 ): Promise<ActionResult<StoreImageUpdateResult>> => {
-    let res: AxiosResponse<ApiEnvelope<StoreImageUpdateResult>>
+    // 個別画像と、それを含む一覧の両方が対象。成功時と契約違反時で同じものを無効化する
+    const invalidateCaches = () => {
+        updateTag(imageTag(storeId, imageId))
+        updateTag(storeImagesTag(storeId))
+    }
+
+    let updated: StoreImageUpdateResult
     try {
-        res = await api.put<ApiEnvelope<StoreImageUpdateResult>>(`/stores/${storeId}/images/${imageId}`, imageData, {
+        const res = await api.put<unknown>(`/stores/${storeId}/images/${imageId}`, imageData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
+        // 殻が契約どおりかを検証してから成功として扱う（uploadStoreImage と同様）
+        updated = ApiClient.assertEnvelope<StoreImageUpdateResult>(
+            res.data,
+            `PUT /stores/${storeId}/images/${imageId}`
+        ).data
     } catch (error) {
+        // 2xx を受け取ったうえでの契約違反は、サーバー側の処理自体は成立している
+        // 可能性が高い。キャッシュを古いまま残すと画面が実態を映さず、
+        // 「失敗した」と受け取った利用者の再送信 → 重複登録に繋がるため、
+        // この場合は成功時と同じタグを無効化してから失敗を返す。
+        // axios が reject した 4xx / 5xx は書き込みが成立していないので対象外。
+        if (error instanceof ApiContractError) {
+            invalidateCaches()
+        }
         return {
             success: false,
-            error: ApiClient.toActionError(
+            error: ApiClient.toWriteActionError(
                 error,
                 "店舗画像更新処理でエラーが発生しました。"
             )
         }
     }
 
-    // 個別画像と、それを含む一覧の両方を無効化する。
     // 更新が成功しているのに「更新失敗」と返すと、利用者が同じ操作を繰り返すため try の外に置く。
-    updateTag(imageTag(storeId, imageId))
-    updateTag(storeImagesTag(storeId))
-    return { success: true, data: res.data.data }
+    invalidateCaches()
+    return { success: true, data: updated }
 }
 
 /**
@@ -116,27 +151,44 @@ export const deleteStoreImage = async (
     imageId: string | number,
     idToken: string
 ): Promise<ActionResult<StoreImageDeleteResult>> => {
-    let res: AxiosResponse<ApiEnvelope<StoreImageDeleteResult>>
+    // 削除された画像と、それを含む一覧の両方が対象。成功時と契約違反時で同じものを無効化する
+    const invalidateCaches = () => {
+        updateTag(imageTag(storeId, imageId))
+        updateTag(storeImagesTag(storeId))
+    }
+
+    let deleted: StoreImageDeleteResult
     try {
-        res = await api.delete<ApiEnvelope<StoreImageDeleteResult>>(`/stores/${storeId}/images/${imageId}`, {
+        const res = await api.delete<unknown>(`/stores/${storeId}/images/${imageId}`, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
+        // 殻が契約どおりかを検証してから成功として扱う（uploadStoreImage と同様）
+        deleted = ApiClient.assertEnvelope<StoreImageDeleteResult>(
+            res.data,
+            `DELETE /stores/${storeId}/images/${imageId}`
+        ).data
     } catch (error) {
+        // 2xx を受け取ったうえでの契約違反は、サーバー側の処理自体は成立している
+        // 可能性が高い。キャッシュを古いまま残すと画面が実態を映さず、
+        // 「失敗した」と受け取った利用者の再送信 → 重複登録に繋がるため、
+        // この場合は成功時と同じタグを無効化してから失敗を返す。
+        // axios が reject した 4xx / 5xx は書き込みが成立していないので対象外。
+        if (error instanceof ApiContractError) {
+            invalidateCaches()
+        }
         return {
             success: false,
-            error: ApiClient.toActionError(
+            error: ApiClient.toWriteActionError(
                 error,
                 "画像削除処理でエラーが発生しました。"
             )
         }
     }
 
-    // 削除された画像と、それを含む一覧の両方を無効化する。
     // 削除が成功しているのに「削除失敗」と返すと、利用者が消えたはずの画像へ再操作するため try の外に置く。
-    updateTag(imageTag(storeId, imageId))
-    updateTag(storeImagesTag(storeId))
-    return { success: true, data: res.data.data }
+    invalidateCaches()
+    return { success: true, data: deleted }
 }
 

@@ -32,8 +32,8 @@
  *
  * 主な用途は書き込み系（登録・更新・削除）で、成功メッセージだけを
  * トースト表示に使うケース。
- * `api.patch<ApiMessageEnvelope>(...)` として `res.data.message` を取り出す
- * （実例は app/api/stores.ts の storeClose）。
+ * `ApiClient.assertMessageEnvelope(res.data, "PATCH /stores/1/close").message` として
+ * 取り出す（実例は app/api/stores.ts の storeClose）。
  *
  * `data` の中身がバックエンドの内部表現に近い場合（Prismaの行をそのまま返す等）、
  * 使わない本体をフロントの型として固定しないためにも有効。
@@ -48,10 +48,23 @@ export interface ApiMessageEnvelope {
 /**
  * APIの成功レスポンスを表す共通エンベロープ。
  *
- * `api.get<ApiEnvelope<MapData[]>>('/maps')` のように使い、
- * `res.data.data` で本体を取り出す。
- * 型引数を渡さない場合 axios の戻り値は `any` になり、
- * `res.data.data` の型チェックが一切効かなくなるため必ず指定する。
+ * この型は axios の型引数としてではなく、実行時ガードの戻り値として使う。
+ *
+ * ```ts
+ * const res = await api.get<unknown>('/maps')
+ * const envelope = ApiClient.assertEnvelope<MapData[]>(res.data, "GET /maps")
+ * // envelope.data は MapData[]
+ * ```
+ *
+ * `api.get<ApiEnvelope<MapData[]>>('/maps')` と型引数で宣言する書き方はやめた（#98）。
+ * それはコンパイラへの宣言であって実行時の検証ではないため、バックエンドが
+ * 契約に反した形（2xx なのに `data` が無い等）を返しても例外にならず、
+ * `res.data.data` が undefined のまま成功として扱われてしまう。
+ * `api.get<unknown>` で受けてガードを通すことで、この型注釈が
+ * 「宣言」ではなく「検証された事実」になる（ただし `data` の中身は未検証）。
+ *
+ * axios の型引数を省くと戻り値が `any` になり型チェックが効かなくなるため、
+ * 検証前であることを示す `unknown` は必ず明示する。
  *
  * @typeParam T エンドポイントごとの本体データの型
  */

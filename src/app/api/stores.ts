@@ -33,9 +33,8 @@ import {
     getStoreToppingCalls as getStoreToppingCallsCached,
     storeTag
 } from "@/app/api/stores.queries";
-import ApiClient from "@/lib/ApiClient";
+import ApiClient, { ApiContractError } from "@/lib/ApiClient";
 import type { ActionResult } from "@/types/actionResult";
-import type { ApiMessageEnvelope } from "@/types/api";
 import type { FormattedToppingOptionNameStoreData, SimulationSelectStoresData, SimulationSelectToppingCallsData, StoreImageDownloadData, StoreInput } from "@/types/Store";
 import { updateTag } from "next/cache";
 
@@ -54,21 +53,35 @@ export const createStore = async (
     storeData: StoreInput,
     idToken: string
 ): Promise<ActionResult<string>> => {
+    // 成功時と「2xx を受けたが本体が読めなかった」時で同じタグを無効化する。
+    // 2箇所に書き下すと片方だけ増減して静かにずれるため、ここでまとめる
+    const invalidateCaches = () => {
+        updateTag(STORES_TAG)
+    }
+
     let message: string
     try {
         // 登録された店舗の本体（`data`）は使わないため、`message`だけを持つ
-        // エンベロープ型を当てる。`data`を読もうとするとコンパイルエラーになり、
+        // エンベロープとして検証する。`data`を読もうとするとコンパイルエラーになり、
         // 「中身を使うなら形を確認して型を定義する」ことが強制される。
-        const res = await api.post<ApiMessageEnvelope>('/stores', storeData, {
+        const res = await api.post<unknown>('/stores', storeData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        message = res.data.message
+        message = ApiClient.assertMessageEnvelope(res.data, "POST /stores").message
     } catch (error) {
+        // 2xx を受け取ったうえでの契約違反は、サーバー側の処理自体は成立している
+        // 可能性が高い。キャッシュを古いまま残すと画面が実態を映さず、
+        // 「失敗した」と受け取った利用者の再送信 → 重複登録に繋がるため、
+        // この場合は成功時と同じタグを無効化してから失敗を返す。
+        // axios が reject した 4xx / 5xx は書き込みが成立していないので対象外。
+        if (error instanceof ApiContractError) {
+            invalidateCaches()
+        }
         return {
             success: false,
-            error: ApiClient.toActionError(
+            error: ApiClient.toWriteActionError(
                 error,
                 "店舗情報登録時にエラーが発生しました。"
             )
@@ -78,7 +91,7 @@ export const createStore = async (
     // 一覧・マップに新店舗を即時反映させる。
     // try の外に置くのは、登録自体は成功しているのに updateTag の失敗を
     // 「登録失敗」として返してしまうと、利用者が再送信して重複登録するため。
-    updateTag(STORES_TAG)
+    invalidateCaches()
     return { success: true, data: message }
 }
 
@@ -98,28 +111,40 @@ export const updateStore = async (
     storeData: StoreInput,
     idToken: string
 ): Promise<ActionResult<string>> => {
+    // 店舗名や位置が変わりうるため、詳細に加えて一覧・マップも対象にする
+    const invalidateCaches = () => {
+        updateTag(storeTag(storeId))
+        updateTag(STORES_TAG)
+    }
+
     let message: string
     try {
-        // createStore と同様、更新後の本体は使わないため message だけを型に取る
-        const res = await api.put<ApiMessageEnvelope>(`/stores/${storeId}`, storeData, {
+        // createStore と同様、更新後の本体は使わないため message だけを取り出す
+        const res = await api.put<unknown>(`/stores/${storeId}`, storeData, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        message = res.data.message
+        message = ApiClient.assertMessageEnvelope(res.data, `PUT /stores/${storeId}`).message
     } catch (error) {
+        // 2xx を受け取ったうえでの契約違反は、サーバー側の処理自体は成立している
+        // 可能性が高い。キャッシュを古いまま残すと画面が実態を映さず、
+        // 「失敗した」と受け取った利用者の再送信 → 重複登録に繋がるため、
+        // この場合は成功時と同じタグを無効化してから失敗を返す。
+        // axios が reject した 4xx / 5xx は書き込みが成立していないので対象外。
+        if (error instanceof ApiContractError) {
+            invalidateCaches()
+        }
         return {
             success: false,
-            error: ApiClient.toActionError(
+            error: ApiClient.toWriteActionError(
                 error,
                 "店舗情報更新時にエラーが発生しました。"
             )
         }
     }
 
-    // 店舗詳細に加え、店舗名や位置が変わりうるため一覧・マップも無効化する
-    updateTag(storeTag(storeId))
-    updateTag(STORES_TAG)
+    invalidateCaches()
     return { success: true, data: message }
 }
 
@@ -136,29 +161,41 @@ export const updateStore = async (
  */
 
 export const storeClose = async (id: string, storeName: string, idToken: string): Promise<ActionResult<string>> => {
+    // 閉店により一覧・マップから消えるため、詳細と併せて両方を対象にする
+    const invalidateCaches = () => {
+        updateTag(storeTag(id))
+        updateTag(STORES_TAG)
+    }
+
     let message: string
     try {
-        const res = await api.patch<ApiMessageEnvelope>(`/stores/${id}/close`, {
+        const res = await api.patch<unknown>(`/stores/${id}/close`, {
             storeName
         }, {
             headers: {
                 'Authorization': `Bearer ${idToken}`
             }
         })
-        message = res.data.message
+        message = ApiClient.assertMessageEnvelope(res.data, `PATCH /stores/${id}/close`).message
     } catch (error) {
+        // 2xx を受け取ったうえでの契約違反は、サーバー側の処理自体は成立している
+        // 可能性が高い。キャッシュを古いまま残すと画面が実態を映さず、
+        // 「失敗した」と受け取った利用者の再送信 → 重複登録に繋がるため、
+        // この場合は成功時と同じタグを無効化してから失敗を返す。
+        // axios が reject した 4xx / 5xx は書き込みが成立していないので対象外。
+        if (error instanceof ApiContractError) {
+            invalidateCaches()
+        }
         return {
             success: false,
-            error: ApiClient.toActionError(
+            error: ApiClient.toWriteActionError(
                 error,
                 "店舗閉店処理時に予期せぬエラーが発生しました"
             )
         }
     }
 
-    // 閉店により一覧・マップから消えるため両方を無効化する
-    updateTag(storeTag(id))
-    updateTag(STORES_TAG)
+    invalidateCaches()
     return { success: true, data: message }
 }
 

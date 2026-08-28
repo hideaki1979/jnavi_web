@@ -42,7 +42,6 @@ import 'server-only'
 
 import ApiClient from "@/lib/ApiClient"
 import type { ActionResult } from "@/types/actionResult"
-import type { ApiEnvelope } from "@/types/api"
 import type {
     FormattedToppingOptionNameStoreData,
     MapData,
@@ -76,9 +75,13 @@ export const getMapAll = async (): Promise<ActionResult<MapData[]>> => {
     cacheTag(STORES_TAG)
 
     try {
-        const res = await api.get<ApiEnvelope<MapData[]>>('/maps')
+        const res = await api.get<unknown>('/maps')
+        // 殻が契約どおりかを検証してから成功として扱う。
+        // `cacheLife` の指定より前に置くのは、契約違反を長寿命キャッシュに載せないため
+        // （throw して catch 側の `cacheLife("seconds")` に倒す）。
+        const envelope = ApiClient.assertEnvelope<MapData[]>(res.data, "GET /maps")
         cacheLife("hours")
-        return { success: true, data: res.data.data }
+        return { success: true, data: envelope.data }
     } catch (error) {
         // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
         cacheLife("seconds")
@@ -106,9 +109,16 @@ export const getStoreImages = async (storeId: string): Promise<ActionResult<Stor
     cacheTag(storeImagesTag(storeId))
 
     try {
-        const res = await api.get<ApiEnvelope<StoreImageDownloadData[]>>(`/stores/${storeId}/images`)
+        const res = await api.get<unknown>(`/stores/${storeId}/images`)
+        // 殻が契約どおりかを検証してから成功として扱う。
+        // `cacheLife` の指定より前に置くのは、契約違反を長寿命キャッシュに載せないため
+        // （throw して catch 側の `cacheLife("seconds")` に倒す）。
+        const envelope = ApiClient.assertEnvelope<StoreImageDownloadData[]>(
+            res.data,
+            `GET /stores/${storeId}/images`
+        )
         cacheLife("hours")
-        return { success: true, data: res.data.data }
+        return { success: true, data: envelope.data }
     } catch (error) {
         // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
         cacheLife("seconds")
@@ -131,9 +141,13 @@ export const getStoreAll = async (): Promise<ActionResult<SimulationSelectStores
     cacheTag(STORES_TAG)
 
     try {
-        const res = await api.get<ApiEnvelope<SimulationSelectStoresData[]>>("/stores")
+        const res = await api.get<unknown>("/stores")
+        // 殻が契約どおりかを検証してから成功として扱う。
+        // `cacheLife` の指定より前に置くのは、契約違反を長寿命キャッシュに載せないため
+        // （throw して catch 側の `cacheLife("seconds")` に倒す）。
+        const envelope = ApiClient.assertEnvelope<SimulationSelectStoresData[]>(res.data, "GET /stores")
         cacheLife("hours")
-        return { success: true, data: res.data.data }
+        return { success: true, data: envelope.data }
     } catch (error) {
         // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
         cacheLife("seconds")
@@ -158,13 +172,20 @@ export const getStoreToppingCalls = async (id: string, call_timing: string): Pro
     cacheTag(storeTag(id))
 
     try {
-        const res = await api.get<ApiEnvelope<SimulationSelectToppingCallsData>>(`/stores/${id}/toppingCalls`, {
+        const res = await api.get<unknown>(`/stores/${id}/toppingCalls`, {
             params: {
                 call_timing
             }
         })
+        // 殻が契約どおりかを検証してから成功として扱う。
+        // `cacheLife` の指定より前に置くのは、契約違反を長寿命キャッシュに載せないため
+        // （throw して catch 側の `cacheLife("seconds")` に倒す）。
+        const envelope = ApiClient.assertEnvelope<SimulationSelectToppingCallsData>(
+            res.data,
+            `GET /stores/${id}/toppingCalls`
+        )
         cacheLife("hours")
-        return { success: true, data: res.data.data }
+        return { success: true, data: envelope.data }
     } catch (error) {
         // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
         cacheLife("seconds")
@@ -188,9 +209,16 @@ export const getStoreById = async (id: string): Promise<ActionResult<FormattedTo
     cacheTag(storeTag(id))
 
     try {
-        const res = await api.get<ApiEnvelope<FormattedToppingOptionNameStoreData>>(`/stores/${id}`)
+        const res = await api.get<unknown>(`/stores/${id}`)
+        // 殻が契約どおりかを検証してから成功として扱う。
+        // `cacheLife` の指定より前に置くのは、契約違反を長寿命キャッシュに載せないため
+        // （throw して catch 側の `cacheLife("seconds")` に倒す）。
+        const envelope = ApiClient.assertEnvelope<FormattedToppingOptionNameStoreData>(
+            res.data,
+            `GET /stores/${id}`
+        )
         cacheLife("hours")
-        return { success: true, data: res.data.data }
+        return { success: true, data: envelope.data }
     } catch (error) {
         // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
         cacheLife("seconds")

@@ -16,7 +16,6 @@ import 'server-only'
 import { imageTag } from "@/app/api/stores.queries"
 import ApiClient from "@/lib/ApiClient"
 import type { ActionResult } from "@/types/actionResult"
-import type { ApiEnvelope } from "@/types/api"
 import type { StoreImageEditData } from "@/types/Image"
 import { cacheLife, cacheTag } from "next/cache"
 
@@ -33,9 +32,16 @@ export const getImageById = async (storeId: string | number, imageId: string | n
     cacheTag(imageTag(storeId, imageId))
 
     try {
-        const res = await api.get<ApiEnvelope<StoreImageEditData>>(`/stores/${storeId}/images/${imageId}`)
+        const res = await api.get<unknown>(`/stores/${storeId}/images/${imageId}`)
+        // 殻が契約どおりかを検証してから成功として扱う。
+        // `cacheLife` の指定より前に置くのは、契約違反を長寿命キャッシュに載せないため
+        // （throw して catch 側の `cacheLife("seconds")` に倒す）。
+        const envelope = ApiClient.assertEnvelope<StoreImageEditData>(
+            res.data,
+            `GET /stores/${storeId}/images/${imageId}`
+        )
         cacheLife("hours")
-        return { success: true, data: res.data.data }
+        return { success: true, data: envelope.data }
     } catch (error) {
         // 一時的な障害を長時間キャッシュしないよう、失敗は短命にする
         cacheLife("seconds")
