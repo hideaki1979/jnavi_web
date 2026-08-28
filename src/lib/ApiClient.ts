@@ -117,6 +117,68 @@ class ApiClient {
     }
 
     /**
+     * authMiddleware が返す認証エラーの種別。
+     * ログへ出すのはこの3つに一致した場合だけにする（{@link toAuthStatus}）。
+     */
+    private static readonly AUTH_STATUSES: ReadonlySet<string> = new Set([
+        "Unauthorized",
+        "TokenExpired",
+        "InvalidToken"
+    ])
+
+    /**
+     * 認証エラーの種別として妥当な値だけを取り出す。
+     *
+     * `AxiosError<ApiErrorResponse>` の型引数は「バックエンドがこの形を返す」という
+     * 宣言でしかなく、実際のボディは検証されていない（#98 でエンベロープに対して
+     * 扱った問題と同じ）。`status` をそのまま出力すると、応答した誰かが決めた
+     * 任意の文字列をログへ流し込むことになる。
+     *
+     * 既知の列挙値に一致したときだけ残し、それ以外は捨てる。
+     * ボディの素性は `responseType` 側で分かるため、捨てても切り分けは進む。
+     */
+    private static toAuthStatus(status: unknown): string | undefined {
+        return typeof status === "string" && ApiClient.AUTH_STATUSES.has(status)
+            ? status
+            : undefined
+    }
+
+    /**
+     * 最初に見つかった空でない文字列を返す。
+     *
+     * `responseData?.error` などは型の上では `string` だが実際には検証されていない。
+     * `||` で繋いだままだとオブジェクトや数値がテンプレートリテラルに入り、
+     * `[object Object]` が画面に出る。文字列であることを確かめてから使う。
+     */
+    private static firstNonEmptyString(...values: unknown[]): string | undefined {
+        return values.find((value): value is string => typeof value === "string" && value.length > 0)
+    }
+
+    /**
+     * エラーレスポンスの `details` から、扱える形の要素だけを取り出す。
+     *
+     * `Array.isArray` だけでは中身が保証されない。`details: [null]` のような形が
+     * 返ると、`value` を落とす際の分割代入が TypeError で落ちる。
+     * これは catch の中で起きるため、エラー処理そのものが壊れて
+     * Next.js にサニタイズされた汎用エラーへ化ける。
+     *
+     * 併せて `ActionErrorPayload.errors` の型（`ExpressValidationError[]`）を
+     * 実態と一致させる意味もある。`msg` は必須項目なので、
+     * それが文字列である要素だけを通す。
+     */
+    private static toValidationErrors(details: unknown): ExpressValidationError[] | undefined {
+        // 配列でなければ詳細なしとして扱う（空配列はそのまま空配列で返す）
+        if (!Array.isArray(details)) return undefined
+        return details.filter(ApiClient.isValidationError)
+    }
+
+    private static isValidationError(detail: unknown): detail is ExpressValidationError {
+        if (typeof detail !== "object" || detail === null) return false
+        const record = detail as Record<string, unknown>
+        return typeof record.msg === "string"
+    }
+
+    /**
      * バリデーション詳細から `value`（利用者が入力した値）を落とす。
      *
      * バックエンドは既に同じ判断を下している（nodedeploytest の zodValidation.ts）。
@@ -162,16 +224,19 @@ class ApiClient {
             // APIからのエラーメッセージを優先
             // バックエンドは { success: false, error: string } 形式で返すため `error` を最優先で読む
             // （`message` は旧形式との互換用フォールバック）
-            const errorMessage = responseData?.error || responseData?.message || axiosError.message
+            const errorMessage = ApiClient.firstNonEmptyString(responseData?.error, responseData?.message)
+                ?? axiosError.message
 
             // バリデーションエラーの詳細は `details`（旧形式は `errors`）に入る
-            const validationDetails = responseData?.details ?? responseData?.errors
+            const validationDetails = ApiClient.toValidationErrors(
+                responseData?.details ?? responseData?.errors
+            )
 
             const status = axiosError.response?.status
 
             const payload: ActionErrorPayload = {
                 message: `API呼出中にエラー発生：${errorMessage}`,
-                errors: Array.isArray(validationDetails) ? validationDetails : undefined,
+                errors: validationDetails,
                 status
             }
 
@@ -185,9 +250,9 @@ class ApiClient {
                 status,
                 responseType: ApiClient.describeBody(responseData),
                 // authMiddleware の 401 だけ種別がここに入る（TokenExpired / InvalidToken /
-                // Unauthorized）。列挙値であり payload には載らないが、
-                // 再ログイン導線の要否を判断するのに要るため残す
-                authStatus: responseData?.status,
+                // Unauthorized）。payload には載らないが再ログイン導線の要否判断に要る。
+                // ただしボディは検証されていないため、既知の列挙値に一致したものだけを残す
+                authStatus: ApiClient.toAuthStatus(responseData?.status),
                 payload: { ...payload, errors: ApiClient.redactValidationErrors(payload.errors) }
             }))
 

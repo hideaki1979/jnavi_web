@@ -311,3 +311,81 @@ describe('toActionError のログ', () => {
         expect(payload.errors?.[0]?.value).toBe('user@example.com')
     })
 })
+
+describe('toActionError のレスポンス由来の値の扱い', () => {
+    const config: InternalAxiosRequestConfig = {
+        headers: new AxiosHeaders(),
+        method: 'post',
+        url: '/users'
+    }
+
+    function axiosErrorWith(data: unknown, status: number): AxiosError {
+        const response: AxiosResponse = { data, status, statusText: '', headers: {}, config }
+        return new AxiosError('Request failed', AxiosError.ERR_BAD_RESPONSE, config, undefined, response)
+    }
+
+    beforeEach(() => {
+        vi.spyOn(console, 'error').mockImplementation(() => { })
+    })
+
+    // AxiosError<ApiErrorResponse> の型引数は宣言であって検証ではない（#98 と同じ構図）。
+    // status をそのまま出すと、応答した誰かが決めた任意の文字列がログに流れ込む
+    it('既知の列挙値でない authStatus はログに出さない', () => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => { })
+        const error = axiosErrorWith({ status: '<script>alert(1)</script>', message: 'NG' }, 401)
+
+        ApiClient.toActionError(error, 'テスト')
+
+        expect(spy.mock.calls[0]?.[1] as string).not.toContain('alert(1)')
+    })
+
+    it.each(['Unauthorized', 'TokenExpired', 'InvalidToken'])(
+        '既知の認証エラー種別は残す：%s',
+        (authStatus) => {
+            const spy = vi.spyOn(console, 'error').mockImplementation(() => { })
+
+            ApiClient.toActionError(axiosErrorWith({ status: authStatus, message: 'NG' }, 401), 'テスト')
+
+            expect(spy.mock.calls[0]?.[1] as string).toContain(authStatus)
+        }
+    )
+
+    // details は Array.isArray しか見ていなかったため、要素が null だと
+    // value を落とす分割代入が TypeError で落ちていた。
+    // catch の中で起きるのでエラー処理そのものが壊れる
+    it.each([
+        ['null 要素', [null]],
+        ['undefined 要素', [undefined]],
+        ['文字列要素', ['壊れた詳細']],
+        ['数値要素', [42]],
+        ['配列ですらない', 'details']
+    ])('details の形が壊れていても落ちない：%s', (_name, details) => {
+        const error = axiosErrorWith({ success: false, error: 'エラー', details }, 400)
+
+        expect(() => ApiClient.toActionError(error, 'テスト')).not.toThrow()
+    })
+
+    it('扱えない details の要素は取り除く', () => {
+        const error = axiosErrorWith({
+            success: false,
+            error: 'エラー',
+            details: [null, { msg: '必須です', path: 'email' }, '壊れた詳細']
+        }, 400)
+
+        const payload = ApiClient.toActionError(error, 'テスト')
+
+        // `ExpressValidationError[]` と宣言している以上、その形の要素だけを載せる
+        expect(payload.errors).toEqual([{ msg: '必須です', path: 'email' }])
+    })
+
+    // `||` で繋いだままだと文字列以外もテンプレートリテラルに入り、
+    // `[object Object]` が画面に出る
+    it('error が文字列でなければ画面表示に混ぜない', () => {
+        const error = axiosErrorWith({ success: false, error: { nested: 'object' } }, 500)
+
+        const payload = ApiClient.toActionError(error, 'テスト')
+
+        expect(payload.message).not.toContain('[object Object]')
+        expect(payload.message).toContain('Request failed')
+    })
+})
