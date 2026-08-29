@@ -51,6 +51,7 @@ next-env.d.ts
 
 # agent instructions（next dev が再生成する。規約の正本は手元のみ）
 /AGENTS.md
+/CLAUDE.md
 
 #firebase-admin
 jnaviproject-firebase-adminsdk-fbsvc-f96e2396e1.json
