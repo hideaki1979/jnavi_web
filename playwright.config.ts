@@ -120,7 +120,12 @@ export default defineConfig({
 
         // `/stores/map` は `navigator.geolocation.getCurrentPosition` を呼び、
         // 失敗すると `console.error('現在地情報取得エラー：', ...)` を出す。
-        // 許可と座標を固定して、実行環境によって結果が変わらないようにする
+        // 許可と座標を固定して、実行環境によって結果が変わらないようにする。
+        //
+        // ここの座標は既定値で、実行時は e2e/smoke.spec.ts が
+        // `GET /maps` の先頭の店舗の座標で上書きする。
+        // 東京駅のままだと店舗が遠い環境ではピンがビューポートの外に出てしまい、
+        // 「ピンが見えていること」を目印にできないため（e2e/routes.ts の MAP_MARKER）
         permissions: ['geolocation'],
         geolocation: { latitude: 35.681236, longitude: 139.767125 }, // 東京駅
         locale: 'ja-JP',
