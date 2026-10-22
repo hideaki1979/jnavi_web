@@ -42,6 +42,10 @@ jobs:
         with:
           # Node のバージョンは .nvmrc に一本化する（package.json の engines は下限）
           node-version-file: .nvmrc
+          # `24` のような範囲指定だと、ランナーに入っている 24.x がそのまま使われ、
+          # イメージが更新されるまでセキュリティリリースのパッチが反映されない。
+          # 本番（Vercel）は最新パッチを自動で使うため、CI も毎回最新に揃える
+          check-latest: true
           cache: npm
 
       - run: npm ci
